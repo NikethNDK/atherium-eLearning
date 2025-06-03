@@ -15,8 +15,8 @@ class User(Base):
     password_hash = Column(String)
     role_id = Column(Integer, ForeignKey("roles.id"))
     is_active = Column(Boolean, default=True)
-    title = Column(String, nullable=True)  # Optional for instructors
-    designation = Column(String, nullable=True)  # Optional for instructors
-    google_id = Column(String, unique=True, nullable=True)  # For Google OAuth
+    title = Column(String, nullable=True)  
+    designation = Column(String, nullable=True)  
+    google_id = Column(String, unique=True, nullable=True) 
     role = relationship("Role", back_populates="users")
 
