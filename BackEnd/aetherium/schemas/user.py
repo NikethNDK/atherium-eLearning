@@ -14,10 +14,16 @@ class UserUpdate(BaseModel):
     title:Optional[str]=None
     designation:Optional[str]=None
 
+class RoleResponse(BaseModel):
+    id: int
+    name: str
+
+    class Config:
+        orm_mode = True
 
 class UserResponse(UserBase):
     id:int
-    role:str
+    role:RoleResponse
     is_active:bool
     title:Optional[str]
     designation:Optional[str]
