@@ -22,7 +22,7 @@ class RoleResponse(BaseModel):
         orm_mode = True
 
 class UserResponse(UserBase):
-    id:int
+    id:int 
     role:RoleResponse
     is_active:bool
     title:Optional[str]
