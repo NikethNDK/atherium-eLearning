@@ -15,11 +15,14 @@ def create_user(db: Session, user: UserCreate) -> User:
     
     hashed_password = hash_password(user.password)
     db_user = User(
+        firstname=user.firstname,
+        lastname=user.lastname,
         email=user.email,
         password_hash=hashed_password,
         role_id=user.role_id,
         title=user.title,
-        designation=user.designation
+        designation=user.designation,
+        phone_number=user.phone_number
     )
     db.add(db_user)
     db.commit()
@@ -30,11 +33,16 @@ def update_user_bio(db: Session, user_update: UserUpdate, email: str) -> User:
     user = db.query(User).filter(User.email == email).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    
+    if user_update.firstname is not None:
+        user.firstname=user_update.firstname
+    if user_update.lastname is not None:
+        user.lastname=user_update.lastname
     if user_update.title is not None:
         user.title = user_update.title
     if user_update.designation is not None:
         user.designation = user_update.designation
+    if user_update.phone_number is not None:
+        user.phone_number=user_update.phone_number
     
     db.commit()
     db.refresh(user)

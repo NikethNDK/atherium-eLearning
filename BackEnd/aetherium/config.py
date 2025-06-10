@@ -9,6 +9,14 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: str
     GOOGLE_CLIENT_SECRET: str
     GOOGLE_REDIRECT_URI: str
+    SMTP_SERVER: str
+    SMTP_PORT: int
+    SMTP_USERNAME: str
+    SMTP_PASSWORD: str
+    FROM_EMAIL: str
+    REDIS_HOST:str
+    REDIS_PORT:int
+    REDIS_DB:int
 
     class Config:
         env_file = os.path.join(os.path.dirname(__file__), ".env")
