@@ -1,5 +1,3 @@
-"use client"
-
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from "../../context/AuthContext"
@@ -11,7 +9,9 @@ import OTPModal from "../../components/common/OTPModal"
 const RegisterUser = () => {
   const [formData, setFormData] = useState({
     email: "",
-    username: "",
+    firstname:"",
+    lastname:"",
+    // username: "",
     password: "",
     confirmPassword: "",
   })
@@ -47,6 +47,8 @@ const RegisterUser = () => {
         email: formData.email,
         password: formData.password,
         role_id: 1, // User role
+        firstname:formData.firstname,
+        lastname:formData.lastname
       })
 
       if (result.success) {
@@ -77,8 +79,8 @@ const RegisterUser = () => {
                 className="w-full h-96 object-cover rounded-2xl"
               />
               <div className="absolute bottom-8 left-8">
-                <h2 className="text-3xl font-bold mb-2">Lorem Ipsum is simply</h2>
-                <p className="text-lg opacity-90">Lorem Ipsum is simply</p>
+                <h2 className="text-3xl font-bold mb-2">Aetherium</h2>
+                {/* <p className="text-lg opacity-90">Lorem Ipsum is simply</p> */}
               </div>
             </div>
           </div>
@@ -120,13 +122,25 @@ const RegisterUser = () => {
                 </div>
 
                 <div>
+                  <label className="block text-cyan-400 text-sm font-semibold mb-2">First Name</label>
+                  <input
+                    type="text"
+                    name="firstname"
+                    value={formData.firstname}
+                    onChange={handleChange}
+                    placeholder="Enter your first name"
+                    className="w-full px-4 py-3 rounded-full bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                    required
+                  />
+                </div>
+                <div>
                   <label className="block text-cyan-400 text-sm font-semibold mb-2">Username</label>
                   <input
                     type="text"
-                    name="username"
-                    value={formData.username}
+                    name="lastname"
+                    value={formData.lastname}
                     onChange={handleChange}
-                    placeholder="Enter your user name"
+                    placeholder="Enter your last name"
                     className="w-full px-4 py-3 rounded-full bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-400"
                     required
                   />

@@ -3,41 +3,40 @@ import Header from "../components/common/Header"
 import Footer from "../components/common/Footer"
 
 const Landing = () => {
-  const courses = [
-    {
-      id: 1,
-      title: "Learn With Shoaib",
-      instructor: "John Wilson",
-      price: "$8.99",
-      rating: 4.5,
-      image: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      id: 2,
-      title: "Building User Interface...",
-      instructor: "Adam Howard",
-      price: "$11.70",
-      rating: 4.8,
-      image: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      id: 3,
-      title: "Figma UI UX Design...",
-      instructor: "Jane Cooper",
-      price: "$17.84",
-      rating: 4.9,
-      image: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      id: 4,
-      title: "Learn With Shoaib",
-      instructor: "John Wilson",
-      price: "$8.99",
-      rating: 4.5,
-      image: "/placeholder.svg?height=200&width=300",
-    },
-  ]
-
+ const courses = [
+  {
+    id: 1,
+    title: "Learn With Shoaib",
+    instructor: "John Wilson",
+    price: "$8.99",
+    rating: 4.5,
+    image: "https://picsum.photos/seed/elearning1/200/300",
+  },
+  {
+    id: 2,
+    title: "Building User Interface...",
+    instructor: "Adam Howard",
+    price: "$11.70",
+    rating: 4.8,
+    image: "https://picsum.photos/seed/elearning2/200/300",
+  },
+  {
+    id: 3,
+    title: "Figma UI UX Design...",
+    instructor: "Jane Cooper",
+    price: "$17.84",
+    rating: 4.9,
+    image: "https://picsum.photos/seed/elearning5/200/300",
+  },
+  {
+    id: 4,
+    title: "Learn With Shoaib",
+    instructor: "John Wilson",
+    price: "$8.99",
+    rating: 4.5,
+    image: "https://picsum.photos/seed/elearning6/200/300",
+  },
+]; 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
@@ -62,7 +61,7 @@ const Landing = () => {
             </div>
             <div>
               <img
-                src="/placeholder.svg?height=400&width=600"
+                src="https://picsum.photos/seed/elearning9/350/500"
                 alt="Learning illustration"
                 className="w-full h-auto rounded-lg"
               />

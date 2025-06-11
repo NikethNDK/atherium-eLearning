@@ -135,6 +135,7 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from "../../context/AuthContext"
+import { CircleUserRound } from "lucide-react"
 
 const Header = () => {
   const { user, isAuthenticated, logout } = useAuth()
@@ -212,7 +213,8 @@ const Header = () => {
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
                   className="flex items-center space-x-2 p-2 rounded-full hover:bg-gray-700 transition-colors"
                 >
-                  <img src="/placeholder.svg?height=32&width=32" alt="Profile" className="w-8 h-8 rounded-full" />
+                  {/* <img src="/placeholder.svg?height=32&width=32" alt="Profile" className="w-8 h-8 rounded-full" /> */}
+                  <CircleUserRound />
                   <span className="text-sm">{user?.email?.split("@")[0] || "User"}</span>
                 </button>
 

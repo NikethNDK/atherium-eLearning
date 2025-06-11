@@ -12,8 +12,8 @@ const RegisterInstructor = () => {
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState({
     // Basic Information
-    firstName: "",
-    lastName: "",
+    firstname: "",
+    lastname: "",
     username: "",
     email: "",
     phoneNumber: "",
@@ -74,9 +74,11 @@ const RegisterInstructor = () => {
 
     try {
       const result = await register({
+        firstname:formData.firstname,
+        lastname:formData.lastname,
         email: formData.email,
         password: formData.password,
-        role_id: 2, // Instructor role
+        role_id: 2, //since instructor
         title: formData.title,
         designation: formData.designation,
       })
@@ -146,8 +148,8 @@ const RegisterInstructor = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <input
                         type="text"
-                        name="firstName"
-                        value={formData.firstName}
+                        name="firstname"
+                        value={formData.firstname}
                         onChange={handleChange}
                         placeholder="First name"
                         className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -155,8 +157,8 @@ const RegisterInstructor = () => {
                       />
                       <input
                         type="text"
-                        name="lastName"
-                        value={formData.lastName}
+                        name="lastname"
+                        value={formData.lastname}
                         onChange={handleChange}
                         placeholder="Last name"
                         className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -165,7 +167,7 @@ const RegisterInstructor = () => {
                     </div>
                   </div>
 
-                  <div>
+                  {/* <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
                     <input
                       type="text"
@@ -176,7 +178,7 @@ const RegisterInstructor = () => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       required
                     />
-                  </div>
+                  </div> */}
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
@@ -269,17 +271,22 @@ const RegisterInstructor = () => {
                   >
                     Cancel
                   </Link>
-                  <button
+                  {/* <button
                     type="button"
                     onClick={handleNext}
                     className="px-6 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
                   >
                     Save & Next
-                  </button>
+                  </button> */}
+                   <button onClick={handleSubmit}
+                    type="submit"
+                    disabled={loading}
+                    className="px-6 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >Register</button>
                 </div>
               </div>
             )}
-
+{/* 
             {currentStep === 2 && (
               <form onSubmit={handleSubmit}>
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">Social Profile</h2>
@@ -389,7 +396,7 @@ const RegisterInstructor = () => {
                   </button>
                 </div>
               </form>
-            )}
+            )} */}
           </div>
         </div>
       </div>

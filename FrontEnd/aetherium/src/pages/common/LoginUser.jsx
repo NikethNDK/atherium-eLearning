@@ -75,13 +75,13 @@ const LoginUser = () => {
           <div className="hidden lg:block">
             <div className="bg-gradient-to-br from-purple-900 to-blue-900 rounded-3xl p-8 text-white relative overflow-hidden">
               <img
-                src="/images/student-login.jpg"
+                src="https://picsum.photos/seed/elearning2/500"
                 alt="Students learning"
                 className="w-full h-96 object-cover rounded-2xl"
               />
               <div className="absolute bottom-8 left-8">
-                <h2 className="text-3xl font-bold mb-2">Lorem Ipsum is simply</h2>
-                <p className="text-lg opacity-90">Lorem Ipsum is simply</p>
+                <h2 className="text-3xl font-bold mb-2">Aetherium</h2>
+                {/* <p className="text-lg opacity-90">Lorem Ipsum is simply</p> */}
               </div>
             </div>
           </div>

@@ -1,5 +1,5 @@
 "use client"
-
+import Header from "../../components/common/Header"
 import { Link } from "react-router-dom"
 import { useAuth } from "../../context/AuthContext"
 
@@ -12,28 +12,28 @@ const UserDashboard = () => {
       title: "AWS Certified Solutions Architect",
       instructor: "Lisa",
       price: "$99",
-      image: "/placeholder.svg?height=200&width=300",
+      image: "https://picsum.photos/seed/elearning1/200/300",
     },
     {
       id: 2,
       title: "AWS Certified Solutions Architect",
       instructor: "Lisa",
       price: "$99",
-      image: "/placeholder.svg?height=200&width=300",
+      image: "https://picsum.photos/seed/elearning4/200/300",
     },
     {
       id: 3,
       title: "AWS Certified Solutions Architect",
       instructor: "Lisa",
       price: "$99",
-      image: "/placeholder.svg?height=200&width=300",
+      image: "https://picsum.photos/seed/elearning5/200/300",
     },
     {
       id: 4,
       title: "AWS Certified Solutions Architect",
       instructor: "Lisa",
       price: "$99",
-      image: "/placeholder.svg?height=200&width=300",
+      image: "https://picsum.photos/seed/elearning6/200/300",
     },
   ]
 
@@ -44,7 +44,7 @@ const UserDashboard = () => {
       instructor: "Jerry Wilson",
       price: "$8.99",
       rating: 4.8,
-      image: "/placeholder.svg?height=200&width=300",
+      image: "https://picsum.photos/seed/elearning17/200/300",
       category: "Web Development",
     },
     {
@@ -53,7 +53,7 @@ const UserDashboard = () => {
       instructor: "Esther Howard",
       price: "$11.70",
       rating: 4.9,
-      image: "/placeholder.svg?height=200&width=300",
+      image: "https://picsum.photos/seed/elearning18/200/300",
       category: "UI/UX Design",
     },
     {
@@ -62,7 +62,7 @@ const UserDashboard = () => {
       instructor: "Jane Cooper",
       price: "$17.84",
       rating: 4.7,
-      image: "/placeholder.svg?height=200&width=300",
+      image: "https://picsum.photos/seed/elearning12/200/300",
       category: "UI/UX Design",
     },
     {
@@ -71,7 +71,7 @@ const UserDashboard = () => {
       instructor: "Jerry Wilson",
       price: "$8.99",
       rating: 4.8,
-      image: "/placeholder.svg?height=200&width=300",
+      image: "https://picsum.photos/seed/elearning1/200/300",
       category: "Web Development",
     },
   ]
@@ -80,25 +80,26 @@ const UserDashboard = () => {
     {
       id: 1,
       title: "Class Technologies Inc. Closes $30 Million Series A Financing to Meet High Demand",
-      image: "/placeholder.svg?height=150&width=250",
+      image: "https://picsum.photos/seed/elearning1/250/",
       excerpt: "Class Technologies Inc., the company that created Class...",
     },
     {
       id: 2,
       title: "Zoom's earliest investors are betting millions on a better Zoom for schools",
-      image: "/placeholder.svg?height=150&width=250",
+      image: "https://picsum.photos/seed/elearning1/250/",
       excerpt: "Zoom was never created to be a consumer product. Nevertheless, the...",
     },
     {
       id: 3,
       title: "Former Blackboard CEO Raises $16M to Bring LMS Features to Zoom Classrooms",
-      image: "/placeholder.svg?height=150&width=250",
+      image: "https://picsum.photos/seed/elearning1/250/",
       excerpt: "This year, investors have poured big financial returns from betting on Zoom...",
     },
   ]
 
   return (
     <div className="bg-gray-50">
+        <Header />
       {/* Hero Section */}
       <section className="bg-white py-20">
         <div className="container mx-auto px-4">
@@ -119,7 +120,7 @@ const UserDashboard = () => {
             </div>
             <div>
               <img
-                src="/placeholder.svg?height=400&width=600"
+                src="https://picsum.photos/seed/elearning10/300/500"
                 alt="Learning illustration"
                 className="w-full h-auto rounded-lg"
               />
