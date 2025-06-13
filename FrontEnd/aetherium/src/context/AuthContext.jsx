@@ -1,6 +1,7 @@
 
 import { createContext, useContext, useState, useEffect } from "react"
 import { authAPI } from "../services/api"
+import { useLocation } from "react-router-dom"
 
 const AuthContext = createContext()
 
@@ -16,17 +17,25 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const location=useLocation();
 
   useEffect(() => {
     checkAuthStatus()
-  }, [])
+  }, [[location.pathname]])
 
   const checkAuthStatus = async () => {
     try {
       const userData = await authAPI.getCurrentUser()
-      setUser(userData)
-      setIsAuthenticated(true)
-    } catch (error) {
+      if (userData){
+        setUser(userData)
+        setIsAuthenticated(true)
+      } else{
+        setUser(null);
+        setIsAuthenticated(false)
+      }
+      
+    } catch (error){
+      console.error("Auth status check error:",error)
       setUser(null)
       setIsAuthenticated(false)
     } finally {
