@@ -103,7 +103,7 @@ const LoginUser = () => {
                   </Link>
                 </div>
                 <p className="text-gray-300 text-sm">
-                  Lorem Ipsum is simply dummy text of the printing and typesetting industry.
+                  Aetherium revolutionizing the way you learn
                 </p>
               </div>
 
@@ -210,4 +210,5 @@ const LoginUser = () => {
 }
 
 export default LoginUser
+
 

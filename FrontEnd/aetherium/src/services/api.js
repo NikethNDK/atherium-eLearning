@@ -29,19 +29,38 @@ export const authAPI = {
         "Content-Type": "application/x-www-form-urlencoded",
       },
     })
+    console.log("login response",response.data)
     return response.data
   },
 
 
+  // getCurrentUser: async () => {
+  //   try {
+  //     const response = await api.get("/auth/me")
+  //     return response.data
+  //   } catch (error) {
+  //     if (error.response?.status === 401) {
+  //       return null 
+  //     }
+  //     throw error
+  //   }
+  // },
+
   getCurrentUser: async () => {
     try {
-      const response = await api.get("/auth/me")
-      return response.data
+      const response = await api.get("/auth/me");
+      console.log("getCurrentUser response:", response.data); 
+      return response.data;
     } catch (error) {
+      console.error("getCurrentUser error:", {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message,
+      }); // Debug
       if (error.response?.status === 401) {
-        return null 
+        return null;
       }
-      throw error
+      throw error;
     }
   },
 
@@ -81,7 +100,23 @@ export const authAPI = {
   },
 
   googleLogin: async () => {
+    console.log("Initiating Google login");
     window.location.href = `${API_BASE_URL}/auth/google/login`
+  },
+
+exchangeGoogleCode: async ({ code }) => {
+    try {
+      const response = await api.post("/auth/google/exchange", { code });
+      console.log("exchangeGoogleCode response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("exchangeGoogleCode error:", {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message,
+      });
+      throw error;
+    }
   },
 
   getAllUsers: async () => {

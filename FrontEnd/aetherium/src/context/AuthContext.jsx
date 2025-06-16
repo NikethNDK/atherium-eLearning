@@ -1,7 +1,7 @@
 
 import { createContext, useContext, useState, useEffect } from "react"
 import { authAPI } from "../services/api"
-import { useLocation } from "react-router-dom"
+
 
 const AuthContext = createContext()
 
@@ -17,15 +17,33 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const location=useLocation();
 
-  useEffect(() => {
-    checkAuthStatus()
-  }, [[location.pathname]])
+useEffect(() => {
+  const fetchUser = async () => {
+    try {
+      const userData = await getCurrentUser();
+      setUser(userData);
+      setIsAuthenticated(true);
+    } catch (e) {
+      setIsAuthenticated(false);
+    } finally {
+      setLoading(false); // only after the API call completes
+    }
+  };
+ const timeout = setTimeout(fetchUser, 300)  // Wait 300ms after mount
+
+  return () => clearTimeout(timeout)
+  // fetchUser();
+}, []);
+
+  // useEffect(() => {
+  //   checkAuthStatus()
+  // }, [])
 
   const checkAuthStatus = async () => {
     try {
       const userData = await authAPI.getCurrentUser()
+      console.log("Fetching current user")
       if (userData){
         setUser(userData)
         setIsAuthenticated(true)

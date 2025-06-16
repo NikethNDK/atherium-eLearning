@@ -1,1 +1,40 @@
-Generic single-database configuration.
+Aetherium E-Learning Platform Backend
+
+Overview
+
+Aetherium is a backend for an e-learning platform built with FastAPI, PostgreSQL, and Redis. It supports user authentication (email/password and Google OAuth), role-based access (student, instructor, admin), email verification via OTP, and user profile management. The backend is designed to work with a React frontend (Vite) running at http://localhost:5173.
+
+Features
+User Authentication:
+Register and login with email/password.
+Google OAuth 2.0 login/signup.
+JWT-based authentication using HTTP-only cookies.
+Email verification with OTP sent via SMTP.
+
+Role-Based Access:
+Roles: Student (role_id=1), Instructor (role_id=2), Admin (role_id=3).
+Admins require a secret key or existing admin authentication for registration.
+User Management:
+Profile updates (firstname, lastname, phone_number, title, designation).
+Active/inactive status and email verification.
+Security:
+Password hashing with bcrypt.
+Secure cookie settings (HTTP-only, same-site lax).
+CORS configured for frontend at http://localhost:5173.
+
+Database:
+PostgreSQL with SQLAlchemy ORM.
+Models for Users and Roles.
+
+Redis:
+Stores OTPs for email verification.
+
+Endpoints:
+/auth/register: Create a new user.
+/auth/login: Authenticate and set JWT cookie.
+/auth/google/login & /auth/google/callback: Google OAuth flow.
+/auth/me: Get current user info.
+/auth/bio: Update user profile.
+/auth/logout: Clear JWT cookie.
+/auth/send-otp, /auth/resend-otp, 
+/auth/verify-otp: Email verification.
