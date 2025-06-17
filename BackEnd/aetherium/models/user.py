@@ -1,7 +1,7 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
-from sqlalchemy.orm import relationship
-from aetherium.database.db import Base
-
+# from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
+# from sqlalchemy.orm import relationship
+# from aetherium.database.db import Base
+from imports import *
 class Role(Base):
     __tablename__ = "roles"
     id = Column(Integer, primary_key=True, index=True)
@@ -32,3 +32,8 @@ class User(Base):
     date_of_birth = Column(String, nullable=True)
     profile_picture = Column(String, nullable=True)  
     role = relationship("Role", back_populates="users")
+
+
+
+    courses = relationship("Course", back_populates="instructor")
+    co_instructed_courses = relationship("CourseInstructor", back_populates="instructor")
