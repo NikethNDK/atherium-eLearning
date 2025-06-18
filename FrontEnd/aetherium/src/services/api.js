@@ -34,18 +34,6 @@ export const authAPI = {
   },
 
 
-  // getCurrentUser: async () => {
-  //   try {
-  //     const response = await api.get("/auth/me")
-  //     return response.data
-  //   } catch (error) {
-  //     if (error.response?.status === 401) {
-  //       return null 
-  //     }
-  //     throw error
-  //   }
-  // },
-
   getCurrentUser: async () => {
     try {
       const response = await api.get("/auth/me");
@@ -137,6 +125,68 @@ exchangeGoogleCode: async ({ code }) => {
   },
 }
 
+//Course Related apis -- Instructor
+export const courseAPI = {
+  createStep1: async (courseData) => {
+    const response = await api.post("/instructor/courses/step1", courseData);
+    return response.data;
+  },
+  updateStep2: async (courseId, courseData, coverImage, trailerVideo) => {
+    const formData = new FormData();
+    Object.keys(courseData).forEach((key) => formData.append(key, courseData[key]));
+    if (coverImage) formData.append("cover_image", coverImage);
+    if (trailerVideo) formData.append("trailer_video", trailerVideo);
+    const response = await api.post(`/instructor/courses/${courseId}/step2`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data;
+  },
+  updateStep3: async (courseId, courseData) => {
+    const response = await api.post(`/instructor/courses/${courseId}/step3`, courseData);
+    return response.data;
+  },
+  updateStep4: async (courseId, courseData) => {
+    const response = await api.post(`/instructor/courses/${courseId}/step4`, courseData);
+    return response.data;
+  },
+  submitCourse: async (courseId) => {
+    const response = await api.post(`/instructor/courses/${courseId}/submit`);
+    return response.data;
+  },
+  getDrafts: async () => {
+    const response = await api.get("/instructor/courses/drafts");
+    return response.data;
+  },
+};
+
+export const adminAPI = {
+  getCourse: async (id) => {
+    const response = await api.get(`/admin/courses/${id}`);
+    return response.data;
+  },
+  reviewCourse: async (id, status, adminResponse) => {
+    const response = await api.post(`/admin/courses/${id}/review`, { status, admin_response: adminResponse });
+    return response.data;
+  },
+  createCategory: async (categoryData) => {
+    const response = await api.post("/admin/categories", categoryData);
+    return response.data;
+  },
+  createTopic: async (topicData) => {
+    const response = await api.post("/admin/topics", topicData);
+    return response.data;
+  },
+  getCategories: async () => {
+    const response = await api.get("/admin/categories");
+    return response.data;
+  },
+  getTopics: async () => {
+    const response = await api.get("/admin/topics");
+    return response.data;
+  },
+};
+
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -151,6 +201,7 @@ api.interceptors.response.use(
     }
     return Promise.reject(error)
   },
+
 )
 
 export default api
