@@ -1,4 +1,7 @@
-from models.imports import *
+from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy.orm import relationship
+from aetherium.database.db import Base
+
 
 class Section(Base):
     __tablename__="sections"

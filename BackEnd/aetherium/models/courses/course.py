@@ -1,4 +1,9 @@
-from models.imports import *
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Text, DateTime, Float, Enum
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+from aetherium.database.db import Base
+import enum
+
 class VerificationStatus(enum.Enum):
     PENDING ='pending'
     VERIFIED='verified'

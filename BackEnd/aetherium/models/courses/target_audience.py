@@ -1,4 +1,6 @@
-from imports import *
+from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy.orm import relationship
+from aetherium.database.db import Base
 
 class TargetAudience(Base):
     __tablename__ = "target_audiences"

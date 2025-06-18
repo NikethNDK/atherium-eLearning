@@ -1,4 +1,6 @@
-from imports import *
+from sqlalchemy import Column, Integer, ForeignKey
+from sqlalchemy.orm import relationship
+from aetherium.database.db import Base
 
 class CourseInstructor(Base):
     __tablename__ = "course_instructors"

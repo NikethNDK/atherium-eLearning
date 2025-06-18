@@ -1,4 +1,8 @@
-from models.imports import *
+from sqlalchemy import Column, Integer, String, ForeignKey, Text, DateTime, Enum
+from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
+from aetherium.database.db import Base
+import enum
 
 class ContentType(enum.Enum):
     File=FILE = "file"

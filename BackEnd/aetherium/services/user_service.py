@@ -15,3 +15,12 @@ def block_user(db: Session, user_id: int, block: bool) -> User:
     db.commit()
     db.refresh(user)
     return user
+
+class UserService:
+    @staticmethod
+    def search_instructors(db: Session, query: str):
+        return db.query(User).filter(
+            User.role == "instructor",
+            (User.firstname.ilike(f"%{query}%") | User.username.ilike(f"%{query}%"))
+        ).limit(10).all()
+

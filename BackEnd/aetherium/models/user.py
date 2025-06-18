@@ -1,7 +1,7 @@
-# from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
-# from sqlalchemy.orm import relationship
-# from aetherium.database.db import Base
-from imports import *
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
+from sqlalchemy.orm import relationship
+from aetherium.database.db import Base
+# from imports import *
 class Role(Base):
     __tablename__ = "roles"
     id = Column(Integer, primary_key=True, index=True)
@@ -14,7 +14,7 @@ class User(Base):
     firstname = Column(String)
     lastname = Column(String)
     username = Column(String, unique=True, index=True, nullable=True)
-    phone_number = Column(Integer, nullable=True)
+    phone_number = Column(String(15), nullable=True)
     email = Column(String, unique=True, index=True)
     password_hash = Column(String)
     role_id = Column(Integer, ForeignKey("roles.id"))

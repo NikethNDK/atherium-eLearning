@@ -1,4 +1,6 @@
-from imports import *
+from sqlalchemy import Column, Integer, String, Text
+from sqlalchemy.orm import relationship
+from aetherium.database.db import Base
 
 class Category(Base):
     __tablename__ = "categories"
