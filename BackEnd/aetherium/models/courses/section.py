@@ -11,4 +11,5 @@ class Section(Base):
     course_id=Column(Integer,ForeignKey('courses.id'),nullable=False)
 
     course=relationship("Course",back_populates="sections")
-    lesson=relationship("Lesson",back_populates="section",cascade="all, delete-orphan")
+    lessons=relationship("Lesson",back_populates="section",cascade="all, delete-orphan")
+   

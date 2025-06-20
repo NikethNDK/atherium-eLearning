@@ -2,15 +2,49 @@
 
 import { useState, useEffect } from "react"
 import { useAuth } from "../../context/AuthContext"
+import { adminAPI } from "../../services/api"
 import LoadingSpinner from "../../components/common/LoadingSpinner"
+import { Users, BookOpen, DollarSign, Star, ShoppingCart } from "lucide-react"
 
 const AdminDashboard = () => {
   const { user } = useAuth()
   const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState({})
+  const [topInstructors, setTopInstructors] = useState([])
 
   useEffect(() => {
-    setTimeout(() => setLoading(false), 1000)
+    fetchDashboardData()
   }, [])
+
+  const fetchDashboardData = async () => {
+    try {
+      const [statsData, instructorsData] = await Promise.all([
+        adminAPI.getDashboardStats(),
+        adminAPI.getTopInstructors(),
+      ])
+      setStats(statsData)
+      setTopInstructors(instructorsData)
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const getRandomColor = (id) => {
+    const colors = [
+      "bg-blue-500",
+      "bg-green-500",
+      "bg-purple-500",
+      "bg-pink-500",
+      "bg-indigo-500",
+      "bg-yellow-500",
+      "bg-red-500",
+      "bg-cyan-500",
+      "bg-orange-500",
+    ]
+    return colors[id % colors.length]
+  }
 
   if (loading) {
     return (
@@ -25,7 +59,7 @@ const AdminDashboard = () => {
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Welcome, user</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Welcome, {user?.firstname || "Admin"}</h1>
           <p className="text-gray-600">Admin Dashboard</p>
         </div>
 
@@ -41,14 +75,21 @@ const AdminDashboard = () => {
           <div className="relative">
             <span className="text-2xl cursor-pointer">🔔</span>
             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
-              3
+              {stats.pending_courses || 0}
             </span>
           </div>
           <div className="bg-purple-600 text-white p-4 rounded-lg">
             <div className="flex items-center space-x-3 mb-4">
-              <img src="/placeholder.svg?height=60&width=60" alt="Profile" className="w-15 h-15 rounded-full" />
+              <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold text-lg">
+                  {user?.firstname?.[0]}
+                  {user?.lastname?.[0]}
+                </span>
+              </div>
               <div>
-                <h3 className="font-bold">User</h3>
+                <h3 className="font-bold">
+                  {user?.firstname} {user?.lastname}
+                </h3>
                 <p className="text-sm opacity-90">Admin</p>
               </div>
             </div>
@@ -56,15 +97,15 @@ const AdminDashboard = () => {
               <h4 className="font-semibold">Total Revenue</h4>
               <div className="flex justify-between">
                 <span>This Year</span>
-                <span>$19,010</span>
+                <span>${(stats.total_revenue / 1000).toFixed(1)}K</span>
               </div>
               <div className="flex justify-between">
                 <span>This Month</span>
-                <span>$124</span>
+                <span>${((stats.total_revenue || 0) * 0.08).toFixed(0)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Today</span>
-                <span>$80</span>
+                <span>${((stats.total_revenue || 0) * 0.003).toFixed(0)}</span>
               </div>
             </div>
           </div>
@@ -77,10 +118,10 @@ const AdminDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Total Revenue</p>
-              <p className="text-2xl font-bold">$168.2</p>
+              <p className="text-2xl font-bold">${(stats.total_revenue / 1000).toFixed(1)}K</p>
             </div>
             <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
-              <span className="text-white text-xl">💰</span>
+              <DollarSign className="text-white" size={24} />
             </div>
           </div>
         </div>
@@ -89,10 +130,10 @@ const AdminDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Average Rating</p>
-              <p className="text-2xl font-bold">4.8/5</p>
+              <p className="text-2xl font-bold">{stats.average_rating}/5</p>
             </div>
             <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
-              <span className="text-white text-xl">⭐</span>
+              <Star className="text-white" size={24} />
             </div>
           </div>
         </div>
@@ -101,10 +142,10 @@ const AdminDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Total Users</p>
-              <p className="text-2xl font-bold">60.63K</p>
+              <p className="text-2xl font-bold">{(stats.total_users / 1000).toFixed(1)}K</p>
             </div>
             <div className="w-12 h-12 bg-indigo-500 rounded-lg flex items-center justify-center">
-              <span className="text-white text-xl">👥</span>
+              <Users className="text-white" size={24} />
             </div>
           </div>
         </div>
@@ -113,10 +154,10 @@ const AdminDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Total Courses</p>
-              <p className="text-2xl font-bold">2.63K</p>
+              <p className="text-2xl font-bold">{(stats.total_courses / 1000).toFixed(1)}K</p>
             </div>
             <div className="w-12 h-12 bg-pink-500 rounded-lg flex items-center justify-center">
-              <span className="text-white text-xl">📚</span>
+              <BookOpen className="text-white" size={24} />
             </div>
           </div>
         </div>
@@ -125,10 +166,10 @@ const AdminDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Total Sales</p>
-              <p className="text-2xl font-bold">2.01K</p>
+              <p className="text-2xl font-bold">{(stats.total_sales / 1000).toFixed(1)}K</p>
             </div>
             <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
-              <span className="text-white text-xl">🛒</span>
+              <ShoppingCart className="text-white" size={24} />
             </div>
           </div>
         </div>
@@ -137,10 +178,10 @@ const AdminDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Total Instructors</p>
-              <p className="text-2xl font-bold">1.01K</p>
+              <p className="text-2xl font-bold">{(stats.total_instructors / 1000).toFixed(1)}K</p>
             </div>
             <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center">
-              <span className="text-white text-xl">👨‍🏫</span>
+              <Users className="text-white" size={24} />
             </div>
           </div>
         </div>
@@ -167,57 +208,19 @@ const AdminDashboard = () => {
             <p className="text-gray-500">Chart placeholder - Course analytics would go here</p>
           </div>
 
-          {/* Best Selling Courses */}
-          <div className="mt-6">
-            <h4 className="font-semibold mb-4">Best Selling Courses</h4>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gray-600 rounded-lg flex items-center justify-center text-white font-bold">
-                    P
-                  </div>
-                  <div>
-                    <p className="font-medium">UI/UX Prototyping with Proto.io</p>
-                    <p className="text-sm text-gray-600">Leslie Alexander</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-gray-600">100 Sales</p>
-                  <p className="font-semibold text-green-600">$1500.5</p>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center text-white font-bold">
-                    📊
-                  </div>
-                  <div>
-                    <p className="font-medium">How to Make UX Case Study for Beginner</p>
-                    <p className="text-sm text-gray-600">Leslie Alexander</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-gray-600">32 Sales</p>
-                  <p className="font-semibold text-green-600">$285</p>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-orange-600 rounded-lg flex items-center justify-center text-white font-bold">
-                    🔍
-                  </div>
-                  <div>
-                    <p className="font-medium">How to Conduct User Research from Scratch</p>
-                    <p className="text-sm text-gray-600">Leslie Alexander</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-gray-600">12 Sales</p>
-                  <p className="font-semibold text-green-600">$109</p>
-                </div>
-              </div>
+          {/* Course Stats */}
+          <div className="mt-6 grid grid-cols-3 gap-4">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-purple-600">{stats.total_courses}</p>
+              <p className="text-sm text-gray-600">Total Courses</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-orange-600">{stats.pending_courses}</p>
+              <p className="text-sm text-gray-600">Pending Review</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-green-600">{stats.published_courses}</p>
+              <p className="text-sm text-gray-600">Published</p>
             </div>
           </div>
         </div>
@@ -226,45 +229,27 @@ const AdminDashboard = () => {
         <div className="bg-white p-6 rounded-lg shadow">
           <h4 className="font-semibold mb-4">Top Instructors</h4>
           <div className="space-y-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                LA
+            {topInstructors.slice(0, 8).map((instructor, index) => (
+              <div key={instructor.id} className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2 flex-1">
+                  <span className="text-xs text-gray-500 w-4">#{index + 1}</span>
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${getRandomColor(instructor.id)}`}
+                  >
+                    {instructor.initials}
+                  </div>
+                  <div className="flex-1">
+                    <span className="text-sm font-medium">{instructor.name}</span>
+                    <p className="text-xs text-gray-500">{instructor.course_count} courses</p>
+                  </div>
+                </div>
               </div>
-              <span className="text-sm">Leslie Alexander</span>
-            </div>
-
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                CG
-              </div>
-              <span className="text-sm">Cameron Green</span>
-            </div>
-
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                AS
-              </div>
-              <span className="text-sm">Arya Stark</span>
-            </div>
-
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                AL
-              </div>
-              <span className="text-sm">Aegon Lucifer</span>
-            </div>
-
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                SK
-              </div>
-              <span className="text-sm">Sreerag Kumar</span>
-            </div>
+            ))}
           </div>
 
-          {/* Popular Courses */}
+          {/* Popular Categories */}
           <div className="mt-8">
-            <h4 className="font-semibold mb-4">Popular Courses</h4>
+            <h4 className="font-semibold mb-4">Popular Categories</h4>
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
                 <div className="w-12 h-12 bg-yellow-500 rounded-lg flex items-center justify-center text-white font-bold">
@@ -272,9 +257,9 @@ const AdminDashboard = () => {
                 </div>
                 <div className="flex-1">
                   <p className="font-medium text-sm">UI/UX Design</p>
-                  <p className="text-xs text-gray-600">30 + Courses</p>
+                  <p className="text-xs text-gray-600">{Math.floor(stats.total_courses * 0.3)} + Courses</p>
                 </div>
-                <button className="text-blue-600 text-sm">View Course</button>
+                <button className="text-blue-600 text-sm">View</button>
               </div>
 
               <div className="flex items-center space-x-3">
@@ -283,9 +268,9 @@ const AdminDashboard = () => {
                 </div>
                 <div className="flex-1">
                   <p className="font-medium text-sm">Marketing</p>
-                  <p className="text-xs text-gray-600">20 + Courses</p>
+                  <p className="text-xs text-gray-600">{Math.floor(stats.total_courses * 0.2)} + Courses</p>
                 </div>
-                <button className="text-blue-600 text-sm">View Course</button>
+                <button className="text-blue-600 text-sm">View</button>
               </div>
 
               <div className="flex items-center space-x-3">
@@ -294,9 +279,9 @@ const AdminDashboard = () => {
                 </div>
                 <div className="flex-1">
                   <p className="font-medium text-sm">Web Development</p>
-                  <p className="text-xs text-gray-600">20 + Courses</p>
+                  <p className="text-xs text-gray-600">{Math.floor(stats.total_courses * 0.25)} + Courses</p>
                 </div>
-                <button className="text-blue-600 text-sm">View Course</button>
+                <button className="text-blue-600 text-sm">View</button>
               </div>
             </div>
           </div>

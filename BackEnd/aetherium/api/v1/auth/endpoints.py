@@ -47,7 +47,7 @@ def get_token_from_cookie(request: Request) -> str:
 
 @router.post("/register", response_model=UserResponse)
 def register(user: UserCreate, db: Session = Depends(get_db), current_user: Optional[dict] = Depends(get_current_user)):
-    if user.role_id == 3 and current_user["role"] != "admin":
+    if user.role_id == 3 and current_user.role != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only admins can register admins")
     db_user = create_user(db, user)
     otp = generate_otp()
@@ -334,30 +334,30 @@ async def google_exchange(request: Request, response: Response, db: Session = De
 @router.put("/bio", response_model=UserResponse)
 def update_bio(
     user_update: UserUpdate,
-    current_user: dict = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    updated_user = update_user_bio(db, user_update, current_user["email"])
+    updated_user = update_user_bio(db, user_update, current_user.email)
     return updated_user
 
 @router.post("/change-password")
 def change_user_password(
     password_data: PasswordChange,
-    current_user: dict = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    change_password(db, password_data, current_user["email"])
+    change_password(db, password_data, current_user.email)
     return {"message": "Password changed successfully"}
 
 @router.post("/upload-profile-picture", response_model=dict)
 def upload_profile_picture(
     file: UploadFile = File(...),
-    current_user: dict = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    print(f"Calling upload_profile_picture with email: {current_user['email']}")
+    print(f"Calling upload_profile_picture with email: {current_user.email}")
     print(f"File object type: {type(file)}, filename: {file.filename}")
-    file_path = upload_profile_picture(db, file, current_user["email"])
+    file_path = upload_profile_picture(db, file, current_user.email)
     return {"message": "Profile picture uploaded successfully", "file_path": file_path}
 
 @router.get("/profile-picture/{user_id}")
@@ -385,9 +385,9 @@ async def get_current_user_info(
     if not current_user:
         logger.debug("No current user found")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
-    user = db.query(User).filter(User.email == current_user["email"]).first()
+    user = db.query(User).filter(User.email == current_user.email).first()
     if not user:
-        logger.error(f"User not found: email={current_user['email']}")
+        logger.error(f"User not found: email={current_user.email}")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     logger.debug(f"Returning user info: email={user.email}")
     return user
