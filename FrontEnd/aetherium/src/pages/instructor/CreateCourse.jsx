@@ -90,8 +90,6 @@ const CreateCourse = () => {
     try {
       setLoading(true)
       const data = await courseAPI.getCourse(id)
-
-      // Transform the data to match our component structure
       const transformedData = {
         ...data,
         category_id: data.category_id?.toString() || "",
@@ -109,8 +107,7 @@ const CreateCourse = () => {
             name: section.name,
             lessons: section.lessons || [],
           })) || [],
-        co_instructors: [], // Will be populated when we have co-instructor data
-        // Preserve existing file references
+        co_instructors: [], 
         cover_image: null,
         trailer_video: null,
       }
@@ -502,8 +499,8 @@ const CreateCourse = () => {
                     }`}
                   >
                     <option value="ENGLISH">ENGLISH</option>
-                    <option value="SPANISH">SPANISH</option>
-                    <option value="FRENCH">FRENCH</option>
+                    <option value="SPANISH">HINDI</option>
+                    <option value="FRENCH">MALAYALAM</option>
                   </select>
                   {errors.language && <span className="text-red-500 text-sm">{errors.language}</span>}
                 </div>
