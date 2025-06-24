@@ -1,0 +1,1 @@
+python -m aetherium.scripts.create_admin admin@gmail.com admin

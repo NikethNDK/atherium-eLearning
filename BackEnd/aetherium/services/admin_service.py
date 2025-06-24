@@ -7,30 +7,23 @@ from typing import List, Dict, Any
 class AdminService:
     @staticmethod
     def get_dashboard_stats(db: Session) -> Dict[str, Any]:
-        # Get total users
         total_users = db.query(User).count()
         
-        # Get total courses
         total_courses = db.query(Course).count()
         
-        # Get total instructors
         total_instructors = db.query(User).join(Role).filter(Role.name == "instructor").count()
         
-        # Get pending courses
         pending_courses = db.query(Course).filter(
-            Course.verification_status == VerificationStatus.PENDING.value
+            Course.verification_status == VerificationStatus.PENDING
         ).count()
         
-        # Get published courses
         published_courses = db.query(Course).filter(
             Course.is_published == True
         ).count()
         
-        # Calculate average rating (placeholder - you'll need to implement ratings)
         average_rating = 4.8
         
-        # Calculate total revenue (placeholder - you'll need to implement sales)
-        total_revenue = 168200
+        total_revenue = 10000
         
         return {
             "total_users": total_users,
@@ -40,12 +33,12 @@ class AdminService:
             "published_courses": published_courses,
             "average_rating": average_rating,
             "total_revenue": total_revenue,
-            "total_sales": published_courses * 15  # Placeholder calculation
+            "total_sales": published_courses * 15  
         }
     
     @staticmethod
     def get_top_instructors(db: Session) -> List[Dict[str, Any]]:
-        # Get instructors with their course counts
+        # instructors with their course counts
         instructors = db.query(
             User.id,
             User.firstname,
@@ -73,8 +66,7 @@ class AdminService:
     
     @staticmethod
     def get_best_selling_courses(db: Session) -> List[Dict[str, Any]]:
-        # Placeholder for best selling courses
-        # You'll need to implement this based on your sales/enrollment model
+        
         courses = db.query(Course).filter(
             Course.is_published == True
         ).limit(5).all()
@@ -84,8 +76,8 @@ class AdminService:
                 "id": course.id,
                 "title": course.title,
                 "instructor_name": f"{course.instructor.firstname} {course.instructor.lastname}" if course.instructor else "Unknown",
-                "sales_count": 100,  # Placeholder
-                "revenue": 1500.5,  # Placeholder
+                "sales_count": 100,  
+                "revenue": 1500.5, 
                 "cover_image": course.cover_image
             }
             for course in courses

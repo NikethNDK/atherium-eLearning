@@ -93,7 +93,7 @@ def upload_profile_picture(db: Session, file: UploadFile, email: str) -> str:
         print("User not found")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     
-    # Ensure the upload directory exists
+ 
     upload_dir = "uploads/profile_pictures"
     print(f"Checking/creating directory: {upload_dir}")
     try:
@@ -102,22 +102,22 @@ def upload_profile_picture(db: Session, file: UploadFile, email: str) -> str:
         print(f"Directory creation failed: {str(e)}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to create directory: {str(e)}")
     
-    # Validate file size (1MB limit)
+ 
     if file.size > 1_000_000:
         print("File size exceeds 1MB")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File size exceeds 1MB")
     
-    # Validate file type
+ 
     if file.content_type not in ["image/jpeg", "image/png"]:
         print(f"Invalid file type: {file.content_type}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only JPEG or PNG files are allowed")
     
-    # Generate a unique filename
+
     file_extension = file.filename.split(".")[-1].lower()
     file_path = f"{upload_dir}/{user.id}_{email.split('@')[0]}.{file_extension}"
     print(f"Attempting to save file to: {file_path}")
     
-    # Save the file
+    # FileSave 
     try:
         with open(file_path, "wb") as buffer:
             content = file.file.read()

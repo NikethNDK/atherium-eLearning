@@ -94,84 +94,6 @@ async def google_login(request: Request):
     logger.debug(f"Initiating Google login with redirect_uri : {redirect_uri}")
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
-# @router.get("/google/callback")
-# async def google_callback(request: Request, response: Response, db: Session = Depends(get_db)):
-#     try:
-#         logger.debug(f"Received callback request: {request.query_params}")
-#         token = await oauth.google.authorize_access_token(request)
-#         logger.debug(f"Received token: {token}")
-#         if not token or 'access_token' not in token:
-#             logger.error("No access_token in token response")
-#             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Failed to obtain access token")
-        
-#         user_info = token.get('userinfo')
-#         if not user_info:
-#             logger.error("No user_info in token")
-#             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Failed to fetch user info")
-        
-#         email = user_info.get('email')
-#         google_id = user_info.get('sub')
-#         firstname = user_info.get('given_name')
-#         lastname = user_info.get('family_name')
-#         profile_picture = user_info.get('picture')
-#         logger.debug(f"User info: email={email}, google_id={google_id}, profile_picture={profile_picture}")
-
-#         if not email or not google_id:
-#             logger.error("Missing email or google_id")
-#             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid user info")
-
-#         user = db.query(User).filter(User.google_id == google_id).first()
-#         if not user:
-#             user = db.query(User).filter(User.email == email).first()
-#             if user:
-#                 user.google_id = google_id
-#                 user.is_emailverified = True
-#                 user.profile_picture = profile_picture
-#                 db.commit()
-#                 logger.debug(f"Updated existing user with google_id: {google_id}")
-#             else:
-#                 default_role = db.query(Role).filter(Role.name == "user").first()
-#                 if not default_role:
-#                     logger.error("Default role 'user' not found")
-#                     raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Default role not found")
-#                 user = User(
-#                     email=email,
-#                     google_id=google_id,
-#                     role_id=default_role.id,
-#                     is_active=True,
-#                     is_emailverified=True,
-#                     firstname=firstname,
-#                     lastname=lastname,
-#                     phone_number=None,
-#                     profile_picture=profile_picture
-#                 )
-#                 db.add(user)
-#                 db.commit()
-#                 db.refresh(user)
-#                 logger.debug(f"Created new user: {email}")
-
-#         access_token = create_access_token(data={"sub": user.email, "role": user.role.name})
-#         logger.debug(f"Created access_token: {access_token[:30]}...")
-#         response.set_cookie(
-#             key="access_token",
-#             value=access_token,
-#             httponly=True,
-#             secure=False,  # For local development
-#             samesite="None",
-#             max_age=settings.ACCESS_TOKEN_EXPIRE_MIN * 60,
-#             path="/"  # Ensure cookie is available for all paths
-#         )
-#         logger.debug("Set access_token cookie")
-#         return RedirectResponse(url="http://localhost:5173/auth/google/callback", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
-#     except OAuthError as e:
-#         logger.error(f"OAuth error: {str(e)}")
-#         return RedirectResponse(url=f"http://localhost:5173/login?error=oauth_error&message={str(e)}")
-#     except HTTPException as e:
-#         logger.error(f"HTTP exception: {str(e)}")
-#         raise e
-#     except Exception as e:
-#         logger.error(f"Unexpected error: {str(e)}", exc_info=True)
-#         return RedirectResponse(url=f"http://localhost:5173/login?error=google_auth_failed")
 @router.post("/google/exchange")
 async def google_exchange(request: Request, response: Response, db: Session = Depends(get_db)):
     try:
@@ -181,23 +103,6 @@ async def google_exchange(request: Request, response: Response, db: Session = De
         if not code:
             logger.error("Missing code")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing code")
-
-        # Exchange code for token
-     
-
-            # token_response = await oauth.google.post(
-            #     'https://oauth2.googleapis.com/token',
-            #     data={
-            #         'code': code,
-            #         'client_id': settings.GOOGLE_CLIENT_ID,
-            #         'client_secret': settings.GOOGLE_CLIENT_SECRET,
-            #         'redirect_uri': settings.GOOGLE_REDIRECT_URI,
-            #         'grant_type': 'authorization_code'
-            #     },
-            #     headers={'Content-Type': 'application/x-www-form-urlencoded'}
-            # )
-
-            # token = token_response.json()
             
         try:
             async with httpx.AsyncClient() as client:
@@ -229,12 +134,6 @@ async def google_exchange(request: Request, response: Response, db: Session = De
             logger.error("No access_token in token response")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Failed to obtain access token")
 
-        # Fetch user info
-        # user_info_response = await oauth.google.get(
-        #     'https://www.googleapis.com/oauth2/v3/userinfo',
-        #     headers={'Authorization': f"Bearer {token['access_token']}"}
-        # )
-        # user_info = user_info_response.json()
         async with httpx.AsyncClient() as client:
             user_info_response = await client.get(
                 'https://www.googleapis.com/oauth2/v3/userinfo',
@@ -298,7 +197,7 @@ async def google_exchange(request: Request, response: Response, db: Session = De
         access_token = create_access_token(data={"sub": user.email, "role": user.role.name})
         logger.debug(f"Created access_token: {access_token[:30]}...")
 
-        # Set the cookie
+      
         # response=Response()
         response_data = {"message": "Login successful"}
         response = JSONResponse(content=response_data)
@@ -306,24 +205,11 @@ async def google_exchange(request: Request, response: Response, db: Session = De
             key="access_token",
             value=access_token,
             httponly=True,
-            secure=True,  # only for HTTPS, use False locally
+            secure=True, 
             samesite="Lax"
         )
         return response
-        # response.set_cookie(
-        #     key="access_token",
-        #     value=access_token,
-        #     httponly=True,
-        #     secure=False,  
-        #     samesite="lax",
-        #     max_age=settings.ACCESS_TOKEN_EXPIRE_MIN * 60,
-        #     path="/",
-        #     domain=None  
-        # )
-        # logger.debug("Set access_token cookie")
-        # response.media_type = "application/json"
-        # response.body = json.dumps({"status": "success", "user": {"email": user.email, "firstname": user.firstname}}).encode("utf-8")
-        # return response
+       
     except OAuthError as e:
         logger.error(f"OAuth error: {str(e)}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"OAuth error: {str(e)}")
@@ -368,14 +254,6 @@ def get_profile_picture(user_id: int, db: Session = Depends(get_db)):
     if not os.path.exists(user.profile_picture):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile picture file missing")
     return FileResponse(user.profile_picture)
-
-# @router.get("/me", response_model=UserResponse)
-# def get_current_user_info(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-#     user = db.query(User).filter(User.email == current_user["email"]).first()
-#     if not user:
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-#     return user
-
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(

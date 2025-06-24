@@ -31,9 +31,12 @@ class User(Base):
     youtube = Column(String, nullable=True)
     date_of_birth = Column(String, nullable=True)
     profile_picture = Column(String, nullable=True)  
+   
     role = relationship("Role", back_populates="users")
-
-
-
-    courses = relationship("Course", back_populates="instructor")
+    courses = relationship("Course", back_populates="instructor", cascade="all, delete-orphan")
     co_instructed_courses = relationship("CourseInstructor", back_populates="instructor")
+    purchases = relationship("Purchase", back_populates="user")
+    cart_items = relationship("Cart", back_populates="user")
+    wishlist_items=relationship("Wishlist",back_populates="user")
+    course_progress = relationship("CourseProgress", back_populates="user")
+    course_reviews = relationship("CourseReview", back_populates="user")

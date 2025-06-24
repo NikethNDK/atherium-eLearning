@@ -1,4 +1,4 @@
-from .course import Course, CourseLevel, DurationUnit, VerificationStatus
+from .course import Course
 from .section import Section
 from .category import *
 from .course_instructor import *
@@ -9,9 +9,10 @@ from .topic import *
 from .requirement import *
 
 
+from ..enum import CourseLevel, DurationUnit, VerificationStatus,ContentType
+
 __all__ = [
-    "Course", "CourseLevel", "DurationUnit", "VerificationStatus",
+    "Course", "CourseLevel", "DurationUnit", "VerificationStatus","ContentType",
     "Section", "Category", "CourseInstructor", "LearningObjective",
     "Lesson", "TargetAudience", "Topic", "Requirement"
 ]
-

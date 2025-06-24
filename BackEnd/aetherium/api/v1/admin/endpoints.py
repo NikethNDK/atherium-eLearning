@@ -59,8 +59,8 @@ def get_categories(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    if current_user.role.name not in ["admin", "instructor"]:
-        raise HTTPException(status_code=403, detail="Not authorized")
+    # if current_user.role.name not in ["admin", "instructor"]:
+    #     raise HTTPException(status_code=403, detail="Not authorized")
     return CourseService.get_all_categories(db)
 
 @router.post("/categories", response_model=CategoryResponse)

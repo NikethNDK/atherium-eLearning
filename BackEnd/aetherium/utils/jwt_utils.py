@@ -23,30 +23,6 @@ def create_access_token(data: Dict[str, str]) -> str:
     logger.debug(f"Created JWT: {encoded_jwt[:30]}...")
     return encoded_jwt
 
-# async def get_current_user(access_token: str = Cookie(None)) -> Optional[Dict[str, str]]:
-#     if access_token is None:
-#         logger.debug("No access_token cookie found")
-#         return None
-#     credentials_exception = HTTPException(
-#         status_code=status.HTTP_401_UNAUTHORIZED,
-#         detail="Could not validate credentials",
-#         headers={"WWW-Authenticate": "Bearer"},
-#     )
-#     try:
-#         payload = jwt.decode(access_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-#         email: str = payload.get("sub")
-#         role: str = payload.get("role")
-#         if email is None or role is None:
-#             logger.error("Invalid payload: missing email or role")
-#             raise credentials_exception
-#         logger.debug(f"Decoded JWT: email={email}, role={role}")
-#         return {"email": email, "role": role}
-#     except JWTError as e:
-#         logger.error(f"JWT decode error: {str(e)}")
-#         raise credentials_exception
-
-
-
 async def get_current_user(access_token: Optional[str] = Cookie(None),db: Session = Depends(get_db)) -> User:
     if access_token is None:
         logger.debug("No access_token cookie found")
