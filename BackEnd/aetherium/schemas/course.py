@@ -2,21 +2,21 @@ from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List
 from datetime import datetime
 from enum import Enum
+from aetherium.models.enum import VerificationStatus,CourseLevel,DurationUnit
+# class VerificationStatus(str, Enum):
+#     PENDING = "pending"
+#     VERIFIED = "verified"
+#     REJECTED = "rejected"
 
-class VerificationStatus(str, Enum):
-    PENDING = "pending"
-    VERIFIED = "verified"
-    REJECTED = "rejected"
+# class CourseLevel(str, Enum):
+#     BEGINNER = "Beginner"
+#     INTERMEDIATE = "Intermediate"
+#     EXPERT = "Expert"
+#     ALL_LEVELS = "All Levels"
 
-class CourseLevel(str, Enum):
-    BEGINNER = "Beginner"
-    INTERMEDIATE = "Intermediate"
-    EXPERT = "Expert"
-    ALL_LEVELS = "All Levels"
-
-class DurationUnit(str, Enum):
-    HOURS = "hours"
-    DAYS = "days"
+# class DurationUnit(str, Enum):
+#     HOURS = "hours"
+#     DAYS = "days"
 
 class CourseStatus(str, Enum):
     DRAFT = "draft"

@@ -49,4 +49,6 @@ class Course(Base):
     course_progress = relationship("CourseProgress", back_populates="course")
     course_reviews = relationship("CourseReview", back_populates="course")
 
+    
+
 __all__ = ["Course"]

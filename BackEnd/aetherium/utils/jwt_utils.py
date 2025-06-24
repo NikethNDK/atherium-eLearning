@@ -26,10 +26,11 @@ def create_access_token(data: Dict[str, str]) -> str:
 async def get_current_user(access_token: Optional[str] = Cookie(None),db: Session = Depends(get_db)) -> User:
     if access_token is None:
         logger.debug("No access_token cookie found")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated"
-        )
+        return None
+        # raise HTTPException(
+        #     status_code=status.HTTP_401_UNAUTHORIZED,
+        #     detail="Not authenticated"
+        # )
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -47,7 +48,7 @@ async def get_current_user(access_token: Optional[str] = Cookie(None),db: Sessio
             logger.error("User not found for email from token")
             raise credentials_exception
 
-        logger.debug(f"Authenticated user: {user.email} (role={user.role})")
+        logger.debug(f"Authenticated user: {user.email} (role={user.role.name})")
         return user
     except JWTError as e:
         logger.error(f"JWT decode error: {str(e)}")

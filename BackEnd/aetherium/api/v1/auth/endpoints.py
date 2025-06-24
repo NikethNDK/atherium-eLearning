@@ -18,6 +18,7 @@ import os
 from fastapi.responses import RedirectResponse
 import logging
 import httpx ,json
+from aetherium.utils.otp_task import send_otp_email_task
 
 logging.basicConfig(level=logging.DEBUG)
 logger=logging.getLogger(__name__)
@@ -71,7 +72,7 @@ async def login(response: Response, form_data: OAuth2PasswordRequestForm = Depen
         otp = generate_otp()
         store_otp(user.email, otp)
         try:
-            await send_otp_email(user.email, otp)
+            send_otp_email_task(user.email, otp)
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Email not verified, OTP sent")
@@ -102,8 +103,7 @@ async def google_exchange(request: Request, response: Response, db: Session = De
         logger.debug(f"Received code: {code}")
         if not code:
             logger.error("Missing code")
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing code")
-            
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing code")            
         try:
             async with httpx.AsyncClient() as client:
                 token_response = await client.post(
