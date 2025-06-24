@@ -25,7 +25,7 @@ const CreateCourse = () => {
     language: "ENGLISH",
     level: "",
     duration: "",
-    duration_unit: "hours",
+    duration_unit: "HOURS",
     description: "",
     cover_image: null,
     cover_image_url: "",
@@ -516,10 +516,10 @@ const CreateCourse = () => {
                     }`}
                   >
                     <option value="">Select...</option>
-                    <option value="Beginner">Beginner</option>
-                    <option value="Intermediate">Intermediate</option>
-                    <option value="Expert">Expert</option>
-                    <option value="All Levels">All Levels</option>
+                    <option value="BEGINNER">Beginner</option>
+                    <option value="INTERMEDIATE">Intermediate</option>
+                    <option value="EXPERT">Expert</option>
+                    <option value="ALL_LEVELS">All Levels</option>
                   </select>
                   {errors.level && <span className="text-red-500 text-sm">{errors.level}</span>}
                 </div>
@@ -543,8 +543,8 @@ const CreateCourse = () => {
                       onChange={handleInputChange}
                       className="w-20 px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                     >
-                      <option value="hours">Hours</option>
-                      <option value="days">Days</option>
+                      <option value="HOURS">Hours</option>
+                      <option value="DAYS">Days</option>
                     </select>
                   </div>
                   {errors.duration && <span className="text-red-500 text-sm">{errors.duration}</span>}

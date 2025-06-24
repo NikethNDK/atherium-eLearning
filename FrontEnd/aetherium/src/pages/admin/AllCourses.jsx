@@ -86,11 +86,11 @@ const AllCourses = () => {
             className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="all">All Status</option>
-            <option value="pending">Draft</option>
+            <option value="DRAFT">Draft</option>
             <option value="PENDING">Pending Review</option>
-            <option value="verified">Verified</option>
-            <option value="rejected">Rejected</option>
-            <option value="published">Published</option>
+            <option value="VERIFIED">Verified</option>
+            <option value="REJECTED">Rejected</option>
+            <option value="PUBLISHED">Published</option>
           </select>
         </div>
       </div>

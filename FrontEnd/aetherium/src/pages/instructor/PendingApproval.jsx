@@ -73,6 +73,12 @@ const PendingApproval = () => {
         return "bg-gray-100 text-gray-800"
     }
   }
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null
+    if (imagePath.startsWith("http")) return imagePath
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
+    return `${baseUrl}/${imagePath}`
+  }
 
   if (loading) return <LoadingSpinner size="large" />
 
@@ -118,20 +124,17 @@ const PendingApproval = () => {
                 {courses.map((course) => (
                   <tr key={course.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 h-12 w-16">
-                          {course.cover_image ? (
-                            <img
-                              className="h-12 w-16 rounded object-cover"
-                              src={course.cover_image || "/placeholder.svg"}
-                              alt={course.title}
-                            />
-                          ) : (
-                            <div className="h-12 w-16 bg-gray-200 rounded flex items-center justify-center">
-                              <span className="text-xs text-gray-500">No Image</span>
-                            </div>
-                          )}
-                        </div>
+                                    <div className="aspect-video bg-gray-200 relative">
+                {course.cover_image ? (
+                  <img
+                    src={getImageUrl(course.cover_image) || "/placeholder.svg"}
+                    alt={course.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400">No Image</div>
+                )}
+      
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">{course.title}</div>
                           <div className="text-sm text-gray-500">{course.subtitle}</div>

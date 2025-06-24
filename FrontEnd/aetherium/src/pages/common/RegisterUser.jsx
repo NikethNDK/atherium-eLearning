@@ -74,7 +74,7 @@ const RegisterUser = () => {
           <div className="hidden lg:block">
             <div className="bg-gradient-to-br from-purple-900 to-blue-900 rounded-3xl p-8 text-white relative overflow-hidden">
               <img
-                src="/images/register-bg.jpg"
+                src="https://cache.careers360.mobi/media/article_images/2021/9/16/Top-Online-Learning-Platforms-to-Sign-Up-Right-Now.jpg"
                 alt="Students learning"
                 className="w-full h-96 object-cover rounded-2xl"
               />

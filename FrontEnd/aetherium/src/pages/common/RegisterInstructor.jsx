@@ -1,4 +1,3 @@
-"use client"
 
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
@@ -48,7 +47,7 @@ const RegisterInstructor = () => {
   const handleNext = () => {
     if (currentStep === 1) {
       // Validate basic information
-      if (!formData.firstName || !formData.lastName || !formData.email || !formData.password) {
+      if (!formData.firstname || !formData.lastname || !formData.email || !formData.password) {
         setError("Please fill in all required fields")
         return
       }
@@ -78,7 +77,7 @@ const RegisterInstructor = () => {
         lastname:formData.lastname,
         email: formData.email,
         password: formData.password,
-        role_id: 2, //since instructor
+        role_id: 2, 
         title: formData.title,
         designation: formData.designation,
       })
@@ -271,13 +270,7 @@ const RegisterInstructor = () => {
                   >
                     Cancel
                   </Link>
-                  {/* <button
-                    type="button"
-                    onClick={handleNext}
-                    className="px-6 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
-                  >
-                    Save & Next
-                  </button> */}
+
                    <button onClick={handleSubmit}
                     type="submit"
                     disabled={loading}
@@ -286,117 +279,6 @@ const RegisterInstructor = () => {
                 </div>
               </div>
             )}
-{/* 
-            {currentStep === 2 && (
-              <form onSubmit={handleSubmit}>
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Social Profile</h2>
-
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Personal Website</label>
-                    <input
-                      type="url"
-                      name="personalWebsite"
-                      value={formData.personalWebsite}
-                      onChange={handleChange}
-                      placeholder="Personal website or portfolio url..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div className="grid md:grid-cols-3 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Facebook</label>
-                      <input
-                        type="text"
-                        name="facebook"
-                        value={formData.facebook}
-                        onChange={handleChange}
-                        placeholder="Username"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Instagram</label>
-                      <input
-                        type="text"
-                        name="instagram"
-                        value={formData.instagram}
-                        onChange={handleChange}
-                        placeholder="Username"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">LinkedIn</label>
-                      <input
-                        type="text"
-                        name="linkedin"
-                        value={formData.linkedin}
-                        onChange={handleChange}
-                        placeholder="Username"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Twitter</label>
-                      <input
-                        type="text"
-                        name="twitter"
-                        value={formData.twitter}
-                        onChange={handleChange}
-                        placeholder="Username"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">WhatsApp</label>
-                      <input
-                        type="tel"
-                        name="whatsapp"
-                        value={formData.whatsapp}
-                        onChange={handleChange}
-                        placeholder="Phone number"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">YouTube</label>
-                      <input
-                        type="text"
-                        name="youtube"
-                        value={formData.youtube}
-                        onChange={handleChange}
-                        placeholder="Username"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-between mt-8">
-                  <button
-                    type="button"
-                    onClick={handleBack}
-                    className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="px-6 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loading ? <LoadingSpinner size="small" /> : "Continue"}
-                  </button>
-                </div>
-              </form>
-            )} */}
           </div>
         </div>
       </div>
