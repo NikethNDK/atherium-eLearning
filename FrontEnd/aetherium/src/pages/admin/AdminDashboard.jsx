@@ -118,7 +118,7 @@ const AdminDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Total Revenue</p>
-              <p className="text-2xl font-bold">${(stats.total_revenue / 1000).toFixed(1)}K</p>
+              <p className="text-2xl font-bold">₹{(stats.total_revenue / 1000).toFixed(1)}K</p>
             </div>
             <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
               <DollarSign className="text-white" size={24} />
