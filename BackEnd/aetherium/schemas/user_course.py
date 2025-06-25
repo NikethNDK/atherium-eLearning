@@ -2,18 +2,55 @@ from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List
 from datetime import datetime
 from enum import Enum
+from aetherium.models.enum import PaymentMethod,PurchaseStatus
+# class PurchaseStatus(str, Enum):
+#     PENDING = "pending"
+#     COMPLETED = "completed"
+#     FAILED = "failed"
+#     REFUNDED = "refunded"
 
-class PurchaseStatus(str, Enum):
-    PENDING = "pending"
-    COMPLETED = "completed"
-    FAILED = "failed"
-    REFUNDED = "refunded"
+# class PaymentMethod(str, Enum):
+#     WALLET = "wallet"
+#     CARD = "card"
+#     UPI = "upi"
+#     NET_BANKING = "net_banking"
 
-class PaymentMethod(str, Enum):
-    WALLET = "wallet"
-    CARD = "card"
-    UPI = "upi"
-    NET_BANKING = "net_banking"
+class InstructorResponse(BaseModel):
+    id: int
+    firstname: str
+    lastname: str
+    profile_picture: Optional[str]
+    title: Optional[str]
+    # bio: Optional[str]
+
+class CategoryResponse(BaseModel):
+    id: int
+    name: str
+
+
+class CourseResponse(BaseModel):
+    id: int
+    title: str
+    subtitle: Optional[str]
+    description: Optional[str]
+    price: float
+    discount_price: Optional[float]
+    cover_image: Optional[str]
+    category: Optional[CategoryResponse]
+    instructor: Optional[InstructorResponse]
+    level: Optional[str]
+    language: Optional[str]
+    duration: Optional[float]
+    duration_unit: Optional[str]
+    # rating: Optional[float]
+    # num_reviews: Optional[int]
+    # num_students: Optional[int]
+    created_at: datetime
+    updated_at: Optional[datetime]
+    # status: str
+
+    class Config:
+        from_attributes = True
 
 # Cart Schemas
 class CartItemCreate(BaseModel):
@@ -23,7 +60,7 @@ class CartItemResponse(BaseModel):
     id: int
     course_id: int
     added_at: datetime
-    course: Optional[dict] = None
+    course: Optional[CourseResponse] = None
     
     model_config = ConfigDict(from_attributes=True)
 
@@ -46,7 +83,7 @@ class PurchaseResponse(BaseModel):
     status: PurchaseStatus
     transaction_id: Optional[str]
     purchased_at: datetime
-    course: Optional[dict] = None
+    course: Optional[CourseResponse] = None
     
     model_config = ConfigDict(from_attributes=True)
 
@@ -73,7 +110,7 @@ class CourseProgressResponse(BaseModel):
     course_id: int
     lesson_id: Optional[int]
     is_completed: bool
-    progress_percentage: float
+    progress_percentage: float=0.0
     last_accessed: datetime
     completed_at: Optional[datetime]
     
@@ -114,3 +151,21 @@ class CourseFilters(BaseModel):
 class PurchaseStatusCheck(BaseModel):
     is_purchased: bool
     purchase_date: Optional[datetime] = None
+
+
+# New schema added for user
+class CourseFilters(BaseModel):
+    search: Optional[str] = None
+    category: Optional[int] = None
+    level: Optional[str] = None
+    language: Optional[str] = None
+    page: int = 1
+    limit: int = 12
+
+
+
+class PaginatedCoursesResponse(BaseModel):
+    courses: List[CourseResponse]
+    total_pages: int
+    current_page: int
+    total_items: int

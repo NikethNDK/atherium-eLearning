@@ -1,30 +1,27 @@
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import or_, and_, func, desc
-from aetherium.models.courses import Course, VerificationStatus,Section
+from sqlalchemy import or_,func,desc
+from aetherium.models.courses import Course, VerificationStatus, Section,Category
+from aetherium.models.user import User
+# from aetherium.models.user_course import Purchase,PurchaseStatus
 from aetherium.models.user_course import Cart, Purchase, Wishlist, CourseProgress, CourseReview, PurchaseStatus, PaymentMethod
-from aetherium.schemas.user_course import *
-from aetherium.schemas.course import CourseResponse
+from aetherium.schemas.user_course import CourseFilters,CourseResponse,InstructorResponse,CategoryResponse,CourseProgressUpdate,CourseReviewCreate
 from fastapi import HTTPException
-from typing import List, Optional
+from typing import Optional,Dict
 import uuid
 from datetime import datetime,timezone
 
 class UserCourseService:
-    
     @staticmethod
-    def get_published_courses(db: Session, filters: CourseFilters):
-        """Get all published courses with filters"""
-        query = db.query(Course).options(
-            joinedload(Course.instructor),
-            joinedload(Course.category),
-            joinedload(Course.topic),
-            joinedload(Course.sections)
-        ).filter(
-            Course.is_published == True,
-            Course.verification_status == VerificationStatus.VERIFIED
-        )
-        
-        # Apply filters
+    def get_published_courses(db: Session, filters: CourseFilters) ->Dict:
+        # query = db.query(Course).options(
+        #     joinedload(Course.instructor),
+        #     joinedload(Course.category),
+        #     joinedload(Course.topic)
+        # ).filter(
+        #     Course.is_published == True,
+        #     Course.verification_status == VerificationStatus.VERIFIED
+        # )
+        query = db.query(Course).filter(Course.is_published.is_(True))
         if filters.search:
             search_term = f"%{filters.search}%"
             query = query.filter(
@@ -36,34 +33,73 @@ class UserCourseService:
         
         if filters.category:
             query = query.filter(Course.category_id == filters.category)
-            
         if filters.level:
             query = query.filter(Course.level == filters.level)
-            
         if filters.language:
             query = query.filter(Course.language == filters.language)
         
-        # Pagination
-        offset = (filters.page - 1) * filters.limit
-        total_courses = query.count()
-        courses = query.offset(offset).limit(filters.limit).all()
+        # offset = (filters.page - 1) * filters.limit
+        # total_courses = query.count()
+        # courses = query.offset(offset).limit(filters.limit).all()
+        # Calculate total items and pages
+        total_items = query.count()
+        total_pages = (total_items + filters.limit - 1) // filters.limit
+
+        paginated_query = query.offset((filters.page - 1) * filters.limit).limit(filters.limit)
+
+        # NOW execute the query to get the actual courses
+        courses = paginated_query.all()
         
+        course_responses = []
+      
+        for course in courses:
+            # Fetch instructor and category
+            instructor = db.query(User).filter(User.id == course.instructor_id).first()
+            category = db.query(Category).filter(Category.id == course.category_id).first()
+
+            course_response = CourseResponse(
+                id=course.id,
+                title=course.title,
+                subtitle=course.subtitle,
+                description=course.description,
+                price=course.price,
+                discount_price=course.discount_price,
+                cover_image=course.cover_image,
+                category=CategoryResponse(id=category.id, name=category.name) if category else None,
+                instructor=InstructorResponse(
+                    id=instructor.id,
+                    firstname=instructor.firstname,
+                    lastname=instructor.lastname,
+                    profile_picture=instructor.profile_picture,
+                    title=instructor.title,
+                    # bio=instructor.bio
+                ) if instructor else None,
+                level=course.level,
+                language=course.language,
+                duration=course.duration,
+                duration_unit=course.duration_unit,
+                # rating=course.rating,
+                # num_reviews=course.num_reviews,
+                # num_students=course.num_students,
+                created_at=course.created_at,
+                updated_at=course.updated_at,
+                # status=course.status
+            )
+            course_responses.append(course_response)
+
         return {
-            "courses": courses,
-            "total": total_courses,
-            "page": filters.page,
-            "limit": filters.limit,
-            "total_pages": (total_courses + filters.limit - 1) // filters.limit
+            "courses": course_responses,
+            "total_pages": total_pages,
+            "current_page": filters.page,
+            "total_items": total_items
         }
     
     @staticmethod
     def get_course_details(db: Session, course_id: int, user_id: Optional[int] = None):
-        """Get detailed course information"""
         course = db.query(Course).options(
             joinedload(Course.instructor),
             joinedload(Course.category),
             joinedload(Course.topic),
-            joinedload(Course.sections).joinedload(Section.lessons),
             joinedload(Course.learning_objectives),
             joinedload(Course.target_audiences),
             joinedload(Course.requirements)
@@ -76,7 +112,26 @@ class UserCourseService:
         if not course:
             raise HTTPException(status_code=404, detail="Course not found")
         
+        # Check purchase status
+        is_purchased = False
+        if user_id:
+            purchase = db.query(Purchase).filter(
+                Purchase.user_id == user_id,
+                Purchase.course_id == course_id,
+                Purchase.status == PurchaseStatus.COMPLETED
+            ).first()
+            is_purchased = purchase is not None
+        
+        # Only include sections and lessons if purchased
+        if is_purchased:
+            course.sections = db.query(Section).options(
+                joinedload(Section.lessons)
+            ).filter(Section.course_id == course_id).all()
+        else:
+            course.sections = []
+        
         return course
+    
     
     @staticmethod
     def check_course_purchase(db: Session, user_id: int, course_id: int):

@@ -1,0 +1,385 @@
+from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import or_, and_, func, desc
+from aetherium.models.courses import Course, VerificationStatus,Section
+from aetherium.models.user_course import Cart, Purchase, Wishlist, CourseProgress, CourseReview, PurchaseStatus, PaymentMethod
+from aetherium.schemas.user_course import *
+from aetherium.schemas.course import CourseResponse
+from fastapi import HTTPException
+from typing import List, Optional
+import uuid
+from datetime import datetime,timezone
+ 
+class UserCourseService:
+    
+    @staticmethod
+    def get_published_courses(db: Session, filters: CourseFilters):
+        """Get all published courses with filters"""
+        query = db.query(Course).options(
+            joinedload(Course.instructor),
+            joinedload(Course.category),
+            joinedload(Course.topic),
+            joinedload(Course.sections)
+        ).filter(
+            Course.is_published == True,
+            Course.verification_status == VerificationStatus.VERIFIED
+        )
+        
+        # Apply filters
+        if filters.search:
+            search_term = f"%{filters.search}%"
+            query = query.filter(
+                or_(
+                    Course.title.ilike(search_term),
+                    Course.description.ilike(search_term)
+                )
+            )
+        
+        if filters.category:
+            query = query.filter(Course.category_id == filters.category)
+            
+        if filters.level:
+            query = query.filter(Course.level == filters.level)
+            
+        if filters.language:
+            query = query.filter(Course.language == filters.language)
+        
+        # Pagination
+        offset = (filters.page - 1) * filters.limit
+        total_courses = query.count()
+        courses = query.offset(offset).limit(filters.limit).all()
+        
+        return {
+            "courses": courses,
+            "total": total_courses,
+            "page": filters.page,
+            "limit": filters.limit,
+            "total_pages": (total_courses + filters.limit - 1) // filters.limit
+        }
+    
+    @staticmethod
+    def get_course_details(db: Session, course_id: int, user_id: Optional[int] = None):
+        """Get detailed course information"""
+        course = db.query(Course).options(
+            joinedload(Course.instructor),
+            joinedload(Course.category),
+            joinedload(Course.topic),
+            joinedload(Course.sections).joinedload(Section.lessons),
+            joinedload(Course.learning_objectives),
+            joinedload(Course.target_audiences),
+            joinedload(Course.requirements)
+        ).filter(
+            Course.id == course_id,
+            Course.is_published == True,
+            Course.verification_status == VerificationStatus.VERIFIED
+        ).first()
+        
+        if not course:
+            raise HTTPException(status_code=404, detail="Course not found")
+        
+        return course
+    
+    @staticmethod
+    def check_course_purchase(db: Session, user_id: int, course_id: int):
+        """Check if user has purchased the course"""
+        purchase = db.query(Purchase).filter(
+            Purchase.user_id == user_id,
+            Purchase.course_id == course_id,
+            Purchase.status == PurchaseStatus.COMPLETED
+        ).first()
+        
+        return {
+            "is_purchased": purchase is not None,
+            "purchase_date": purchase.purchased_at if purchase else None
+        }
+    
+    # Cart Operations
+    @staticmethod
+    def add_to_cart(db: Session, user_id: int, course_id: int):
+        course = db.query(Course).filter(
+            Course.id == course_id,
+            Course.is_published == True
+        ).first()
+        if not course:
+            raise HTTPException(status_code=404, detail="Course not found")
+        
+        # Check if already purchased
+        existing_purchase = db.query(Purchase).filter(
+            Purchase.user_id == user_id,
+            Purchase.course_id == course_id,
+            Purchase.status == PurchaseStatus.COMPLETED
+        ).first()
+        if existing_purchase:
+            raise HTTPException(status_code=400, detail="Course already purchased")
+        
+        # Check if already in cart
+        existing_cart_item = db.query(Cart).filter(
+            Cart.user_id == user_id,
+            Cart.course_id == course_id
+        ).first()
+        if existing_cart_item:
+            raise HTTPException(status_code=400, detail="Course already in cart")
+        
+        cart_item = Cart(user_id=user_id, course_id=course_id)
+        db.add(cart_item)
+        db.commit()
+        db.refresh(cart_item)
+        return cart_item
+    
+    @staticmethod
+    def get_cart(db: Session, user_id: int):
+        """Get user's cart items"""
+        cart_items = db.query(Cart).options(
+            joinedload(Cart.course).joinedload(Course.instructor)
+        ).filter(Cart.user_id == user_id).all()
+        
+        total_amount = sum(
+            item.course.discount_price or item.course.price or 0 
+            for item in cart_items
+        )
+        
+        return {
+            "items": cart_items,
+            "total_items": len(cart_items),
+            "total_amount": total_amount
+        }
+    
+    @staticmethod
+    def remove_from_cart(db: Session, user_id: int, course_id: int):
+        cart_item = db.query(Cart).filter(
+            Cart.user_id == user_id,
+            Cart.course_id == course_id
+        ).first()
+        
+        if not cart_item:
+            raise HTTPException(status_code=404, detail="Item not found in cart")
+        
+        db.delete(cart_item)
+        db.commit()
+        return {"message": "Item removed from cart"}
+    
+    # Purchase Operations
+    @staticmethod
+    def purchase_course(db: Session, user_id: int, course_id: int, payment_method: PaymentMethod):
+        course = db.query(Course).filter(
+            Course.id == course_id,
+            Course.is_published == True
+        ).first()
+        if not course:
+            raise HTTPException(status_code=404, detail="Course not found")
+        
+        # Check if already purchased
+        existing_purchase = db.query(Purchase).filter(
+            Purchase.user_id == user_id,
+            Purchase.course_id == course_id,
+            Purchase.status == PurchaseStatus.COMPLETED
+        ).first()
+        if existing_purchase:
+            raise HTTPException(status_code=400, detail="Course already purchased")
+        
+        # Calculate amount
+        amount = course.discount_price or course.price or 0
+        
+        # Create purchase record
+        purchase = Purchase(
+            user_id=user_id,
+            course_id=course_id,
+            amount=amount,
+            payment_method=payment_method,
+            status=PurchaseStatus.COMPLETED,  
+            transaction_id=str(uuid.uuid4())
+        )
+        
+        db.add(purchase)
+        
+        # Remove from cart if exists
+        cart_item = db.query(Cart).filter(
+            Cart.user_id == user_id,
+            Cart.course_id == course_id
+        ).first()
+        if cart_item:
+            db.delete(cart_item)
+        
+        # Initialize course progress
+        progress = CourseProgress(
+            user_id=user_id,
+            course_id=course_id,
+            progress_percentage=0.0,
+            is_completed=False
+        )
+        db.add(progress)
+        
+        db.commit()
+        db.refresh(purchase)
+        return purchase
+    
+    @staticmethod
+    def get_user_purchases(db: Session, user_id: int):
+        purchases = db.query(Purchase).options(
+            joinedload(Purchase.course).joinedload(Course.instructor),
+            joinedload(Purchase.course).joinedload(Course.sections)
+        ).filter(
+            Purchase.user_id == user_id,
+            Purchase.status == PurchaseStatus.COMPLETED
+        ).order_by(desc(Purchase.purchased_at)).all()
+        
+        return [purchase.course for purchase in purchases]
+    
+    # Progress Operations
+    @staticmethod
+    def update_course_progress(db: Session, user_id: int, course_id: int, progress_data: CourseProgressUpdate):
+        """Update course progress"""
+        progress = db.query(CourseProgress).filter(
+            CourseProgress.user_id == user_id,
+            CourseProgress.course_id == course_id
+        ).first()
+        
+        if not progress:
+            # Check if user has purchased the course
+            purchase = db.query(Purchase).filter(
+                Purchase.user_id == user_id,
+                Purchase.course_id == course_id,
+                Purchase.status == PurchaseStatus.COMPLETED
+            ).first()
+            if not purchase:
+                raise HTTPException(status_code=403, detail="Course not purchased")
+            
+            progress = CourseProgress(user_id=user_id, course_id=course_id)
+            db.add(progress)
+        
+        # Update progress
+        if progress_data.lesson_id is not None:
+            progress.lesson_id = progress_data.lesson_id
+        if progress_data.progress_percentage is not None:
+            progress.progress_percentage = progress_data.progress_percentage
+        if progress_data.is_completed is not None:
+            progress.is_completed = progress_data.is_completed
+            if progress_data.is_completed:
+                progress.completed_at = datetime.now(timezone.utc)
+        
+        progress.last_accessed = datetime.now(timezone.utc)
+        
+        db.commit()
+        db.refresh(progress)
+        return progress
+    
+    @staticmethod
+    def get_course_progress(db: Session, user_id: int, course_id: int):
+        progress = db.query(CourseProgress).filter(
+            CourseProgress.user_id == user_id,
+            CourseProgress.course_id == course_id
+        ).first()
+        
+        if not progress:
+            return {
+                "progress_percentage": 0.0,
+                "is_completed": False,
+                "last_accessed": None,
+                "completed_at": None
+            }
+        
+        return progress
+    
+    # Review Operations
+    @staticmethod
+    def create_course_review(db: Session, user_id: int, review_data: CourseReviewCreate):
+        """Create a course review"""
+        # Check if user has purchased the course
+        purchase = db.query(Purchase).filter(
+            Purchase.user_id == user_id,
+            Purchase.course_id == review_data.course_id,
+            Purchase.status == PurchaseStatus.COMPLETED
+        ).first()
+        
+        is_verified = purchase is not None
+        
+        # Check if review already exists
+        existing_review = db.query(CourseReview).filter(
+            CourseReview.user_id == user_id,
+            CourseReview.course_id == review_data.course_id
+        ).first()
+        
+        if existing_review:
+            raise HTTPException(status_code=400, detail="Review already exists")
+        
+        review = CourseReview(
+            user_id=user_id,
+            course_id=review_data.course_id,
+            rating=review_data.rating,
+            review_text=review_data.review_text,
+            is_verified_purchase=is_verified
+        )
+        
+        db.add(review)
+        db.commit()
+        db.refresh(review)
+        return review
+    
+    @staticmethod
+    def get_course_reviews(db: Session, course_id: int, page: int = 1, limit: int = 10):
+        """Get course reviews with pagination"""
+        offset = (page - 1) * limit
+        
+        reviews = db.query(CourseReview).options(
+            joinedload(CourseReview.user)
+        ).filter(
+            CourseReview.course_id == course_id
+        ).order_by(desc(CourseReview.created_at)).offset(offset).limit(limit).all()
+        
+        total_reviews = db.query(CourseReview).filter(CourseReview.course_id == course_id).count()
+        
+        # Calculate average rating
+        avg_rating = db.query(func.avg(CourseReview.rating)).filter(
+            CourseReview.course_id == course_id
+        ).scalar() or 0
+        
+        return {
+            "reviews": reviews,
+            "total": total_reviews,
+            "average_rating": round(float(avg_rating), 1),
+            "page": page,
+            "limit": limit
+        }
+    
+    # Wishlist Operations
+    @staticmethod
+    def add_to_wishlist(db: Session, user_id: int, course_id: int):
+        # Check if course exists
+        course = db.query(Course).filter(Course.id == course_id).first()
+        if not course:
+            raise HTTPException(status_code=404, detail="Course not found")
+        
+        # Check if already in wishlist
+        existing_item = db.query(Wishlist).filter(
+            Wishlist.user_id == user_id,
+            Wishlist.course_id == course_id
+        ).first()
+        if existing_item:
+            raise HTTPException(status_code=400, detail="Course already in wishlist")
+        
+        wishlist_item = Wishlist(user_id=user_id, course_id=course_id)
+        db.add(wishlist_item)
+        db.commit()
+        db.refresh(wishlist_item)
+        return wishlist_item
+    
+    @staticmethod
+    def get_wishlist(db: Session, user_id: int):
+        wishlist_items = db.query(Wishlist).options(
+            joinedload(Wishlist.course).joinedload(Course.instructor)
+        ).filter(Wishlist.user_id == user_id).all()
+        
+        return wishlist_items
+    
+    @staticmethod
+    def remove_from_wishlist(db: Session, user_id: int, course_id: int):
+        wishlist_item = db.query(Wishlist).filter(
+            Wishlist.user_id == user_id,
+            Wishlist.course_id == course_id
+        ).first()
+        
+        if not wishlist_item:
+            raise HTTPException(status_code=404, detail="Item not found in wishlist")
+        
+        db.delete(wishlist_item)
+        db.commit()
+        return {"message": "Item removed from wishlist"}
