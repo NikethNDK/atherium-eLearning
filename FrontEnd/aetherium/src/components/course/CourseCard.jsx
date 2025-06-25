@@ -11,11 +11,19 @@ const CourseCard = ({ course, showAddToCart = true }) => {
     return `${duration} ${unit || "hours"}`
   }
 
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null
+    // If it's already a full URL, return as is
+    if (imagePath.startsWith("http")) return imagePath
+    // Otherwise, construct the URL with your backend base URL
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
+    return `${baseUrl}/${imagePath}`
+  }
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
       <div className="relative">
         <img
-          src={course.cover_image || "/placeholder.svg?height=200&width=300"}
+            src={getImageUrl(course.cover_image) || "/placeholder.svg"}
           alt={course.title}
           className="w-full h-48 object-cover"
         />

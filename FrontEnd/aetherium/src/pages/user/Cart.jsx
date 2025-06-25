@@ -48,6 +48,15 @@ const Cart = () => {
     }
   }
 
+    const getImageUrl = (imagePath) => {
+    if (!imagePath) return null
+    // If it's already a full URL, return as is
+    if (imagePath.startsWith("http")) return imagePath
+    // Otherwise, construct the URL with your backend base URL
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
+    return `${baseUrl}/${imagePath}`
+  }
+
   const handleMoveToWishlist = async (courseId) => {
     // Implement wishlist functionality
     console.log("Move to wishlist:", courseId)
@@ -69,10 +78,8 @@ const Cart = () => {
 
     try {
       setProcessing(true)
-      // For now, we'll purchase the first item in cart
-      // In a real app, you'd handle multiple items
       const firstCourse = cartItems[0]
-      await userAPI.purchaseCourse(firstCourse.course.id, "wallet")
+      await userAPI.purchaseCourse(firstCourse.course.id, "WALLET")
 
       navigate("/payment-success", {
         state: {
@@ -130,13 +137,13 @@ const Cart = () => {
               {cartItems.map((item) => (
                 <div key={item.course.id} className="bg-white rounded-lg shadow-md overflow-hidden">
                   <div className="flex">
-                    <div className="w-48 h-32 flex-shrink-0">
+                    {/* <div className="w-48 h-32 flex-shrink-0">
                       <img
-                        src={item.course.cover_image || "/placeholder.svg?height=128&width=192"}
+                        // src={getImageUrl(course.cover_image) || "/placeholder.svg"}
                         alt={item.course.title}
                         className="w-full h-full object-cover"
                       />
-                    </div>
+                    </div> */}
                     <div className="flex-1 p-6">
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
