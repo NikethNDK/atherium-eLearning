@@ -12,7 +12,8 @@ const AdminUsers = () => {
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [usersPerPage] = useState(10)
-  const [actionLoading, setActionLoading] = useState(null)
+  const [actionLoading, setActionLoading] = useState(null);
+
 
   useEffect(() => {
     fetchUsers()

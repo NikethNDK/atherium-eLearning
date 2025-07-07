@@ -163,7 +163,7 @@ export const courseAPI = {
     })
     return response.data
   },
-
+ 
   updateStep3: async (courseId, courseData) => {
     const response = await api.put(`/instructor/courses/${courseId}/step3`, courseData)
     return response.data

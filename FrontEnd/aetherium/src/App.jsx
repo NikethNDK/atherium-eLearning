@@ -398,9 +398,14 @@ import InstrtructorCourseView from "./pages/instructor/InstructorCourseView";
 import ForgotPassword from "./pages/common/ForgotPassword";
 import ResetPassword from "./pages/common/ResetPassword";
 
+
 const queryClient = new QueryClient()
 
 function App() {
+
+ 
+
+
   return (
     <QueryClientProvider client={queryClient}>
     <Router>
