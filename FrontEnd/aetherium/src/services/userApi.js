@@ -64,4 +64,42 @@ export const userAPI = {
     const response = await api.get(`/user/courses/${courseId}/purchase-status`)
     return response.data
   },
+  // Order History
+  getOrderHistory: async (page = 1) => {
+    const response = await api.get(`/user/orders?page=${page}`)
+    return response.data
+  },
+
+  getOrderDetail: async (orderId) => {
+    const response = await api.get(`/user/orders/${orderId}`)
+    return response.data
+  },
+
+  // Wishlist functions
+  getWishlist: async () => {
+    const response = await api.get("/user/wishlist")
+    return response.data
+  },
+
+  addToWishlist: async (courseId) => {
+    const response = await api.post("/user/wishlist/add", { course_id: courseId })
+    return response.data
+  },
+
+  removeFromWishlist: async (courseId) => {
+    const response = await api.delete(`/user/wishlist/remove/${courseId}`)
+    return response.data
+  },
+
+  // Enhanced cart function to return count
+  getCartCount: async () => {
+    const cartData = await api.get("/user/cart")
+    return cartData.data.total_items || 0
+  },
+
+  // Enhanced wishlist count
+  getWishlistCount: async () => {
+    const wishlistData = await api.get("/user/wishlist")
+    return wishlistData.data.length || 0
+  },
 }

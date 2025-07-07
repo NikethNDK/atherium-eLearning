@@ -9,7 +9,7 @@ const InstructorSettings = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [file, setFile] = useState(null);
-
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
   // Account Settings Form
   const [accountData, setAccountData] = useState({
     firstname: "",
@@ -49,6 +49,7 @@ const InstructorSettings = () => {
   });
 
   useEffect(() => {
+    console.log("user details",user)
     if (user) {
       setAccountData({
         firstname: user.firstname || "",
@@ -408,7 +409,7 @@ const InstructorSettings = () => {
                   />
                 </div>
               </div>
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
                 <input
                   type="text"
@@ -418,7 +419,7 @@ const InstructorSettings = () => {
                   placeholder="Enter your username"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-              </div>
+              </div> */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
                 <div className="flex">
@@ -462,11 +463,12 @@ const InstructorSettings = () => {
               <div className="flex items-center space-x-6">
                 <div className="relative">
                   <img
-                    src={
-                      user?.profile_picture
-                        ? `/uploads/profile_pictures/${user.profile_picture.split('/').pop()}`
-                        : "/placeholder.svg?height=128&width=128"
-                    }
+                    // src={
+                    //   user?.profile_picture
+                    //     ? `/uploads/profile_pictures/${user.profile_picture.split('/').pop()}`
+                    //     : "/placeholder.svg?height=128&width=128"
+                    // }
+                    src={`${API_BASE_URL}/${user.profile_picture}`}
                     alt="Profile"
                     className="w-32 h-32 rounded-full object-cover"
                   />

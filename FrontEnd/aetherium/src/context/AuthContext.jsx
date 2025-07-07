@@ -22,6 +22,7 @@ useEffect(() => {
   const fetchUser = async () => {
     try {
       const userData = await getCurrentUser();
+      console.log("This is userData in the authContext",userData)
       setUser(userData);
       setIsAuthenticated(true);
     } catch (e) {

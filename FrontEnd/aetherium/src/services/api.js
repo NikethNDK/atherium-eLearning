@@ -125,6 +125,27 @@ export const authAPI = {
     const response = await api.get("/auth/profile")
     return response.data
   },
+  // Password reset methods
+  // forgotPassword: async (email) => {
+  //   const response = await api.post("/auth/forgot-password", { email })
+  //   return response.data
+  // },
+  forgotPassword: async (email) => {
+    console.log("Sending forgot password request for:", email); // Add logging
+    const response = await api.post("/auth/forgot-password", { email });
+    console.log("Forgot password response:", response.data); // Add logging
+    return response.data;
+  },
+
+  resetPassword: async (resetData) => {
+    const response = await api.post("/auth/reset-password", resetData)
+    return response.data
+  },
+
+  verifyResetToken: async (token) => {
+    const response = await api.get(`/auth/verify-reset-token/${token}`)
+    return response.data
+  },
 }
 
 // Enhanced Course Related APIs -- Instructor

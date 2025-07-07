@@ -10,7 +10,7 @@ const UserProfile = () => {
   const [success, setSuccess] = useState("")
   const [error, setError] = useState("")
   const [file, setFile] = useState(null)
-
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
   const [formData, setFormData] = useState({
     firstname: "",
     lastname: "",
@@ -487,8 +487,10 @@ const UserProfile = () => {
             </div>
             <div className="flex items-center space-x-6">
               <div className="relative">
+
+
                 <img
-                  src={user?.profile_picture ? `/uploads/profile_pictures/${user.profile_picture.split('/').pop()}` : "/placeholder.svg?height=100&width=100"}
+                  src={`${API_BASE_URL}/${user.profile_picture}`}
                   alt="Profile"
                   className="w-24 h-24 rounded-full object-cover"
                 />

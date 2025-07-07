@@ -15,6 +15,13 @@ const MyCourses = () => {
     fetchMyCourses()
   }, [])
 
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null
+    if (imagePath.startsWith("http")) return imagePath
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
+    return `${baseUrl}/${imagePath}`
+  }
+
   const fetchMyCourses = async () => {
     try {
       const data = await courseAPI.getMyCourses()
@@ -61,7 +68,7 @@ const MyCourses = () => {
               <div className="aspect-video bg-gray-200 relative">
                 {course.cover_image ? (
                   <img
-                    src={course.cover_image || "/placeholder.svg"}
+                    src={getImageUrl(course.cover_image) || "/placeholder.svg"}
                     alt={course.title}
                     className="w-full h-full object-cover"
                   />
@@ -91,7 +98,8 @@ const MyCourses = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex space-x-2">
                     <button
-                      onClick={() => navigate(`/courses/${course.id}`)}
+                      // onClick={() => navigate(`/courses/${course.id}`)} 
+                      onClick={() => navigate(`/instructor/courses/${course.id}/InstrtructorCourseView`)}
                       className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 text-sm"
                     >
                       <Eye size={14} />

@@ -79,10 +79,10 @@ const LoginInstructor = () => {
                 alt="Professional instructor"
                 className="w-full h-96 object-cover rounded-2xl"
               />
-              <div className="absolute bottom-8 left-8">
+              {/* <div className="absolute bottom-8 left-8">
                 <h2 className="text-3xl font-bold mb-2 ml-2 text-black">Aethrium</h2>
                 <p className="text-lg opacity-90"></p>
-              </div>
+              </div> */}
             </div>
           </div>
 
@@ -102,9 +102,9 @@ const LoginInstructor = () => {
                     Register
                   </Link>
                 </div>
-                <p className="text-gray-300 text-sm">
+                {/* <p className="text-gray-300 text-sm">
                   Lorem Ipsum is simply dummy text of the printing and typesetting industry.
-                </p>
+                </p> */}
               </div>
 
               {error && <div className="bg-red-500 text-white p-3 rounded-lg mb-4 text-sm">{error}</div>}

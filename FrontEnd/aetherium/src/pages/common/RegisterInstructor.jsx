@@ -75,6 +75,7 @@ const RegisterInstructor = () => {
       const result = await register({
         firstname:formData.firstname,
         lastname:formData.lastname,
+        phonenumber:formData.phoneNumber,
         email: formData.email,
         password: formData.password,
         role_id: 2, 
