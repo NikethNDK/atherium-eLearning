@@ -106,7 +106,8 @@ const MyCourses = () => {
                       <span>View</span>
                     </button>
                     <button
-                      onClick={() => navigate(`/instructor/courses/${course.id}/edit`)}
+                      // onClick={() => navigate(`/instructor/courses/${course.id}/edit`)}
+                      onClick={ ()=> navigate(`/instructor/create-course/${course.id}`)}
                       className="flex items-center space-x-1 text-gray-600 hover:text-gray-700 text-sm"
                     >
                       <Edit size={14} />

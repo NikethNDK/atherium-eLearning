@@ -1,3 +1,4 @@
+
 import api from "./api.js"
 
 export const instructorAPI = {
@@ -130,6 +131,11 @@ export const instructorAPI = {
     return response.data
   },
 
+  updateStep3Lesson: async (sectionId, lessonData) => {
+    const response = await api.put(`/instructor/courses/lesson/${sectionId}/step3Lesson`, lessonData)
+    return response.data
+  },
+
   updateStep4: async (courseId, courseData) => {
     const response = await api.put(`/instructor/courses/${courseId}/step4`, courseData)
     return response.data
@@ -181,5 +187,6 @@ export const instructorAPI = {
   },
   
 }
+
 
 

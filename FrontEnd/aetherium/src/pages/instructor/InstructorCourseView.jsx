@@ -10,6 +10,7 @@ const InstrtructorCourseView = () => {
   const navigate = useNavigate()
   const [course, setCourse] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [expandedLessonId, setExpandedLessonId] = useState(null)
   const [activeTab, setActiveTab] = useState("overview")
   const [reviewData, setReviewData] = useState({
     status: "",
@@ -253,7 +254,7 @@ const InstrtructorCourseView = () => {
                       {section.lessons && section.lessons.length > 0 && (
                         <div className="p-4">
                           <div className="space-y-2">
-                            {section.lessons.map((lesson, lessonIndex) => (
+                            {/* {section.lessons.map((lesson, lessonIndex) => (
                               <div key={lesson.id} className="flex items-center space-x-3 py-2">
                                 <div className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center">
                                   <Play className="w-3 h-3 text-gray-600" />
@@ -261,7 +262,88 @@ const InstrtructorCourseView = () => {
                                 <span className="flex-1 text-gray-700">{lesson.name}</span>
                                 <span className="text-sm text-gray-500">{lesson.duration || "00:00"}</span>
                               </div>
-                            ))}
+                            ))} */}
+                            {section.lessons.map((lesson) => {
+                              const isExpanded = expandedLessonId === lesson.id
+                              let parsedData = {}
+                                                        
+                              try {
+                                parsedData = lesson.content_data ? JSON.parse(lesson.content_data) : {}
+                              } catch (err) {
+                                console.warn("Invalid lesson content_data JSON")
+                              }
+                            
+                              return (
+                                <div key={lesson.id} className="border rounded p-3 mb-2 bg-white">
+                                  <div
+                                    className="flex items-center justify-between cursor-pointer"
+                                    onClick={() =>
+                                      setExpandedLessonId(isExpanded ? null : lesson.id)
+                                    }
+                                  >
+                                    <div className="flex items-center space-x-3">
+                                      <Play className="text-gray-500 w-4 h-4" />
+                                      <span className="text-gray-800 font-medium">{lesson.name}</span>
+                                    </div>
+                                    <span className="text-sm text-gray-500">{lesson.duration} mins</span>
+                                  </div>
+                                  
+                                  {isExpanded && (
+                                    <div className="mt-3 text-sm text-gray-700 pl-6">
+                                      {/* TEXT content */}
+                                      {lesson.content_type === "TEXT" && parsedData.text && (
+                                        <p className="whitespace-pre-wrap">{parsedData.text}</p>
+                                      )}
+                            
+                                      {/* REFERENCE_LINK content */}
+                                      {lesson.content_type === "REFERENCE_LINK" && (
+                                        <div>
+                                          <p className="mb-1">
+                                            <strong>Title:</strong> {parsedData.title}
+                                          </p>
+                                          <p className="mb-1">
+                                            <strong>Description:</strong> {parsedData.description}
+                                          </p>
+                                          <p>
+                                            <strong>Link:</strong>{" "}
+                                            <a
+                                              href={`https://${parsedData.url}`}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="text-blue-600 underline"
+                                            >
+                                              {parsedData.url}
+                                            </a>
+                                          </p>
+                                        </div>
+                                      )}
+                            
+                                      {/* ASSESSMENT content */}
+                                      {lesson.content_type === "ASSESSMENT" && lesson.assessment && (
+                                        <div className="space-y-4">
+                                          <h4 className="font-semibold">Assessment: {lesson.assessment.title}</h4>
+                                          <p className="text-sm text-gray-600 mb-2">{lesson.assessment.description}</p>
+                                          {lesson.assessment.questions?.map((q, index) => (
+                                            <div key={index} className="p-2 border rounded bg-gray-50">
+                                              <p className="font-medium">{index + 1}. {q.question_text}</p>
+                                              <ul className="ml-4 list-disc">
+                                                {q.options.map((opt, i) => (
+                                                  <li key={i} className={opt.is_correct ? "text-green-700 font-semibold" : ""}>
+                                                    {opt.text}
+                                                  </li>
+                                                ))}
+                                              </ul>
+                                              <p className="text-xs text-gray-500 mt-1">Points: {q.points} | Time limit: {q.time_limit}s</p>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            })}
+
                           </div>
                         </div>
                       )}

@@ -151,7 +151,7 @@ import { adminAPI,courseAPI } from "../../services/api"
 import LoadingSpinner from "../../components/common/LoadingSpinner"
 import ArrayInputField from "../../components/course/ArrayInputField"
 import FileUpload from "../../components/course/FileUpload"
-import EnhancedSectionEditor from "../../components/course/EnhancedSEctionEditor"
+import EnhancedSectionEditor from "../../components/course/EnhancedSectionEditor"
 import InstructorSearch from "../../components/course/InstructorSearch"
 import { ChevronRight, Check } from "lucide-react"
 
