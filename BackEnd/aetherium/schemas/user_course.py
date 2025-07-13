@@ -169,3 +169,90 @@ class PaginatedCoursesResponse(BaseModel):
     total_pages: int
     current_page: int
     total_items: int
+
+
+
+class OrderCourseResponse(BaseModel):
+    id: int
+    title: str
+    subtitle: Optional[str]
+    cover_image: Optional[str]
+    category: Optional[dict]
+    instructor: dict
+    
+    class Config:
+        from_attributes = True
+
+class OrderHistoryResponse(BaseModel):
+    id: int
+    course: OrderCourseResponse
+    amount: float
+    payment_method: str
+    status: str
+    transaction_id: str
+    purchased_at: datetime
+    
+    model_config=ConfigDict(from_attributes=True)
+
+class OrderDetailResponse(BaseModel):
+    id: int
+    course: dict  
+    amount: float
+    payment_method: str
+    status: str
+    transaction_id: str
+    purchased_at: datetime
+    
+    model_config=ConfigDict(from_attributes=True)
+    
+
+class WishlistCourseResponse(BaseModel):
+    id: int
+    title: str
+    subtitle: Optional[str]
+    cover_image: Optional[str]
+    price: Optional[float]
+    discount_price: Optional[float]
+    level: Optional[str]
+    duration: Optional[int]
+    duration_unit: Optional[str]
+    instructor: dict
+    
+    model_config=ConfigDict(from_attributes=True)
+    
+
+class WishlistItemResponse(BaseModel):
+    id: int
+    course: WishlistCourseResponse
+    added_at: datetime
+    
+    model_config=ConfigDict(from_attributes=True)
+
+class RazorpayOrderCreate(BaseModel):
+    course_id:int
+    payment_method:PaymentMethod=PaymentMethod.CARD
+
+class RazorpayOrderResponse(BaseModel):
+    order_id:str
+    amount:int
+    currency:Optional[str]
+    key_id:str
+    course_id:int
+    course_title:str
+    user_email:str
+    user_name:Optional[str]
+
+class RazorpayPaymentVerify(BaseModel):
+    razorpay_order_id:str
+    razorpay_payment_id:str
+    razorpay_signature:str
+    course_id: int
+
+class PaymentSuccessResponse(BaseModel):
+    success:bool
+    message:str
+    purchase_id:int
+    course_id:int
+    trasaction_id:int
+
+

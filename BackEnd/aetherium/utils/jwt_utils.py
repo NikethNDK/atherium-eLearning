@@ -53,3 +53,5 @@ async def get_current_user(access_token: Optional[str] = Cookie(None),db: Sessio
     except JWTError as e:
         logger.error(f"JWT decode error: {str(e)}")
         raise credentials_exception
+
+

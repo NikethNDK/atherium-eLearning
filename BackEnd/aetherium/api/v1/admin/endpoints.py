@@ -122,7 +122,8 @@ async def get_course_for_review(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    if current_user.role.name != "admin":
+    if current_user.role.name not in ["admin", "instructor"]:
+
         raise HTTPException(status_code=403, detail="Not authorized")
     return CourseService.get_course_by_id(db, course_id)
 

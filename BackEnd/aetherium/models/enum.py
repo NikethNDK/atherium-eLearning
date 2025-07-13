@@ -30,14 +30,24 @@ class DurationUnit(enum.Enum):
     DAYS = "DAYS"
 
 
-class ContentType(enum.Enum):
+# class ContentType(enum.Enum):
+#     FILE = "FILE"
+#     VIDEO = "VIDEO"
+#     CAPTIONS = "CAPTIONS"
+#     DESCRIPTION = "DESCRIPTION"
+#     QUIZ = "QUIZ"
+#     LECTURE_NOTES = "LECTURE_NOTES"
+class ContentType(str, enum.Enum):
     FILE = "FILE"
     VIDEO = "VIDEO"
     CAPTIONS = "CAPTIONS"
     DESCRIPTION = "DESCRIPTION"
     QUIZ = "QUIZ"
     LECTURE_NOTES = "LECTURE_NOTES"
-
+    TEXT = "TEXT"
+    ASSESSMENT = "ASSESSMENT"
+    PDF = "PDF"
+    REFERENCE_LINK = "REFERENCE_LINK"
 
 # SQLAlchemy enum types
 purchase_status_enum = ENUM(

@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from aetherium.database.db import get_db
 from aetherium.utils.jwt_utils import get_current_user
 from aetherium.models.user import User
+from aetherium.models.courses import Course
 from aetherium.services.course_service import CourseService
 from aetherium.schemas.course import *
 from typing import List, Optional
@@ -12,6 +13,136 @@ import shutil
 from pathlib import Path
 
 router = APIRouter(prefix="/instructor", tags=["instructor"])
+
+# @router.post("/courses/step1", response_model=CourseResponse)
+# async def create_course_step1(
+#     course_data: CourseCreateStep1,
+#     db: Session = Depends(get_db),
+#     current_user: User = Depends(get_current_user)
+# ):
+#     if current_user.role.name != "instructor":
+#         raise HTTPException(status_code=403, detail="Instructor access required")
+    
+#     course = CourseService.create_or_update_course_step1(db, course_data, current_user.id)
+#     return course
+
+# @router.put("/courses/{course_id}/step2", response_model=CourseResponse)
+# async def update_course_step2(
+#     course_id: int,
+#     description: Optional[str] = Form(None),
+#     learning_objectives: Optional[str] = Form(None),
+#     target_audiences: Optional[str] = Form(None),
+#     requirements: Optional[str] = Form(None),
+#     cover_image: Optional[UploadFile] = File(None),
+#     trailer_video: Optional[UploadFile] = File(None),
+#     db: Session = Depends(get_db),
+#     current_user: User = Depends(get_current_user)
+# ):
+#     if current_user.role.name != "instructor":
+#         raise HTTPException(status_code=403, detail="Instructor access required")
+    
+#     # Handle file uploads
+#     cover_image_path = None
+#     trailer_video_path = None
+    
+#     if cover_image:
+#         upload_dir = Path("uploads/cover_images")
+#         upload_dir.mkdir(parents=True, exist_ok=True)
+#         cover_image_path = f"uploads/cover_images/{cover_image.filename}"
+#         with open(cover_image_path, "wb") as buffer:
+#             shutil.copyfileobj(cover_image.file, buffer)
+    
+#     if trailer_video:
+#         upload_dir = Path("uploads/trailers")
+#         upload_dir.mkdir(parents=True, exist_ok=True)
+#         trailer_video_path = f"uploads/trailers/{trailer_video.filename}"
+#         with open(trailer_video_path, "wb") as buffer:
+#             shutil.copyfileobj(trailer_video.file, buffer)
+    
+#     # Parse arrays from form data
+#     learning_objectives_list = []
+#     if learning_objectives:
+#         learning_objectives_list = [obj.strip() for obj in learning_objectives.split('\n') if obj.strip()]
+    
+#     target_audiences_list = []
+#     if target_audiences:
+#         target_audiences_list = [aud.strip() for aud in target_audiences.split('\n') if aud.strip()]
+    
+#     requirements_list = []
+#     if requirements:
+#         requirements_list = [req.strip() for req in requirements.split('\n') if req.strip()]
+    
+#     course_data = CourseCreateStep2(
+#         description=description,
+#         learning_objectives=learning_objectives_list,
+#         target_audiences=target_audiences_list,
+#         requirements=requirements_list
+#     )
+    
+#     course = CourseService.update_course_step2(
+#         db, course_id, course_data, current_user.id, 
+#         cover_image_path, trailer_video_path
+#     )
+#     return course
+
+# @router.put("/courses/{course_id}/step3", response_model=CourseResponse)
+# async def update_course_step3(
+#     course_id: int,
+#     course_data: CourseCreateStep3,
+#     db: Session = Depends(get_db),
+#     current_user: User = Depends(get_current_user)
+# ):
+#     if current_user.role.name != "instructor":
+#         raise HTTPException(status_code=403, detail="Instructor access required")
+    
+#     course = CourseService.update_course_step3(db, course_id, course_data, current_user.id)
+#     return course
+
+# # @router.put("/courses/lesson/{section_id}/step3Lesson", response_model=CourseResponse)
+# # async def update_course_step3(
+# #     section_id: int,
+# #     lesson_data: LessonCreateModel,
+# #     db: Session = Depends(get_db),
+# #     current_user: User = Depends(get_current_user)
+# # ):
+   
+# #     print(f"  Lesson: {lesson_data.duration}")
+# #     print(f"  Type: {lesson_data.content_type}")
+# #     print(f"  Parsed content: {lesson_data.parsed_content}")
+
+# #             # You can now use `lesson.parsed_content.dict()` to save structured content
+
+# #     return CourseResponse(message="Course step3 updated successfully", data=None)
+
+# @router.put("/courses/{course_id}/step4", response_model=CourseResponse)
+# async def update_course_step4(
+#     course_id: int,
+#     course_data: CourseCreateStep4,
+#     db: Session = Depends(get_db),
+#     current_user: User = Depends(get_current_user)
+# ):
+#     if current_user.role.name != "instructor":
+#         raise HTTPException(status_code=403, detail="Instructor access required")
+    
+#     course = CourseService.update_course_step4(db, course_id, course_data, current_user.id)
+#     return course
+
+# @router.post("/courses/{course_id}/submit", response_model=CourseResponse)
+# async def submit_course(
+#     course_id: int,
+#     db: Session = Depends(get_db),
+#     current_user: User = Depends(get_current_user)
+# ):
+#     if current_user.role.name != "instructor":
+#         raise HTTPException(status_code=403, detail="Instructor access required")
+    
+#     course = CourseService.submit_course_for_review(db, course_id, current_user.id)
+#     return course
+
+
+
+
+
 
 @router.post("/courses/step1", response_model=CourseResponse)
 async def create_course_step1(
@@ -23,6 +154,34 @@ async def create_course_step1(
         raise HTTPException(status_code=403, detail="Instructor access required")
     
     course = CourseService.create_or_update_course_step1(db, course_data, current_user.id)
+    return course
+
+@router.put("/courses/{course_id}/step1", response_model=CourseResponse)
+async def update_course_step1(
+    course_id: int,
+    course_data: CourseCreateStep1,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role.name != "instructor":
+        raise HTTPException(status_code=403, detail="Instructor access required")
+    
+    # Get existing course and update it
+    course = db.query(Course).filter(
+        Course.id == course_id,
+        Course.instructor_id == current_user.id
+    ).first()
+    
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found or not authorized")
+    
+    # Update course data
+    for field, value in course_data.model_dump().items():
+        if value is not None:
+            setattr(course, field, value)
+
+    db.commit()
+    db.refresh(course)
     return course
 
 @router.put("/courses/{course_id}/step2", response_model=CourseResponse)
@@ -94,8 +253,13 @@ async def update_course_step3(
     if current_user.role.name != "instructor":
         raise HTTPException(status_code=403, detail="Instructor access required")
     
-    course = CourseService.update_course_step3(db, course_id, course_data, current_user.id)
-    return course
+    try:
+        print(f"Received course_data: {course_data}")  # Debug log
+        course = CourseService.update_course_step3(db, course_id, course_data, current_user.id)
+        return course
+    except Exception as e:
+        print(f"Error in update_course_step3: {str(e)}")  # Debug log
+        raise HTTPException(status_code=422, detail=f"Validation error: {str(e)}")
 
 @router.put("/courses/{course_id}/step4", response_model=CourseResponse)
 async def update_course_step4(
@@ -121,6 +285,12 @@ async def submit_course(
     
     course = CourseService.submit_course_for_review(db, course_id, current_user.id)
     return course
+
+
+
+
+
+
 
 @router.get("/courses/drafts", response_model=List[CourseResponse])
 async def get_drafts(
@@ -152,8 +322,20 @@ async def get_my_courses(
     
     return CourseService.get_instructor_published_courses(db, current_user.id)
 
+# @router.get("/courses/{course_id}", response_model=CourseResponse)
+# async def get_course(
+#     course_id: int,
+#     db: Session = Depends(get_db),
+#     current_user: User = Depends(get_current_user)
+# ):
+#     if current_user.role.name != "instructor":
+#         raise HTTPException(status_code=403, detail="Instructor access required")
+    
+#     return CourseService.get_instructor_course(db, course_id, current_user.id)
+
+
 @router.get("/courses/{course_id}", response_model=CourseResponse)
-async def get_course(
+async def get_instructor_course(
     course_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -161,7 +343,16 @@ async def get_course(
     if current_user.role.name != "instructor":
         raise HTTPException(status_code=403, detail="Instructor access required")
     
-    return CourseService.get_instructor_course(db, course_id, current_user.id)
+    course = CourseService.get_instructor_course_detail(
+        db=db, 
+        course_id=course_id, 
+        instructor_id=current_user.id
+    )
+    
+    return course
+
+
+
 
 @router.put("/courses/{course_id}/status", response_model=CourseResponse)
 async def update_course_status(
@@ -209,3 +400,19 @@ async def get_all_instructors(
         raise HTTPException(status_code=403, detail="Instructor access required")
     
     return CourseService.get_all_instructors(db)
+
+@router.get("/dashboard/stats")
+async def get_instructor_dashboard_stats(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+   
+    if current_user.role.name != "instructor":
+        raise HTTPException(status_code=403, detail="Instructor access required")
+    
+    stats = CourseService.get_instructor_dashboard_stats(
+        db=db, 
+        instructor_id=current_user.id
+    )
+    
+    return stats

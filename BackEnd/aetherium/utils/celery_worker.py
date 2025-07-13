@@ -7,3 +7,5 @@ celery_app = Celery(
 )
 
 celery_app.conf.timezone = "Asia/Kolkata"
+
+celery_app.autodiscover_tasks(['aetherium.utils'])

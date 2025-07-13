@@ -17,6 +17,12 @@ class Settings(BaseSettings):
     REDIS_HOST:str
     REDIS_PORT:int
     REDIS_DB:int
+    FRONTEND_URL: str
+    RAZORPAY_KEY_ID :str
+    RAZORPAY_KEY_SECRET:str
+    CLOUDINARY_CLOUD_NAME:str
+    CLOUDINARY_API_KEY:str
+    CLOUDINARY_API_SECRET:str
 
     class Config:
         env_file = os.path.join(os.path.dirname(__file__), ".env")

@@ -14,7 +14,7 @@ class UserCreate(UserBase):
     role_id: int
     title: Optional[str] = None
     designation: Optional[str] = None
-    phone_number: Optional[int] = None
+    phonenumber: Optional[int] = None
     profile_picture: Optional[str]=None
 
 class UserUpdate(BaseModel):
@@ -23,7 +23,7 @@ class UserUpdate(BaseModel):
     title: Optional[NonEmptyStr] = None
     designation: Optional[NonEmptyStr] = None
     phone_number: Optional[int] = None
-    username: Optional[NonEmptyStr] = None
+    # username: Optional[NonEmptyStr] = None
     personal_website: Optional[str] = None
     facebook: Optional[str] = None
     instagram: Optional[str] = None
@@ -33,7 +33,7 @@ class UserUpdate(BaseModel):
     date_of_birth: Optional[str] = None
     profile_picture:Optional[str]=None
 
-    @field_validator('firstname', 'lastname', 'username')
+    @field_validator('firstname', 'lastname') 
     def reject_empty_strings(cls, v):
         if v == "":
             raise ValueError("Field cannot be empty")
@@ -58,7 +58,7 @@ class RoleResponse(BaseModel):
 class UserResponse(UserBase):
     firstname: Optional[str] = None 
     lastname: Optional[str] = None
-    username: Optional[str] = None
+    # username: Optional[str] = None
     id: int 
     role: RoleResponse
     is_active: bool
@@ -89,3 +89,14 @@ class OTPVerify(BaseModel):
 
 class OTPSend(BaseModel):
     email: EmailStr
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+    confirm_password: str
+
+class MessageResponse(BaseModel):
+    message: str

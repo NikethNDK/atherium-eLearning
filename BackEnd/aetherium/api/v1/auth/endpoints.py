@@ -1,16 +1,17 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Response, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, status, Response, UploadFile, File,status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from aetherium.database.db import get_db
 from aetherium.models.user import User, Role
-from aetherium.schemas.user import UserCreate, UserResponse, Token, UserUpdate, OTPVerify, OTPSend, PasswordChange
+from aetherium.schemas.user import UserCreate, UserResponse, Token, UserUpdate, OTPVerify, OTPSend, PasswordChange,MessageResponse,ForgotPasswordRequest,ResetPasswordRequest
 from aetherium.services.auth_service import create_user, update_user_bio, change_password, upload_profile_picture
 from aetherium.utils.jwt_utils import create_access_token, get_current_user
-from aetherium.utils.password_hash import verify_password
-from aetherium.utils.email_utils import generate_otp, store_otp, verify_otp_code, send_otp_email
+from aetherium.utils.password_hash import verify_password,hash_password
+from aetherium.utils.email_utils import generate_otp, store_otp, verify_otp_code, send_otp_email,check_existing_reset_request,generate_reset_token,store_reset_token,delete_reset_token,verify_reset_token,send_password_reset_email
 from authlib.integrations.starlette_client import OAuth,OAuthError
 from starlette.requests import Request
 from starlette.config import Config
+from starlette.responses import JSONResponse
 from aetherium.config import settings
 from fastapi.responses import FileResponse,JSONResponse
 from typing import Optional
@@ -18,7 +19,8 @@ import os
 from fastapi.responses import RedirectResponse
 import logging
 import httpx ,json
-from aetherium.utils.otp_task import send_otp_email_task
+from aetherium.utils.otp_task import send_otp_email_task,send_password_reset_email_task
+
 
 logging.basicConfig(level=logging.DEBUG)
 logger=logging.getLogger(__name__)
@@ -236,7 +238,7 @@ def change_user_password(
     return {"message": "Password changed successfully"}
 
 @router.post("/upload-profile-picture", response_model=dict)
-def upload_profile_picture(
+def upload_profile_picture_route(
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -306,3 +308,99 @@ def verify_otp(otp_verify: OTPVerify, db: Session = Depends(get_db)):
     user.is_emailverified = True
     db.commit()
     return {"message": "Email verified successfully"}
+
+
+
+
+
+
+@router.post("/forgot-password", response_model=MessageResponse)
+
+async def forgot_password(request: ForgotPasswordRequest,db: Session = Depends(get_db)):
+    logger = logging.getLogger(__name__) 
+    user = db.query(User).filter(User.email == request.email).first()
+    if not user:
+        logger.info(f"No user found for email: {request.email}")
+        return MessageResponse(message="If your email is registered, you will receive a password reset link shortly.")
+    
+    logger.info(f"User found: {user.email}, ID: {user.id}")
+    if check_existing_reset_request(request.email):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="A password reset email was already sent. Please check your email or wait before requesting again."
+        )
+    
+    # Generate reset token
+    reset_token = generate_reset_token()
+    
+    # Store reset token
+    store_reset_token(user.email, reset_token, user.id)
+    
+    # Send email asynchronously
+    user_name = f"{user.firstname} {user.lastname}".strip() if user.firstname else "User"
+    logger.info(f"Queuing email task for {user.email} with token {reset_token}")
+    print("After store_rest_before calling the email sending funtion")
+    send_password_reset_email_task.delay(user.email, reset_token, user_name)
+    
+    return MessageResponse(message="If your email is registered, you will receive a password reset link shortly.")
+
+@router.post("/reset-password", response_model=MessageResponse)
+async def reset_password(
+    request: ResetPasswordRequest,
+    db: Session = Depends(get_db)
+):
+    """Reset user password using reset token"""
+    logger.info(f"{request.confirm_password}{request.token},jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj")
+    # Validate passwords match
+    if request.new_password != request.confirm_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Passwords do not match"
+        )
+    
+    # Validate password strength (add your own validation)
+    if len(request.new_password) < 8:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password must be at least 8 characters long"
+        )
+    
+    # Verify reset token
+    token_data = verify_reset_token(request.token)
+    if not token_data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset token"
+        )
+    
+    # Get user
+    user = db.query(User).filter(User.id == token_data["user_id"]).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Update password
+    user.password_hash = hash_password(request.new_password)
+    db.commit()
+    
+    # Delete reset token
+    delete_reset_token(request.token, token_data["email"])
+    
+    return MessageResponse(message="Password has been reset successfully. You can now login with your new password.")
+
+@router.get("/verify-reset-token/{token}")
+async def verify_reset_token_endpoint(token: str):
+    """Verify if reset token is valid"""
+    token_data = verify_reset_token(token)
+    if not token_data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset token"
+        )
+    
+    return {
+        "valid": True,
+        "email": token_data["email"]
+    }

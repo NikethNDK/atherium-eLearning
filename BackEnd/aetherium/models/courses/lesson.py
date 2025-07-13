@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Text, DateTime, Enum
+from sqlalchemy import Column, Integer, String, ForeignKey, Text, DateTime, Enum,JSON
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from aetherium.database.db import Base
@@ -13,6 +13,11 @@ class Lesson(Base):
     content_url = Column(String(255), nullable=True) 
     duration = Column(Integer, nullable=True)  
     description = Column(Text, nullable=True)
+    content_data=Column(Text,nullable=True)
+    order_index=Column(Integer,nullable=True,default=0)
+    assessment=Column(JSON,nullable=True)
+
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 

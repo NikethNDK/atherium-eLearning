@@ -4,13 +4,19 @@ from aetherium.services.user_course.purchase_service import PurchaseService
 from aetherium.services.user_course.porgress_service import ProgressService
 from aetherium.services.user_course.review_service import ReviewService
 from aetherium.services.user_course.wishlist_service import WishlistService
+from aetherium.services.razorpay_service import *
 from fastapi import APIRouter,Query,Depends,HTTPException
 from typing import Optional,List
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session,joinedload
 from aetherium.database.db import get_db
-from aetherium.schemas.user_course import CourseFilters,CartItemCreate,CartResponse,PurchaseResponse,PurchaseCreate,CourseProgressResponse,CourseProgressUpdate,CourseReviewUpdate,CourseReviewResponse,CourseReviewCreate,WishlistItemCreate,WishlistItemResponse,PaginatedCoursesResponse
+from aetherium.schemas.user_course import *
+from aetherium.schemas.user_course import CourseFilters,CartItemCreate,CartResponse,PurchaseResponse,PurchaseCreate,CourseProgressResponse,CourseProgressUpdate,CourseReviewUpdate,CourseReviewResponse,CourseReviewCreate,WishlistItemCreate,WishlistItemResponse,PaginatedCoursesResponse,OrderHistoryResponse,OrderDetailResponse
 from aetherium.schemas.course import CourseResponse
+from aetherium.models.enum import PurchaseStatus
 from aetherium.models import User
+from aetherium.models.courses import Course,Section
+from aetherium.models.user_course import Purchase,Cart
+
 from aetherium.utils.jwt_utils import get_current_user
 from sqlalchemy.sql import func
 
@@ -179,3 +185,120 @@ async def remove_from_wishlist(
     if current_user.role.name != "user":
         raise HTTPException(status_code=403, detail="User access required")
     return WishlistService.remove_from_wishlist(db, current_user.id, course_id)
+
+
+@router.get("/orders", response_model=List[OrderHistoryResponse])
+async def get_order_history(
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1, le=50),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role.name != "user":
+        raise HTTPException(status_code=403, detail="User access required")
+    
+    offset = (page - 1) * limit
+    
+    orders = db.query(Purchase).options(
+        joinedload(Purchase.course).joinedload(Course.instructor),
+        joinedload(Purchase.course).joinedload(Course.category)
+    ).filter(
+        Purchase.user_id == current_user.id,
+        Purchase.status == PurchaseStatus.COMPLETED
+    ).order_by(Purchase.purchased_at.desc()).offset(offset).limit(limit).all()
+    
+    return orders
+
+@router.get("/orders/{order_id}", response_model=OrderDetailResponse)
+async def get_order_detail(
+    order_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role.name != "user":
+        raise HTTPException(status_code=403, detail="User access required")
+    
+    order = db.query(Purchase).options(
+        joinedload(Purchase.course).joinedload(Course.instructor),
+        joinedload(Purchase.course).joinedload(Course.category),
+        joinedload(Purchase.course).joinedload(Course.sections).joinedload(Section.lessons)
+    ).filter(
+        Purchase.id == order_id,
+        Purchase.user_id == current_user.id
+    ).first()
+    
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    return order
+
+@router.post("/payment/create-razorpay-order",response_model=RazorpayOrderResponse)
+async def create_razorpay_order(order_data:RazorpayOrderCreate,current_user:User=Depends(get_current_user),db:Session=Depends(get_db)):
+    course=db.query(Course).filter(Course.id==order_data.course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    
+    exsisting_purchase=db.query(Purchase).filter(
+        Purchase.course_id==order_data.course_id,
+        Purchase.user_id==current_user.id,
+        Purchase.status==PurchaseStatus.COMPLETED).first()
+    
+    if exsisting_purchase:
+        raise HTTPException(status_code=400,detail="Course Already Purchased")
+    
+    amount=course.discount_price if course.discount_price else course.price
+    reciept=f"course_{course.id}_user_{current_user.id}"
+    razorpay_order=razorpay_service.create_order(amount=amount,receipt=reciept)
+
+    razorpay_service.create_purchase_record(
+        db=db,
+        user_id=current_user.id,
+        course_id=course.id,
+        amount=amount,
+        order_id=razorpay_order['id'],
+        status=PurchaseStatus.PENDING
+    )
+
+    return RazorpayOrderResponse(
+        order_id=razorpay_order['id'],
+        amount=razorpay_order['amount'],
+        currency=razorpay_order['currency'],
+        key_id=razorpay_service.key_id,
+        course_id=course.id,
+        course_title=course.title,
+        user_email=current_user.email,
+        user_name=f"{current_user.firstname}{current_user.lastname}"
+    )
+
+@router.post("/payment/verify-razorpay",response_model=PaymentSuccessResponse)
+async def verify_razorpay_payment(payment_data:RazorpayPaymentVerify,current_user:User=Depends(get_current_user),db:Session=Depends(get_db)):
+    is_valid = razorpay_service.verify_payment_signature(
+        order_id=payment_data.razorpay_order_id,
+        payment_id=payment_data.razorpay_payment_id,
+        signature=payment_data.razorpay_signature
+    )
+    
+    if not is_valid:
+        razorpay_service.update_purchase_status(db=db,order_id=payment_data.razorpay_order_id,payment_id=payment_data.razorpay_payment_id,status=PurchaseStatus.FAILED)
+        raise HTTPException(status_code=400,detail="Payment verification failed")
+    
+    purchase = razorpay_service.update_purchase_status(
+        db=db,
+        order_id=payment_data.razorpay_order_id,
+        payment_id=payment_data.razorpay_payment_id,
+        status=PurchaseStatus.COMPLETED
+    )
+
+    cart_item = db.query(Cart).filter(Cart.user_id == current_user.id,Cart.course_id == payment_data.course_id).first()
+    
+    if cart_item:
+        db.delete(cart_item)
+        db.commit()
+    
+    return PaymentSuccessResponse(
+        success=True,
+        message="Payment successful! Course purchased successfully.",
+        purchase_id=purchase.id,
+        course_id=payment_data.course_id,
+        transaction_id=payment_data.razorpay_payment_id
+    )

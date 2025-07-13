@@ -8,7 +8,7 @@ from aetherium.schemas.course import (
 from aetherium.schemas.category import CategoryCreate, CategoryResponse
 from aetherium.schemas.topic import TopicCreate
 from fastapi import HTTPException
-from typing import List
+from typing import List,Optional
 
 class CourseService:
     @staticmethod
@@ -57,15 +57,14 @@ class CourseService:
 
         # Handle learning objectives
         if course_data.learning_objectives:
-            # Clear existing objectives
             db.query(LearningObjective).filter(LearningObjective.course_id == course_id).delete()
-            # Add new objectives
+      
             for obj_desc in course_data.learning_objectives:
                 if obj_desc.strip():
                     objective = LearningObjective(course_id=course_id, description=obj_desc.strip())
                     db.add(objective)
 
-        # Handle target audiences
+
         if course_data.target_audiences:
             db.query(TargetAudience).filter(TargetAudience.course_id == course_id).delete()
             for aud_desc in course_data.target_audiences:
@@ -91,22 +90,112 @@ class CourseService:
             Course.id == course_id, 
             Course.instructor_id == instructor_id
         ).first()
-        
+
         if not course:
             raise HTTPException(status_code=404, detail="Course not found or not authorized")
+        
+        try:
+        
+            sections = db.query(Section).filter(Section.course_id == course_id).all()
 
-        # Clear existing sections
-        db.query(Section).filter(Section.course_id == course_id).delete()
+            for section in sections:
+                db.query(Lesson).filter(Lesson.section_id == section.id).delete()
 
-        # Add new sections
-        for section_data in course_data.sections:
-            if section_data.name.strip():
-                section = Section(course_id=course_id, name=section_data.name.strip())
-                db.add(section)
+            db.query(Section).filter(Section.course_id == course_id).delete()
+            db.flush()
 
-        db.commit()
-        db.refresh(course)
-        return course
+            for section_data in course_data.sections:
+                if section_data.name.strip():
+                    section = Section(course_id=course_id, name=section_data.name.strip())
+                    db.add(section)
+                    db.flush()  
+
+                    for lesson_data in section_data.lessons:
+                        if lesson_data.name.strip():
+             
+                            assessment_json = None
+                            if lesson_data.assessment and lesson_data.content_type == ContentType.ASSESSMENT:
+                                assessment_json = lesson_data.assessment
+
+                            duration_value = None
+                            if lesson_data.duration is not None:
+                                try:
+                                    duration_value = int(lesson_data.duration)
+                                except (ValueError, TypeError):
+                                    duration_value = None
+
+                            lesson = Lesson(
+                                section_id=section.id,
+                                name=lesson_data.name.strip(),
+                                content_type=lesson_data.content_type,
+                                content_url=lesson_data.content_url,
+                                duration=duration_value,  # Ensure it's an integer
+                                description=lesson_data.description,
+                                content_data=lesson_data.content_data,
+                                order_index=lesson_data.order_index or 0,
+                                assessment=assessment_json
+                            )
+                            db.add(lesson)
+
+            db.commit()
+             
+            return db.query(Course).options(
+                joinedload(Course.learning_objectives),
+                joinedload(Course.target_audiences),
+                joinedload(Course.requirements),
+                joinedload(Course.sections).joinedload(Section.lessons),
+                joinedload(Course.category),
+                joinedload(Course.topic),
+                joinedload(Course.instructor)
+            ).filter(Course.id == course_id).first()
+            
+        except Exception as e:
+            db.rollback()
+            print(f"Error in update_course_step3: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    # @staticmethod
+    # def update_course_step3(db:Session,course_id:int,course_data:CourseCreateStep3,instructor_id:int):
+    #     course=db.query(Course).filter(Course.id==course_id, Course.instructor_id==instructor_id).first()
+
+    #     if not course:
+    #         raise HTTPException(status_code=404,detail="Course no found or not authorized")
+        
+    #     db.query(Section).filter(Section.course_id==course_id).delete()
+
+    #     for section_data in course_data.sections:
+    #         if section_data.name.strip():
+    #             section=Section(course_id=course_id,name=section_data.name.strip())
+    #             db.add(section)
+    #             db.flush()
+
+    #             for lesson_data in section_data.lessons:
+    #                 if lesson_data.name.strip():
+    #                     assessment_json = None
+    #                     if lesson_data.assessment and lesson_data.content_type == ContentType.ASSESSMENT:
+    #                         assessment_json = lesson_data.assessment
+    #                     # Ensure duration is properly handled
+    #                     duration_value = None
+    #                     if lesson_data.duration is not None:
+    #                         try:
+    #                             duration_value = int(lesson_data.duration)
+    #                         except (ValueError, TypeError):
+    #                             duration_value = None
+    #                     lesson=Lesson(
+    #                         section_id=section.id,
+    #                         name=lesson_data.name.strip(),
+    #                         content_type=lesson_data.content_type,
+    #                         content_url=lesson_data.content_url,
+    #                         duration=duration_value,
+    #                         description=lesson_data.description,
+    #                         content_data=lesson_data.content_data,
+    #                         order_index=lesson_data.order_index or 0,
+    #                         assessment=assessment_json
+    #                     )
+    #                     db.add(lesson)
+    #     db.commit()
+    #     db.refresh(course)
+    #     return course            
+
 
     @staticmethod
     def update_course_step4(db: Session, course_id: int, course_data: CourseCreateStep4, instructor_id: int):
@@ -118,7 +207,6 @@ class CourseService:
         if not course:
             raise HTTPException(status_code=404, detail="Course not found or not authorized")
 
-        # Update fields
         for field, value in course_data.model_dump().items():
             if value is not None:
                 setattr(course, field, value)
@@ -136,8 +224,7 @@ class CourseService:
         
         if not course:
             raise HTTPException(status_code=404, detail="Course not found or not authorized")
-        
-        # More robust validation - check essential fields
+
         missing_fields = []
         
         if not course.title or not course.title.strip():
@@ -145,8 +232,7 @@ class CourseService:
         
         if not course.description or not course.description.strip():
             missing_fields.append("description")
-        
-        # Check price - handle both None and 0 cases, and string conversion
+
         price_value = None
         if course.price is not None:
             try:
@@ -157,21 +243,20 @@ class CourseService:
         if price_value is None or price_value < 0:
             missing_fields.append("price")
         
-        # Check if course has learning objectives
+        
         learning_objectives = db.query(LearningObjective).filter(
             LearningObjective.course_id == course_id
         ).count()
         if learning_objectives == 0:
             missing_fields.append("learning objectives")
         
-        # Check if course has target audiences
+        
         target_audiences = db.query(TargetAudience).filter(
             TargetAudience.course_id == course_id
         ).count()
         if target_audiences == 0:
             missing_fields.append("target audiences")
         
-        # Check if course has sections
         sections = db.query(Section).filter(
             Section.course_id == course_id
         ).count()
@@ -190,7 +275,7 @@ class CourseService:
                 detail=f"Missing required fields: {', '.join(missing_fields)}"
             )
         
-        # Ensure price is properly set as float
+
         if price_value is not None:
             course.price = price_value
         
@@ -385,7 +470,6 @@ class CourseService:
             course.is_published = True
         elif status == "rejected":
             course.is_published = False
-            # Move back to draft status for editing
             course.verification_status = VerificationStatus.PENDING
         
         db.commit()
@@ -414,3 +498,131 @@ class CourseService:
         return db.query(User).join(Role).filter(
             Role.name == "instructor"
         ).limit(20).all()
+    
+
+
+
+
+
+
+
+    
+    @staticmethod
+    def get_instructor_courses(db: Session, instructor_id: int, page: int = 1, limit: int = 10, status: Optional[str] = None):
+        """Get paginated courses for a specific instructor with optional status filter"""
+        offset = (page - 1) * limit
+        
+        query = db.query(Course).options(
+            joinedload(Course.learning_objectives),
+            joinedload(Course.target_audiences),
+            joinedload(Course.requirements),
+            joinedload(Course.sections),
+            joinedload(Course.category),
+            joinedload(Course.topic),
+            joinedload(Course.instructor)
+        ).filter(Course.instructor_id == instructor_id)
+        
+        # Filter by status if provided
+        if status:
+            if status == "verified":
+                query = query.filter(Course.verification_status == VerificationStatus.VERIFIED)
+            elif status == "pending":
+                query = query.filter(Course.verification_status == VerificationStatus.PENDING)
+            elif status == "rejected":
+                query = query.filter(Course.verification_status == VerificationStatus.REJECTED)
+        
+        courses = query.order_by(Course.created_at.desc()).offset(offset).limit(limit).all()
+        return courses
+
+    @staticmethod
+    def get_instructor_course_detail(db: Session, course_id: int, instructor_id: int):
+        """Get detailed information about a specific course owned by the instructor"""
+        course = db.query(Course).options(
+            joinedload(Course.learning_objectives),
+            joinedload(Course.target_audiences),
+            joinedload(Course.requirements),
+            joinedload(Course.sections).joinedload(Section.lessons),
+            joinedload(Course.category),
+            joinedload(Course.topic),
+            joinedload(Course.instructor)
+        ).filter(
+            Course.id == course_id,
+            Course.instructor_id == instructor_id
+        ).first()
+        
+        if not course:
+            raise HTTPException(status_code=404, detail="Course not found or not authorized")
+        
+        return course
+
+    @staticmethod
+    def get_instructor_dashboard_stats(db: Session, instructor_id: int):
+        """Get dashboard statistics for instructor"""
+        total_courses = db.query(Course).filter(Course.instructor_id == instructor_id).count()
+        
+        verified_courses = db.query(Course).filter(
+            Course.instructor_id == instructor_id,
+            Course.verification_status == VerificationStatus.VERIFIED
+        ).count()
+        
+        pending_courses = db.query(Course).filter(
+            Course.instructor_id == instructor_id,
+            Course.verification_status == VerificationStatus.PENDING
+        ).count()
+        
+        rejected_courses = db.query(Course).filter(
+            Course.instructor_id == instructor_id,
+            Course.verification_status == VerificationStatus.REJECTED
+        ).count()
+        
+    
+        total_students = 0  
+        total_revenue = 0.0 
+        pending_reviews = 0  
+        
+        return {
+            "totalCourses": total_courses,
+            "verifiedCourses": verified_courses,
+            "pendingCourses": pending_courses,
+            "rejectedCourses": rejected_courses,
+            "totalStudents": total_students,
+            "totalRevenue": total_revenue,
+            "pendingReviews": pending_reviews
+        }
+
+   
+    @staticmethod
+    def update_course_step3_with_lessons(db: Session, course_id: int, course_data: CourseCreateStep3, instructor_id: int):
+        course = db.query(Course).filter(
+            Course.id == course_id, 
+            Course.instructor_id == instructor_id
+        ).first()
+        
+        if not course:
+            raise HTTPException(status_code=404, detail="Course not found or not authorized")
+
+       
+        db.query(Section).filter(Section.course_id == course_id).delete()
+
+        for section_data in course_data.sections:
+            if section_data.name.strip():
+                section = Section(course_id=course_id, name=section_data.name.strip())
+                db.add(section)
+                db.flush() 
+                
+                if hasattr(section_data, 'lessons') and section_data.lessons:
+                    for lesson_data in section_data.lessons:
+                        if lesson_data.name.strip():
+                            lesson = Lesson(
+                                section_id=section.id,
+                                name=lesson_data.name.strip(),
+                                content_type=lesson_data.content_type or ContentType.DESCRIPTION,
+                                content_url=lesson_data.content_url,
+                                duration=lesson_data.duration,
+                                description=lesson_data.description
+                            )
+                            db.add(lesson)
+
+        db.commit()
+        db.refresh(course)
+        return course

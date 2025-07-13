@@ -25,7 +25,7 @@ def create_user(db: Session, user: UserCreate) -> User:
         role_id=user.role_id,
         title=user.title,
         designation=user.designation,
-        phone_number=user.phone_number
+        phone_number=user.phonenumber
     )
     db.add(db_user)
     db.commit()
