@@ -212,7 +212,8 @@ export const userAPI = {
   // =================== ORDER HISTORY APIs ===================
 
   getOrderHistory: async (page = 1) => {
-    const response = await api.get(`/user/orders?page=${page}`)
+    // const response = await api.get(`/user/orders?page=${page}`)
+    const response = await api.get('/user/orders')
     return response.data
   },
 

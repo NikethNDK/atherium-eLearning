@@ -95,25 +95,6 @@ const InstrtructorCourseView = () => {
               </div>
             </div>
           </div>
-
-          {/* <div className="flex flex-wrap justify-end space-x-3">
-            <button
-              onClick={() => handleReview("verified")}
-              disabled={submitting}
-              className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-            >
-              <CheckCircle size={16} />
-              <span>Verify & Publish</span>
-            </button>
-            <button
-              onClick={() => handleReview("rejected")}
-              disabled={submitting}
-              className="flex items-center space-x-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
-            >
-              <XCircle size={16} />
-              <span>Reject Course</span>
-            </button>
-          </div> */}
         </div>
       </div>
 
@@ -400,42 +381,6 @@ const InstrtructorCourseView = () => {
                 </div>
               </div>
             )}
-          </div>
-        </div>
-
-        {/* Admin Review Section */}
-        <div className="bg-white rounded-lg shadow-sm mt-6 p-4 sm:p-6">
-          <h3 className="text-lg font-semibold mb-4">Admin Review</h3>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Comments/Feedback</label>
-              <textarea
-                value={reviewData.admin_response}
-                onChange={(e) => setReviewData((prev) => ({ ...prev, admin_response: e.target.value }))}
-                placeholder="Provide feedback for the instructor..."
-                rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            {/* <div className="flex flex-wrap justify-end space-x-3">
-              <button
-                onClick={() => handleReview("rejected")}
-                disabled={submitting}
-                className="flex items-center space-x-2 bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
-              >
-                <XCircle size={16} />
-                <span>Reject with Comments</span>
-              </button>
-              <button
-                onClick={() => handleReview("verified")}
-                disabled={submitting}
-                className="flex items-center space-x-2 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-              >
-                <CheckCircle size={16} />
-                <span>Approve & Publish</span>
-              </button>
-            </div> */}
           </div>
         </div>
       </div>
