@@ -36,13 +36,13 @@ export const instructorAPI = {
     return response.data
   },
 
-  updateCourseStep2: async (courseId, courseData) => {
-    const response = await api.put(`/instructor/courses/${courseId}/step2`, courseData)
-    return response.data
-  },
+  // updateCourseStep2: async (courseId, courseData) => {
+  //   const response = await api.put(`/instructor/courses/${courseId}/step2`, courseData)
+  //   return response.data
+  // },
 
-  updateCourseStep3: async (courseId, courseData) => {
-    const response = await api.put(`/instructor/courses/${courseId}/step3`, courseData)
+  updateCourseStep3: async (courseId) => {
+    const response = await api.put(`/instructor/courses/${courseId}/step3`)
     return response.data
   },
 
@@ -126,15 +126,15 @@ export const instructorAPI = {
     return response.data
   },
  
-  updateStep3: async (courseId, courseData) => {
-    const response = await api.put(`/instructor/courses/${courseId}/step3`, courseData)
-    return response.data
-  },
+  // updateStep3: async (courseId, courseData) => {
+  //   const response = await api.put(`/instructor/courses/${courseId}/step3`, courseData)
+  //   return response.data
+  // },
 
-  updateStep3Lesson: async (sectionId, lessonData) => {
-    const response = await api.put(`/instructor/courses/lesson/${sectionId}/step3Lesson`, lessonData)
-    return response.data
-  },
+  // updateStep3Lesson: async (sectionId, lessonData) => {
+  //   const response = await api.put(`/instructor/courses/lesson/${sectionId}/step3Lesson`, lessonData)
+  //   return response.data
+  // },
 
   updateStep4: async (courseId, courseData) => {
     const response = await api.put(`/instructor/courses/${courseId}/step4`, courseData)
@@ -145,6 +145,61 @@ export const instructorAPI = {
     const response = await api.post(`/instructor/courses/${courseId}/submit`)
     return response.data
   },
+
+
+
+// Section Management APIs
+  createSection: async (courseId, sectionName) => {
+    const response = await api.post(`/instructor/courses/${courseId}/sections`, { name: sectionName })
+    return response.data
+  },
+
+  updateSection: async (sectionId, sectionName) => {
+    const response = await api.put(`/instructor/sections/${sectionId}`, { name: sectionName })
+    return response.data
+  },
+
+  deleteSection: async (sectionId) => {
+    const response = await api.delete(`/instructor/sections/${sectionId}`)
+    return response.data
+  },
+
+  // Lesson Management APIs (added based on backend endpoints)
+  createLesson: async (sectionId, lessonData) => {
+    const response = await api.post(`/instructor/sections/${sectionId}/lessons`, lessonData)
+    return response.data
+  },
+
+  updateLesson: async (lessonId, lessonData) => {
+    const response = await api.put(`/instructor/lessons/${lessonId}`, lessonData)
+    return response.data
+  },
+
+  deleteLesson: async (lessonId) => {
+    const response = await api.delete(`/instructor/lessons/${lessonId}`)
+    return response.data
+  },
+
+  uploadLessonFile: async (lessonId, file, fileType) => {
+    const formData = new FormData()
+    formData.append("file", file)
+    formData.append("file_type", fileType)
+    const response = await api.post(`/instructor/lessons/${lessonId}/upload-file`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    })
+    return response.data
+  },
+  getUploadStatus: async (taskId) => {
+    const response = await api.get(`/instructor/lessons/upload-status/${taskId}`)
+    return response.data
+  },
+
+
+
+
+
 
   getDrafts: async () => {
     const response = await api.get("/instructor/courses/drafts")
@@ -186,6 +241,13 @@ export const instructorAPI = {
     return response.data
   },
   
+
+
+
+
+
+
+
 }
 
 

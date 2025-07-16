@@ -1,36 +1,93 @@
 
-// import { useState } from "react"
+
+// "use client"
+
+// import { useState, useEffect, useCallback } from "react"
 // import { ContentTypeSelector, LessonContentEditor } from "./LessonContentEditor"
 // import AssessmentEditor from "./AssessmentEditor"
 // import { Save, X } from "lucide-react"
-// import { instructorAPI } from "../../services/instructorAPI"
+// import { instructorAPI } from '../../services/instructorApi'
 
-// const LessonEditor = ({ lesson, onSave, onCancel, isOpen }) => {
+// const LessonEditor = ({ lesson, onSave, onCancel, isOpen, courseId, sectionId }) => {
+
+//   const getInitialContent = (contentType) => {
+//   switch (contentType) {
+//     case "TEXT":
+//       return { text_content: "" };
+//     case "PDF":
+//       return {
+//         file_url: "",
+//         file_public_id: "",
+//         file_type: "",
+//         file_size: null
+//       };
+//     case "VIDEO":
+//       return {
+//         file_url: "",
+//         file_public_id: "",
+//         file_type: "",
+//         file_size: null,
+//         video_duration: null,
+//         video_thumbnail: ""
+//       };
+//     case "REFERENCE_LINK":
+//       return {
+//         external_url: "",
+//         link_title: "",
+//         link_description: ""
+//       };
+//     case "ASSESSMENT":
+//       return null;
+//     default:
+//       return {};
+//   }
+// };
+
 //   const [lessonData, setLessonData] = useState(
-//      {
+//     lesson || {
 //       name: "",
 //       content_type: "TEXT",
 //       duration: "",
 //       description: "",
-//       content: {},
+//       content:  getInitialContent("TEXT"),
 //       assessment: null,
 //     },
 //   )
-
 //   const [errors, setErrors] = useState({})
+//   const [loading, setLoading] = useState(false)
+//   const [apiError, setApiError] = useState("")
 
-//   const handleInputChange = (field, value) => {
-//     setLessonData((prev) => ({ ...prev, [field]: value }))
-//     if (errors[field]) {
-//       setErrors((prev) => ({ ...prev, [field]: "" }))
-//     }
-//   }
+//   useEffect(() => {
+//     setLessonData(
+//       lesson || {
+//         name: "",
+//         content_type: "TEXT",
+//         duration: "",
+//         description: "",
+//         content: {},
+//         assessment: null,
+//       },
+//     )
+//     setErrors({})
+//     setApiError("")
+//   }, [lesson, isOpen])
 
-//   const handleContentTypeChange = (contentType) => {
+//   const handleInputChange = useCallback(
+//     (field, value) => {
+//       setLessonData((prev) => ({ ...prev, [field]: value }))
+//       if (errors[field]) {
+//         setErrors((prev) => ({ ...prev, [field]: "" }))
+//       }
+//       setApiError("") // Clear API error on input change
+//     },
+//     [errors],
+//   )
+
+//   const handleContentTypeChange = useCallback((contentType) => {
 //     setLessonData((prev) => ({
 //       ...prev,
 //       content_type: contentType,
-//       content: {},
+//       content: getInitialContent(contentType), 
 //       assessment:
 //         contentType === "ASSESSMENT"
 //           ? {
@@ -41,17 +98,21 @@
 //             }
 //           : null,
 //     }))
-//   }
+//     setErrors({}) // Clear content-related errors on type change
+//     setApiError("")
+//   }, [])
 
-//   const handleContentChange = (content) => {
+//   const handleContentChange = useCallback((content) => {
 //     setLessonData((prev) => ({ ...prev, content }))
-//   }
+//     setApiError("")
+//   }, [])
 
-//   const handleAssessmentChange = (assessment) => {
+//   const handleAssessmentChange = useCallback((assessment) => {
 //     setLessonData((prev) => ({ ...prev, assessment }))
-//   }
+//     setApiError("")
+//   }, [])
 
-//   const validateLesson = () => {
+//   const validateLesson = useCallback(() => {
 //     const newErrors = {}
 
 //     if (!lessonData.name.trim()) {
@@ -65,26 +126,163 @@
 //       if (!lessonData.assessment?.questions?.length) {
 //         newErrors.assessment_questions = "At least one question is required"
 //       }
-//       // Validate each question has correct answer
 //       lessonData.assessment?.questions?.forEach((question, index) => {
 //         const hasCorrectAnswer = question.options?.some((option) => option.is_correct)
 //         if (!hasCorrectAnswer) {
 //           newErrors[`question_${index}`] = `Question ${index + 1} must have a correct answer`
 //         }
 //       })
+//     } else if (lessonData.content_type === "VIDEO" && !lessonData.content?.file && !lessonData.content?.file_url) {
+//       newErrors.content_file = "Video file is required for video lessons."
+//     } else if (lessonData.content_type === "PDF" && !lessonData.content?.file && !lessonData.content?.file_url) {
+//       newErrors.content_file = "PDF file is required for PDF lessons."
+//     } else if (lessonData.content_type === "REFERENCE_LINK" && !lessonData.content?.external_url?.trim()) {
+//       newErrors.content_external_url = "External URL is required for link lessons."
+//     } else if (lessonData.content_type === "TEXT" && !lessonData.content?.text_content?.trim()) {
+//       newErrors.content_text = "Text content is required for text lessons."
 //     }
 
 //     setErrors(newErrors)
 //     return Object.keys(newErrors).length === 0
-//   }
+//   }, [lessonData])
 
 //   const handleSave = async () => {
-//     if (validateLesson()) {
-//       onSave(lessonData)
-//       // console.log(lessonData,'jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj',lesson)
-//       // await instructorAPI.updateStep3Lesson(12,lessonData)
-//     }
+//   setApiError("")
+//   if (!validateLesson()) {
+//     return
 //   }
+
+//   setLoading(true)
+//   try {
+//     let savedLesson = null
+//     const processedLessonData = {
+//       ...lessonData,
+//       duration: lessonData.duration ? Number.parseInt(lessonData.duration) : null,
+//       order_index: lessonData.order_index || 0,
+//     }
+
+//     // Separate content and assessment for API call
+//     const lessonPayload = {
+//       name: processedLessonData.name,
+//       content_type: processedLessonData.content_type,
+//       duration: processedLessonData.duration,
+//       description: processedLessonData.description,
+//       order_index: processedLessonData.order_index,
+//       content: processedLessonData.content_type !== "ASSESSMENT" ? processedLessonData.content : undefined,
+//       assessment: processedLessonData.content_type === "ASSESSMENT" ? processedLessonData.assessment : undefined,
+//     }
+
+//     if (lesson?.id) {
+//       // Update existing lesson
+//       savedLesson = await instructorAPI.updateLesson(lesson.id, lessonPayload)
+//     } else {
+//       // Create new lesson
+//       savedLesson = await instructorAPI.createLesson(sectionId, lessonPayload)
+//     }
+
+//     // Handle file upload if a new file is selected
+//     if (lessonData.content?.file && savedLesson?.id) {
+//       try {
+//         const fileTypeMap = {
+//           VIDEO: "video",
+//           PDF: "pdf",
+//         }
+//         const backendFileType = fileTypeMap[lessonData.content_type] || "document"
+
+//         const uploadResult = await instructorAPI.uploadLessonFile(
+//           savedLesson.id,
+//           lessonData.content.file,
+//           backendFileType,
+//         )
+
+//         // Check if it's an async upload (has task_id)
+//         if (uploadResult.task_id) {
+//           // Handle async upload with polling
+//           setApiError("File upload started. Please wait...")
+          
+//           const pollUploadStatus = async (taskId) => {
+//             const maxAttempts = 60 // 5 minutes with 5-second intervals
+//             let attempts = 0
+            
+//             const poll = async () => {
+//               try {
+//                 const statusResult = await instructorAPI.getUploadStatus(taskId)
+                
+//                 if (statusResult.state === 'SUCCESS') {
+//                   // Upload completed successfully
+//                   const finalResult = statusResult.result
+//                   savedLesson = {
+//                     ...savedLesson,
+//                     lesson_content: {
+//                       ...savedLesson.lesson_content,
+//                       file_url: finalResult.url,
+//                       file_public_id: finalResult.public_id,
+//                       file_type: finalResult.file_type,
+//                       file_size: finalResult.file_size,
+//                       video_duration: finalResult.duration,
+//                       video_thumbnail: finalResult.thumbnail,
+//                     },
+//                   }
+//                   setApiError("")
+//                   onSave(savedLesson)
+//                   return
+//                 } else if (statusResult.state === 'FAILURE') {
+//                   // Upload failed
+//                   setApiError(`File upload failed: ${statusResult.status}`)
+//                   return
+//                 } else {
+//                   // Still processing
+//                   const progress = Math.round((statusResult.current / statusResult.total) * 100)
+//                   setApiError(`Upload progress: ${progress}% - ${statusResult.status}`)
+                  
+//                   attempts++
+//                   if (attempts < maxAttempts) {
+//                     setTimeout(poll, 5000) // Poll every 5 seconds
+//                   } else {
+//                     setApiError("Upload timeout. Please try again.")
+//                   }
+//                 }
+//               } catch (error) {
+//                 console.error("Error polling upload status:", error)
+//                 setApiError("Error checking upload status. Please refresh and try again.")
+//               }
+//             }
+            
+//             poll()
+//           }
+          
+//           await pollUploadStatus(uploadResult.task_id)
+//         } else {
+//           // Direct upload completed
+//           savedLesson = {
+//             ...savedLesson,
+//             lesson_content: {
+//               ...savedLesson.lesson_content,
+//               file_url: uploadResult.url,
+//               file_public_id: uploadResult.public_id,
+//               file_type: uploadResult.file_type,
+//               file_size: uploadResult.file_size,
+//               video_duration: uploadResult.duration,
+//               video_thumbnail: uploadResult.thumbnail,
+//             },
+//           }
+//           onSave(savedLesson)
+//         }
+//       } catch (uploadError) {
+//         console.error("Error uploading lesson file:", uploadError)
+//         setApiError(`File upload failed: ${uploadError.response?.data?.detail || uploadError.message}`)
+//       }
+//     } else {
+//       // No file upload needed
+//       onSave(savedLesson)
+//     }
+//   } catch (error) {
+//     console.error("Error saving lesson:", error)
+//     setApiError(error.response?.data?.detail || "Error saving lesson. Please try again.")
+//   } finally {
+//     setLoading(false)
+//   }
+// }
 
 //   if (!isOpen) return null
 
@@ -99,6 +297,10 @@
 //         </div>
 
 //         <div className="p-6 space-y-6">
+//           {apiError && (
+//             <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{apiError}</div>
+//           )}
+
 //           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 //             <div>
 //               <label className="block text-sm font-medium text-gray-700 mb-2">Lesson Name *</label>
@@ -118,8 +320,8 @@
 //               <label className="block text-sm font-medium text-gray-700 mb-2">Duration (minutes)</label>
 //               <input
 //                 type="number"
-//                 value={lessonData.duration}
-//                 onChange={(e) => handleInputChange("duration", Number.parseInt(e.target.value))}
+//                 value={lessonData.duration || ""}
+//                 onChange={(e) => handleInputChange("duration", e.target.value)}
 //                 placeholder="Estimated duration"
 //                 min="1"
 //                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -159,11 +361,18 @@
 //                 ))}
 //             </div>
 //           ) : (
-//             <LessonContentEditor
-//               contentType={lessonData.content_type}
-//               content={lessonData.content}
-//               onChange={handleContentChange}
-//             />
+//             <>
+//               <LessonContentEditor
+//                 contentType={lessonData.content_type}
+//                 content={lessonData.content}
+//                 onChange={handleContentChange}
+//               />
+//               {errors.content_file && <p className="text-red-500 text-sm mt-1">{errors.content_file}</p>}
+//               {errors.content_external_url && (
+//                 <p className="text-red-500 text-sm mt-1">{errors.content_external_url}</p>
+//               )}
+//               {errors.content_text && <p className="text-red-500 text-sm mt-1">{errors.content_text}</p>}
+//             </>
 //           )}
 //         </div>
 
@@ -171,15 +380,26 @@
 //           <button
 //             onClick={onCancel}
 //             className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+//             disabled={loading}
 //           >
 //             Cancel
 //           </button>
 //           <button
 //             onClick={handleSave}
-//             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+//             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+//             disabled={loading}
 //           >
-//             <Save className="w-4 h-4 mr-2" />
-//             Save Lesson
+//             {loading ? (
+//               <span className="flex items-center">
+//                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+//                 Saving...
+//               </span>
+//             ) : (
+//               <>
+//                 <Save className="w-4 h-4 mr-2" />
+//                 Save Lesson
+//               </>
+//             )}
 //           </button>
 //         </div>
 //       </div>
@@ -189,100 +409,315 @@
 
 // export default LessonEditor
 
-
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { ContentTypeSelector, LessonContentEditor } from "./LessonContentEditor"
 import AssessmentEditor from "./AssessmentEditor"
 import { Save, X } from "lucide-react"
+import { instructorAPI } from '../../services/instructorApi'
 
-const LessonEditor = ({ lesson, onSave, onCancel, isOpen }) => {
-  const [lessonData, setLessonData] = useState(
-    lesson || {
-      name: "",
-      content_type: "TEXT",
-      duration: "",
-      description: "",
-      content: {},
-      assessment: null,
+
+const LessonEditor = ({ lesson, onSave, onCancel, isOpen, courseId, sectionId }) => {
+  console.log('LessonEditor received:', lesson);
+
+  const getInitialContent = (contentType) => {
+    switch (contentType) {
+      case "TEXT":
+        return { text_content: "" };
+      case "PDF":
+        return {
+          file_url: "",
+          file_public_id: "",
+          file_type: "",
+          file_size: null
+        };
+      case "VIDEO":
+        return {
+          file_url: "",
+          file_public_id: "",
+          file_type: "",
+          file_size: null,
+          video_duration: null,
+          video_thumbnail: ""
+        };
+      case "REFERENCE_LINK":
+        return {
+          external_url: "",
+          link_title: "",
+          link_description: ""
+        };
+      case "ASSESSMENT":
+        return null;
+      default:
+        return {};
+    }
+  };
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState("");
+  // Initialize state directly with lesson_content
+   const [lessonData, setLessonData] = useState(() => {
+    // Handle case where lesson is undefined
+    if (!lesson) {
+      return {
+        name: "",
+        content_type: "TEXT",
+        duration: "",
+        description: "",
+        order_index: 0,
+        content: getInitialContent("TEXT"),
+        assessment: null
+      };
+    }
+    
+    return {
+      ...lesson,
+      content: lesson.content || getInitialContent(lesson.content_type || "TEXT")
+    };
+  });
+const handleAssessmentChange = useCallback((assessment) => {
+    setLessonData((prev) => ({ ...prev, assessment }))
+    setApiError("")
+  }, [])
+  useEffect(() => {
+    if (!lesson) {
+      setLessonData({
+        name: "",
+        content_type: "TEXT",
+        duration: "",
+        description: "",
+        order_index: 0,
+        content: getInitialContent("TEXT"),
+        assessment: null
+      });
+    } else {
+      setLessonData({
+        ...lesson,
+        content: lesson.content || getInitialContent(lesson.content_type || "TEXT")
+      });
+    }
+    setErrors({});
+    setApiError("");
+  }, [lesson, isOpen]);
+
+  const handleInputChange = useCallback(
+    (field, value) => {
+      setLessonData((prev) => ({ ...prev, [field]: value }))
+      if (errors[field]) {
+        setErrors((prev) => ({ ...prev, [field]: "" }))
+      }
+      setApiError("") // Clear API error on input change
     },
+    [errors],
   )
 
-  const [errors, setErrors] = useState({})
+const handleContentTypeChange = useCallback((contentType) => {
+  setLessonData((prev) => ({
+    ...prev,
+    content_type: contentType,
+    lesson_content: getInitialContent(contentType), 
+    assessment: contentType === "ASSESSMENT" ? {
+      title: "",
+      description: "",
+      passing_score: 70,
+      questions: [],
+      is_correct:""
+    } : null
+  }));
+  setErrors({});
+  setApiError("");
+}, []);
 
-  const handleInputChange = (field, value) => {
-    setLessonData((prev) => ({ ...prev, [field]: value }))
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }))
-    }
+const handleContentChange = useCallback((lesson_content) => {
+  setLessonData((prev) => ({ ...prev, lesson_content }));
+  setApiError("");
+}, []);
+
+const validateLesson = useCallback(() => {
+  const newErrors = {};
+
+  if (!lessonData.name.trim()) {
+    newErrors.name = "Lesson name is required";
   }
 
-  const handleContentTypeChange = (contentType) => {
-    setLessonData((prev) => ({
-      ...prev,
-      content_type: contentType,
-      content: {},
-      assessment:
-        contentType === "ASSESSMENT"
-          ? {
-              title: "",
-              description: "",
-              passing_score: 70,
-              questions: [],
-            }
-          : null,
-    }))
-  }
-
-  const handleContentChange = (content) => {
-    setLessonData((prev) => ({ ...prev, content }))
-  }
-
-  const handleAssessmentChange = (assessment) => {
-    setLessonData((prev) => ({ ...prev, assessment }))
-  }
-
-  const validateLesson = () => {
-    const newErrors = {}
-
-    if (!lessonData.name.trim()) {
-      newErrors.name = "Lesson name is required"
-    }
-
-    if (lessonData.content_type === "ASSESSMENT") {
+  if (lessonData.content_type === "ASSESSMENT") {
       if (!lessonData.assessment?.title?.trim()) {
         newErrors.assessment_title = "Assessment title is required"
       }
       if (!lessonData.assessment?.questions?.length) {
         newErrors.assessment_questions = "At least one question is required"
       }
-      // Validate each question has correct answer
       lessonData.assessment?.questions?.forEach((question, index) => {
         const hasCorrectAnswer = question.options?.some((option) => option.is_correct)
         if (!hasCorrectAnswer) {
           newErrors[`question_${index}`] = `Question ${index + 1} must have a correct answer`
         }
       })
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
+     } else if (lessonData.content_type === "VIDEO" && !lessonData.lesson_content?.file && !lessonData.lesson_content?.file_url) {
+    newErrors.content_file = "Video file is required for video lessons.";
+  } else if (lessonData.content_type === "PDF" && !lessonData.lesson_content?.file && !lessonData.lesson_content?.file_url) {
+    newErrors.content_file = "PDF file is required for PDF lessons.";
+  } else if (lessonData.content_type === "REFERENCE_LINK" && !lessonData.lesson_content?.external_url?.trim()) {
+    newErrors.content_external_url = "External URL is required for link lessons.";
+  } else if (lessonData.content_type === "TEXT" && !lessonData.lesson_content?.text_content?.trim()) {
+    newErrors.content_text = "Text content is required for text lessons.";
   }
 
-  const handleSave = () => {
-    if (validateLesson()) {
-      // Ensure duration is a number or null
-      const processedLessonData = {
-        ...lessonData,
-        duration: lessonData.duration ? Number.parseInt(lessonData.duration) : null,
-        order_index: lessonData.order_index || 0,
+  setErrors(newErrors);
+  return Object.keys(newErrors).length === 0;
+}, [lessonData]);
+
+  const handleSave = async () => {
+    setApiError("")
+    if (!validateLesson()) {
+      return
+    }
+
+setApiError("");
+  if (!validateLesson()) return;
+
+  setLoading(true);
+  try {
+    const processedLessonData = {
+      ...lessonData,
+      duration: lessonData.duration ? Number.parseInt(lessonData.duration) : null,
+      order_index: lessonData.order_index || 0,
+    };
+
+    const lessonPayload = {
+      name: processedLessonData.name,
+      content_type: processedLessonData.content_type,
+      duration: processedLessonData.duration,
+      description: processedLessonData.description,
+      order_index: processedLessonData.order_index,
+      lesson_content: processedLessonData.content_type !== "ASSESSMENT" ? processedLessonData.lesson_content : undefined,
+      assessment: processedLessonData.content_type === "ASSESSMENT" ? processedLessonData.assessment : undefined,
+    };
+
+      if (lesson?.id) {
+        // Update existing lesson
+        savedLesson = await instructorAPI.updateLesson(lesson.id, lessonPayload)
+      } else {
+        // Create new lesson
+        savedLesson = await instructorAPI.createLesson(sectionId, lessonPayload)
       }
-      onSave(processedLessonData)
+
+      // Handle file upload if a new file is selected
+      if (lessonData.content?.file && savedLesson?.id) {
+        try {
+          const fileTypeMap = {
+            VIDEO: "video",
+            PDF: "pdf",
+          }
+          const backendFileType = fileTypeMap[lessonData.content_type] || "document"
+
+          const uploadResult = await instructorAPI.uploadLessonFile(
+            savedLesson.id,
+            lessonData.content.file,
+            backendFileType,
+          )
+
+          // Check if it's an async upload (has task_id)
+          if (uploadResult.task_id) {
+            // Handle async upload with polling
+            setApiError("File upload started. Please wait...")
+            
+            const pollUploadStatus = async (taskId) => {
+              const maxAttempts = 60 // 5 minutes with 5-second intervals
+              let attempts = 0
+              
+              const poll = async () => {
+                try {
+                  const statusResult = await instructorAPI.getUploadStatus(taskId)
+                  
+                  if (statusResult.state === 'SUCCESS') {
+                    // Upload completed successfully
+                    const finalResult = statusResult.result
+                    savedLesson = {
+                      ...savedLesson,
+                      lesson_content: {
+                        ...savedLesson.lesson_content,
+                        file_url: finalResult.url,
+                        file_public_id: finalResult.public_id,
+                        file_type: finalResult.file_type,
+                        file_size: finalResult.file_size,
+                        video_duration: finalResult.duration,
+                        video_thumbnail: finalResult.thumbnail,
+                      },
+                    }
+                    setApiError("")
+                    onSave(savedLesson)
+                    return
+                  } else if (statusResult.state === 'FAILURE') {
+                    // Upload failed
+                    setApiError(`File upload failed: ${statusResult.status}`)
+                    return
+                  } else {
+                    // Still processing
+                    const progress = Math.round((statusResult.current / statusResult.total) * 100)
+                    setApiError(`Upload progress: ${progress}% - ${statusResult.status}`)
+                    
+                    attempts++
+                    if (attempts < maxAttempts) {
+                      setTimeout(poll, 5000) // Poll every 5 seconds
+                    } else {
+                      setApiError("Upload timeout. Please try again.")
+                    }
+                  }
+                } catch (error) {
+                  console.error("Error polling upload status:", error)
+                  setApiError("Error checking upload status. Please refresh and try again.")
+                }
+              }
+              
+              poll()
+            }
+            
+            await pollUploadStatus(uploadResult.task_id)
+          } else {
+            // Direct upload completed
+            savedLesson = {
+              ...savedLesson,
+              lesson_content: {
+                ...savedLesson.lesson_content,
+                file_url: uploadResult.url,
+                file_public_id: uploadResult.public_id,
+                file_type: uploadResult.file_type,
+                file_size: uploadResult.file_size,
+                video_duration: uploadResult.duration,
+                video_thumbnail: uploadResult.thumbnail,
+              },
+            }
+            onSave(savedLesson)
+          }
+        } catch (uploadError) {
+          console.error("Error uploading lesson file:", uploadError)
+          setApiError(`File upload failed: ${uploadError.response?.data?.detail || uploadError.message}`)
+        }
+      } else {
+        // No file upload needed
+        onSave(savedLesson)
+      }
+    } catch (error) {
+      console.error("Error saving lesson:", error)
+      setApiError(error.response?.data?.detail || "Error saving lesson. Please try again.")
+    } finally {
+      setLoading(false)
     }
   }
 
-  if (!isOpen) return null
+if (!isOpen) {
+  console.log('LessonEditor not rendering because isOpen is false');
+  return null;
+}
+
+console.log('Rendering LessonEditor with:', {
+  lessonData,
+  isOpen,
+  errors,
+  apiError
+});
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -295,6 +730,10 @@ const LessonEditor = ({ lesson, onSave, onCancel, isOpen }) => {
         </div>
 
         <div className="p-6 space-y-6">
+          {apiError && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{apiError}</div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Lesson Name *</label>
@@ -314,7 +753,7 @@ const LessonEditor = ({ lesson, onSave, onCancel, isOpen }) => {
               <label className="block text-sm font-medium text-gray-700 mb-2">Duration (minutes)</label>
               <input
                 type="number"
-                value={lessonData.duration}
+                value={lessonData.duration || ""}
                 onChange={(e) => handleInputChange("duration", e.target.value)}
                 placeholder="Estimated duration"
                 min="1"
@@ -355,11 +794,18 @@ const LessonEditor = ({ lesson, onSave, onCancel, isOpen }) => {
                 ))}
             </div>
           ) : (
-            <LessonContentEditor
-              contentType={lessonData.content_type}
-              content={lessonData.content}
-              onChange={handleContentChange}
-            />
+            <>
+              <LessonContentEditor
+                contentType={lessonData.content_type}
+                lesson_content={lessonData.content}
+                onChange={handleContentChange}
+              />
+              {errors.content_file && <p className="text-red-500 text-sm mt-1">{errors.content_file}</p>}
+              {errors.content_external_url && (
+                <p className="text-red-500 text-sm mt-1">{errors.content_external_url}</p>
+              )}
+              {errors.content_text && <p className="text-red-500 text-sm mt-1">{errors.content_text}</p>}
+            </>
           )}
         </div>
 
@@ -367,15 +813,26 @@ const LessonEditor = ({ lesson, onSave, onCancel, isOpen }) => {
           <button
             onClick={onCancel}
             className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            disabled={loading}
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={loading}
           >
-            <Save className="w-4 h-4 mr-2" />
-            Save Lesson
+            {loading ? (
+              <span className="flex items-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Saving...
+              </span>
+            ) : (
+              <>
+                <Save className="w-4 h-4 mr-2" />
+                Save Lesson
+              </>
+            )}
           </button>
         </div>
       </div>

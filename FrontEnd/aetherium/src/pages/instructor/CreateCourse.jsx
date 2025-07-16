@@ -1,153 +1,10 @@
-// "use client"
-
-// import { useState, useEffect } from "react"
-// import { useNavigate, useParams } from "react-router-dom"
-// import SectionManager from "../../components/lesson/SectionManager"
-// import { courseAPI } from "../../services/api"
-
-// const CourseCreationPage = () => {
-//   const { courseId } = useParams()
-//   const navigate = useNavigate()
-//   const [courseData, setCourseData] = useState({
-//     title: "",
-//     sections: [],
-//   })
-//   const [loading, setLoading] = useState(false)
-//   const [errors, setErrors] = useState({})
-
-//   useEffect(() => {
-//     if (courseId) {
-//       fetchCourseData()
-//     }
-//   }, [courseId])
-
-//   const fetchCourseData = async () => {
-//     try {
-//       setLoading(true)
-//       const data = await courseAPI.getCourse(courseId)
-//       setCourseData({
-//         title: data.title,
-//         sections: data.sections || [],
-//       })
-//     } catch (error) {
-//       console.error("Error fetching course:", error)
-//     } finally {
-//       setLoading(false)
-//     }
-//   }
-
-//   const handleSectionsChange = (sections) => {
-//     setCourseData((prev) => ({ ...prev, sections }))
-//     setErrors((prev) => ({ ...prev, sections: "" }))
-//   }
-
-//   const validateCourse = () => {
-//     const newErrors = {}
-
-//     if (courseData.sections.length === 0) {
-//       newErrors.sections = "At least one section is required"
-//     }
-
-//     const sectionsWithoutLessons = courseData.sections.filter(
-//       (section) => !section.lessons || section.lessons.length === 0,
-//     )
-
-//     if (sectionsWithoutLessons.length > 0) {
-//       newErrors.sections = "Each section must have at least one lesson"
-//     }
-
-//     setErrors(newErrors)
-//     return Object.keys(newErrors).length === 0
-//   }
-
-//   const handleSave = async () => {
-//     if (!validateCourse()) return
-
-//     try {
-//       setLoading(true)
-//       const step3Data = {
-//         sections: courseData.sections.map((section) => ({
-//           name: section.name,
-//           lessons: section.lessons.map((lesson) => ({
-//             name: lesson.name,
-//             content_type: lesson.content_type,
-//             content_url: lesson.content_url,
-//             duration: lesson.duration,
-//             description: lesson.description,
-//           })),
-//         })),
-//       }
-
-//       await courseAPI.updateStep3(courseId, step3Data)
-//       navigate("/instructor/courses")
-//     } catch (error) {
-//       console.error("Error saving course:", error)
-//     } finally {
-//       setLoading(false)
-//     }
-//   }
-
-//   if (loading) {
-//     return (
-//       <div className="min-h-screen flex items-center justify-center">
-//         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-//       </div>
-//     )
-//   }
-
-//   return (
-//     <div className="min-h-screen bg-gray-50">
-//       <div className="max-w-6xl mx-auto py-8 px-4">
-//         <div className="bg-white rounded-lg shadow-sm">
-//           <div className="border-b border-gray-200 px-6 py-4">
-//             <div className="flex items-center justify-between">
-//               <div>
-//                 <h1 className="text-2xl font-semibold text-gray-900">{courseData.title || "Course Creation"}</h1>
-//                 <p className="text-gray-600 mt-1">Create sections and lessons for your course</p>
-//               </div>
-//               <div className="flex space-x-3">
-//                 <button
-//                   onClick={() => navigate("/instructor/courses")}
-//                   className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-//                 >
-//                   Cancel
-//                 </button>
-//                 <button
-//                   onClick={handleSave}
-//                   disabled={loading}
-//                   className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-//                 >
-//                   {loading ? "Saving..." : "Save Course"}
-//                 </button>
-//               </div>
-//             </div>
-//           </div>
-
-//           <div className="p-6">
-//             <SectionManager sections={courseData.sections} onChange={handleSectionsChange} />
-
-//             {errors.sections && (
-//               <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-//                 <p className="text-red-700 text-sm">{errors.sections}</p>
-//               </div>
-//             )}
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   )
-// }
-
-// export default CourseCreationPage
-
-
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { useAuth } from "../../context/AuthContext"
-import { instructorAPI } from "../../services/instructorAPI"
-import { adminAPI,courseAPI } from "../../services/api"
+import { instructorAPI } from "../../services/instructorApi"
+import { adminAPI } from "../../services/api"
 import LoadingSpinner from "../../components/common/LoadingSpinner"
 import ArrayInputField from "../../components/course/ArrayInputField"
 import FileUpload from "../../components/course/FileUpload"
@@ -189,6 +46,7 @@ const CreateCourse = () => {
   const [categories, setCategories] = useState([])
   const [topics, setTopics] = useState([])
   const [errors, setErrors] = useState({})
+  const [apiError, setApiError] = useState("")
 
   const steps = [
     { id: 1, title: "Basic Information", icon: "📝" },
@@ -211,6 +69,7 @@ const CreateCourse = () => {
       setCategories(data)
     } catch (error) {
       console.error("Error fetching categories:", error)
+      setApiError("Failed to load categories.")
     }
   }
 
@@ -220,6 +79,7 @@ const CreateCourse = () => {
       setTopics(data)
     } catch (error) {
       console.error("Error fetching topics:", error)
+      setApiError("Failed to load topics.")
     }
   }
 
@@ -231,8 +91,9 @@ const CreateCourse = () => {
   }
 
   const fetchCourseData = async (id) => {
+    setLoading(true)
+    setApiError("")
     try {
-      setLoading(true)
       const data = await instructorAPI.getCourseDetail(id)
       const transformedData = {
         ...data,
@@ -254,15 +115,14 @@ const CreateCourse = () => {
                 id: lesson.id,
                 name: lesson.name,
                 content_type: lesson.content_type,
-                content_url: lesson.content_url,
                 duration: lesson.duration,
                 description: lesson.description,
-                content: lesson.content_data || {},
-                assessment: lesson.assessment || null,
+                content: lesson.lesson_content || {},
+                assessment: lesson.assessments?.[0] || null,
                 order_index: lesson.order_index || 0,
               })) || [],
           })) || [],
-        co_instructors: [],
+        co_instructors: data.co_instructors || [],
         cover_image: null,
         trailer_video: null,
       }
@@ -270,113 +130,141 @@ const CreateCourse = () => {
       setCourseData(transformedData)
     } catch (error) {
       console.error("Error fetching course:", error)
+      setApiError(error.response?.data?.detail || "Failed to load course data.")
     } finally {
       setLoading(false)
     }
   }
 
-  const validateStep = (step) => {
-    const newErrors = {}
+  const validateStep = useCallback(
+    (step) => {
+      const newErrors = {}
+      setApiError("")
 
-    switch (step) {
-      case 1:
-        if (!courseData.title.trim()) newErrors.title = "Title is required"
-        if (!courseData.category_id) newErrors.category_id = "Category is required"
-        if (!courseData.language) newErrors.language = "Language is required"
-        if (!courseData.level) newErrors.level = "Level is required"
-        if (!courseData.duration) newErrors.duration = "Duration is required"
-        if (!courseData.duration_unit) newErrors.duration_unit = "Duration unit is required"
-        break
-      case 2:
-        if (!courseData.description.trim()) newErrors.description = "Description is required"
-        if (courseData.learning_objectives.length === 0)
-          newErrors.learning_objectives = "At least one learning objective is required"
-        if (courseData.target_audiences.length === 0)
-          newErrors.target_audiences = "At least one target audience is required"
-        break
-      case 3:
-        if (courseData.sections.length === 0) {
-          newErrors.sections = "At least one section is required"
-        } else {
-          // Check if all sections have at least one lesson
-          const sectionsWithoutLessons = courseData.sections.filter(
-            (section) => !section.lessons || section.lessons.length === 0,
-          )
-          if (sectionsWithoutLessons.length > 0) {
-            newErrors.sections = "Each section must have at least one lesson"
+      switch (step) {
+        case 1:
+          if (!courseData.title.trim()) newErrors.title = "Title is required"
+          if (!courseData.category_id) newErrors.category_id = "Category is required"
+          if (!courseData.language) newErrors.language = "Language is required"
+          if (!courseData.level) newErrors.level = "Level is required"
+          if (!courseData.duration || Number.parseInt(courseData.duration) <= 0)
+            newErrors.duration = "Duration is required and must be a positive number"
+          if (!courseData.duration_unit) newErrors.duration_unit = "Duration unit is required"
+          break
+        case 2:
+          if (!courseData.description.trim()) newErrors.description = "Description is required"
+          if (courseData.learning_objectives.length === 0)
+            newErrors.learning_objectives = "At least one learning objective is required"
+          if (courseData.target_audiences.length === 0)
+            newErrors.target_audiences = "At least one target audience is required"
+          break
+        case 3:
+          if (courseData.sections.length === 0) {
+            newErrors.sections = "At least one section is required"
+          } else {
+            const sectionsWithoutLessons = courseData.sections.filter(
+              (section) => !section.lessons || section.lessons.length === 0,
+            )
+            if (sectionsWithoutLessons.length > 0) {
+              newErrors.sections = "Each section must have at least one lesson"
+            }
           }
-        }
-        break
-      case 4:
-        if (!courseData.price || Number.parseFloat(courseData.price) <= 0) newErrors.price = "Valid price is required"
-        if (!courseData.welcome_message.trim()) newErrors.welcome_message = "Welcome message is required"
-        if (!courseData.congratulation_message.trim())
-          newErrors.congratulation_message = "Congratulation message is required"
-        break
-    }
+          break
+        case 4:
+          if (!courseData.price || Number.parseFloat(courseData.price) <= 0) newErrors.price = "Valid price is required"
+          if (!courseData.welcome_message.trim()) newErrors.welcome_message = "Welcome message is required"
+          if (!courseData.congratulation_message.trim())
+            newErrors.congratulation_message = "Congratulation message is required"
+          break
+      }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+      setErrors(newErrors)
+      return Object.keys(newErrors).length === 0
+    },
+    [courseData],
+  )
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target
-    setCourseData((prev) => ({ ...prev, [name]: value }))
+  const handleInputChange = useCallback(
+    (e) => {
+      const { name, value } = e.target
+      setCourseData((prev) => ({ ...prev, [name]: value }))
 
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }))
-    }
-  }
+      if (errors[name]) {
+        setErrors((prev) => ({ ...prev, [name]: "" }))
+      }
+      setApiError("")
+    },
+    [errors],
+  )
 
-  const handleFileChange = (name) => (e) => {
-    const file = e.target.files[0]
-    setCourseData((prev) => ({
-      ...prev,
-      [name]: file,
-      [`${name}_url`]: file ? URL.createObjectURL(file) : prev[`${name}_url`],
-    }))
-  }
+  const handleFileChange = useCallback(
+    (name) => (e) => {
+      const file = e.target.files[0]
+      setCourseData((prev) => ({
+        ...prev,
+        [name]: file,
+        [`${name}_url`]: file ? URL.createObjectURL(file) : prev[`${name}_url`],
+      }))
+      setApiError("")
+    },
+    [],
+  )
 
-  const addToArray = (field, value) => {
-    setCourseData((prev) => ({
-      ...prev,
-      [field]: [...prev[field], value],
-    }))
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }))
-    }
-  }
+  const addToArray = useCallback(
+    (field, value) => {
+      setCourseData((prev) => ({
+        ...prev,
+        [field]: [...prev[field], value],
+      }))
+      if (errors[field]) {
+        setErrors((prev) => ({ ...prev, [field]: "" }))
+      }
+      setApiError("")
+    },
+    [errors],
+  )
 
-  const removeFromArray = (field, index) => {
+  const removeFromArray = useCallback((field, index) => {
     setCourseData((prev) => ({
       ...prev,
       [field]: prev[field].filter((_, i) => i !== index),
     }))
-  }
+    setApiError("")
+  }, [])
 
-  const handleSectionsChange = (sections) => {
-    setCourseData((prev) => ({ ...prev, sections }))
-    if (errors.sections) {
-      setErrors((prev) => ({ ...prev, sections: "" }))
-    }
-  }
+  const handleSectionsChange = useCallback(
+    (sections) => {
+      setCourseData((prev) => ({ ...prev, sections }))
+      if (errors.sections) {
+        setErrors((prev) => ({ ...prev, sections: "" }))
+      }
+      setApiError("")
+    },
+    [errors],
+  )
 
-  const handleInstructorAdd = (instructor) => {
+  const handleInstructorAdd = useCallback((instructor) => {
     setCourseData((prev) => ({
       ...prev,
       co_instructors: [...prev.co_instructors, instructor],
     }))
-  }
+    setApiError("")
+  }, [])
 
-  const handleInstructorRemove = (instructorId) => {
+  const handleInstructorRemove = useCallback((instructorId) => {
     setCourseData((prev) => ({
       ...prev,
       co_instructors: prev.co_instructors.filter((instructor) => instructor.id !== instructorId),
     }))
-  }
+    setApiError("")
+  }, [])
 
   const handleNext = async () => {
-    if (!validateStep(currentStep)) return
+    setApiError("")
+    if (!validateStep(currentStep)) {
+      setApiError("Please correct the errors before proceeding.")
+      return
+    }
 
     setLoading(true)
     try {
@@ -435,8 +323,10 @@ const CreateCourse = () => {
           break
 
         case 3:
-          // Sections are handled by EnhancedSectionEditor
-          // Just validate and proceed
+          // For Step 3, we now only call the validation endpoint.
+          // Section and lesson data are handled by granular API calls within SectionList/LessonEditor.
+          response = await instructorAPI.updateCourseStep3(courseData.id)
+          // The response here will confirm curriculum_complete status
           break
 
         case 4:
@@ -446,20 +336,25 @@ const CreateCourse = () => {
             congratulation_message: courseData.congratulation_message,
             co_instructor_ids: courseData.co_instructors.map((instructor) => instructor.id),
           }
-          response = await instructorAPI.updateStep4(courseData.id, step4Data)
+          response = await instructorAPI.updateCourseStep4(courseData.id, step4Data)
           break
       }
 
       setCurrentStep(currentStep + 1)
     } catch (error) {
       console.error(`Error in step ${currentStep}:`, error)
+      setApiError(error.response?.data?.detail || `Error saving data for step ${currentStep}. Please try again.`)
     } finally {
       setLoading(false)
     }
   }
 
   const handleSubmit = async () => {
-    if (!validateStep(4)) return
+    setApiError("")
+    if (!validateStep(4)) {
+      setApiError("Please correct the errors before submitting.")
+      return
+    }
 
     setLoading(true)
     try {
@@ -470,21 +365,21 @@ const CreateCourse = () => {
         co_instructor_ids: courseData.co_instructors.map((instructor) => instructor.id),
       }
 
-      await instructorAPI.updateStep4(courseData.id, step4Data)
+      await instructorAPI.updateCourseStep4(courseData.id, step4Data)
       await instructorAPI.submitCourse(courseData.id)
 
       navigate("/instructor/pending-approval")
     } catch (error) {
       console.error("Error submitting course:", error)
-      const errorMessage =
-        error.response?.data?.detail || "Error submitting course. Please check all required fields are filled."
-      alert(errorMessage)
+      setApiError(
+        error.response?.data?.detail || "Error submitting course. Please check all required fields are filled.",
+      )
     } finally {
       setLoading(false)
     }
   }
 
-  if (loading && !courseData.id) return <LoadingSpinner size="large" />
+  if (loading && !courseData.id && !courseId) return <LoadingSpinner size="large" />
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -508,7 +403,7 @@ const CreateCourse = () => {
 
       {/* Progress Steps */}
       <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between max-w-4xl">
+        <div className="flex items-center justify-between max-w-4xl mx-auto">
           {steps.map((step, index) => (
             <div key={step.id} className="flex items-center">
               <div className="flex items-center space-x-3">
@@ -535,6 +430,10 @@ const CreateCourse = () => {
 
       {/* Content */}
       <div className="max-w-4xl mx-auto p-6">
+        {apiError && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 text-red-700 text-sm">{apiError}</div>
+        )}
+
         {currentStep === 1 && (
           <div className="bg-white rounded-lg shadow-sm p-6">
             <h2 className="text-xl font-semibold mb-6">Basic Information</h2>
@@ -674,15 +573,23 @@ const CreateCourse = () => {
               <button
                 onClick={() => navigate("/instructor/dashboard")}
                 className="px-6 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                disabled={loading}
               >
                 Cancel
               </button>
               <button
                 onClick={handleNext}
                 disabled={loading}
-                className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? "Saving..." : "Save & Next"}
+                {loading ? (
+                  <span className="flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Saving...
+                  </span>
+                ) : (
+                  "Save & Next"
+                )}
               </button>
             </div>
           </div>
@@ -767,15 +674,23 @@ const CreateCourse = () => {
               <button
                 onClick={() => setCurrentStep(1)}
                 className="px-6 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                disabled={loading}
               >
                 Previous
               </button>
               <button
                 onClick={handleNext}
                 disabled={loading}
-                className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? "Saving..." : "Save & Next"}
+                {loading ? (
+                  <span className="flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Saving...
+                  </span>
+                ) : (
+                  "Save & Next"
+                )}
               </button>
             </div>
           </div>
@@ -796,15 +711,23 @@ const CreateCourse = () => {
               <button
                 onClick={() => setCurrentStep(2)}
                 className="px-6 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                disabled={loading}
               >
                 Previous
               </button>
               <button
                 onClick={handleNext}
                 disabled={loading}
-                className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? "Saving..." : "Save & Next"}
+                {loading ? (
+                  <span className="flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Saving...
+                  </span>
+                ) : (
+                  "Save & Next"
+                )}
               </button>
             </div>
           </div>
@@ -881,15 +804,23 @@ const CreateCourse = () => {
               <button
                 onClick={() => setCurrentStep(3)}
                 className="px-6 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                disabled={loading}
               >
                 Previous
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={loading}
-                className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? "Submitting..." : "Submit For Review"}
+                {loading ? (
+                  <span className="flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Submitting...
+                  </span>
+                ) : (
+                  "Submit For Review"
+                )}
               </button>
             </div>
           </div>
@@ -900,3 +831,4 @@ const CreateCourse = () => {
 }
 
 export default CreateCourse
+

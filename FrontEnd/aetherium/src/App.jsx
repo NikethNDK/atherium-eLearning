@@ -12,7 +12,7 @@ import NotFound from "./pages/common/NotFound";
 
 const queryClient = new QueryClient();
 
-function App() {
+function App() { 
   return (
     <QueryClientProvider client={queryClient}>
       <Router>

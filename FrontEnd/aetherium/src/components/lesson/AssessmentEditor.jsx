@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { Plus, Trash2, Check, X, FileQuestion } from "lucide-react"
 
@@ -11,31 +10,42 @@ const QuestionEditor = ({ question, onUpdate, onDelete, questionIndex }) => {
     onUpdate(updated)
   }
 
-  const handleOptionChange = (optionIndex, field, value) => {
+  const handleOptionChange = (optionIndex, value) => {
     const updatedOptions = localQuestion.options.map((option, index) =>
-      index === optionIndex ? { ...option, [field]: value } : option,
+      index === optionIndex ? value : option
     )
     handleQuestionChange("options", updatedOptions)
+    
+    // If we changed the correct answer option, update correct_answer
+    if (localQuestion.correct_answer === localQuestion.options[optionIndex]) {
+      handleQuestionChange("correct_answer", value)
+    }
   }
 
   const addOption = () => {
-    const newOption = { text: "", is_correct: false }
-    handleQuestionChange("options", [...localQuestion.options, newOption])
+    const newOptions = [...localQuestion.options, ""]
+    handleQuestionChange("options", newOptions)
   }
 
   const removeOption = (optionIndex) => {
     if (localQuestion.options.length > 2) {
       const updatedOptions = localQuestion.options.filter((_, index) => index !== optionIndex)
       handleQuestionChange("options", updatedOptions)
+      
+      // If we removed the correct answer, clear it
+      if (localQuestion.correct_answer === localQuestion.options[optionIndex]) {
+        handleQuestionChange("correct_answer", null)
+      }
     }
   }
 
   const setCorrectAnswer = (optionIndex) => {
-    const updatedOptions = localQuestion.options.map((option, index) => ({
-      ...option,
-      is_correct: index === optionIndex,
-    }))
-    handleQuestionChange("options", updatedOptions)
+    const correctAnswer = localQuestion.options[optionIndex]
+    handleQuestionChange("correct_answer", correctAnswer)
+  }
+
+  const isCorrectAnswer = (optionIndex) => {
+    return localQuestion.correct_answer === localQuestion.options[optionIndex]
   }
 
   return (
@@ -77,18 +87,18 @@ const QuestionEditor = ({ question, onUpdate, onDelete, questionIndex }) => {
               <button
                 onClick={() => setCorrectAnswer(optionIndex)}
                 className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                  option.is_correct
+                  isCorrectAnswer(optionIndex)
                     ? "border-green-500 bg-green-500 text-white"
                     : "border-gray-300 hover:border-green-400"
                 }`}
               >
-                {option.is_correct && <Check className="w-3 h-3" />}
+                {isCorrectAnswer(optionIndex) && <Check className="w-3 h-3" />}
               </button>
 
               <input
                 type="text"
-                value={option.text}
-                onChange={(e) => handleOptionChange(optionIndex, "text", e.target.value)}
+                value={option}
+                onChange={(e) => handleOptionChange(optionIndex, e.target.value)}
                 placeholder={`Option ${optionIndex + 1}`}
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
@@ -111,21 +121,20 @@ const QuestionEditor = ({ question, onUpdate, onDelete, questionIndex }) => {
           <input
             type="number"
             value={localQuestion.points || 1}
-            onChange={(e) => handleQuestionChange("points", Number.parseInt(e.target.value))}
-            min="1"
-            max="10"
+            onChange={(e) => handleQuestionChange("points", parseFloat(e.target.value) || 1.0)}
+            min="0"
+            step="0.1"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Time Limit (seconds)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Order Index</label>
           <input
             type="number"
-            value={localQuestion.time_limit || 30}
-            onChange={(e) => handleQuestionChange("time_limit", Number.parseInt(e.target.value))}
-            min="10"
-            max="300"
+            value={localQuestion.order_index || 0}
+            onChange={(e) => handleQuestionChange("order_index", parseInt(e.target.value) || 0)}
+            min="0"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
@@ -139,8 +148,7 @@ const AssessmentEditor = ({ assessment, onChange }) => {
     assessment || {
       title: "",
       description: "",
-      time_limit: 30,
-      passing_score: 70,
+      passing_score: 70.0,
       questions: [],
     },
   )
@@ -154,12 +162,10 @@ const AssessmentEditor = ({ assessment, onChange }) => {
   const addQuestion = () => {
     const newQuestion = {
       question_text: "",
-      options: [
-        { text: "", is_correct: false },
-        { text: "", is_correct: false },
-      ],
-      points: 1,
-      time_limit: 30,
+      options: ["", ""],
+      correct_answer: null,
+      points: 1.0,
+      order_index: localAssessment.questions.length,
     }
     handleAssessmentChange("questions", [...localAssessment.questions, newQuestion])
   }
@@ -172,7 +178,9 @@ const AssessmentEditor = ({ assessment, onChange }) => {
   }
 
   const deleteQuestion = (questionIndex) => {
-    const updatedQuestions = localAssessment.questions.filter((_, index) => index !== questionIndex)
+    const updatedQuestions = localAssessment.questions
+      .filter((_, index) => index !== questionIndex)
+      .map((question, index) => ({ ...question, order_index: index })) // Reorder after deletion
     handleAssessmentChange("questions", updatedQuestions)
   }
 
@@ -200,9 +208,10 @@ const AssessmentEditor = ({ assessment, onChange }) => {
             <input
               type="number"
               value={localAssessment.passing_score}
-              onChange={(e) => handleAssessmentChange("passing_score", Number.parseInt(e.target.value))}
-              min="1"
+              onChange={(e) => handleAssessmentChange("passing_score", parseFloat(e.target.value) || 70.0)}
+              min="0"
               max="100"
+              step="0.1"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>

@@ -1,13 +1,157 @@
+// "use client"
+
+// import { useState, useEffect } from "react"
+// import { useNavigate, useParams } from "react-router-dom"
+// import SectionManager from "../../components/lesson/SectionManager"
+// import { courseAPI } from "../../services/api"
+
+// const CourseCreationPage = () => {
+//   const { courseId } = useParams()
+//   const navigate = useNavigate()
+//   const [courseData, setCourseData] = useState({
+//     title: "",
+//     sections: [],
+//   })
+//   const [loading, setLoading] = useState(false)
+//   const [errors, setErrors] = useState({})
+
+//   useEffect(() => {
+//     if (courseId) {
+//       fetchCourseData()
+//     }
+//   }, [courseId])
+
+//   const fetchCourseData = async () => {
+//     try {
+//       setLoading(true)
+//       const data = await courseAPI.getCourse(courseId)
+//       setCourseData({
+//         title: data.title,
+//         sections: data.sections || [],
+//       })
+//     } catch (error) {
+//       console.error("Error fetching course:", error)
+//     } finally {
+//       setLoading(false)
+//     }
+//   }
+
+//   const handleSectionsChange = (sections) => {
+//     setCourseData((prev) => ({ ...prev, sections }))
+//     setErrors((prev) => ({ ...prev, sections: "" }))
+//   }
+
+//   const validateCourse = () => {
+//     const newErrors = {}
+
+//     if (courseData.sections.length === 0) {
+//       newErrors.sections = "At least one section is required"
+//     }
+
+//     const sectionsWithoutLessons = courseData.sections.filter(
+//       (section) => !section.lessons || section.lessons.length === 0,
+//     )
+
+//     if (sectionsWithoutLessons.length > 0) {
+//       newErrors.sections = "Each section must have at least one lesson"
+//     }
+
+//     setErrors(newErrors)
+//     return Object.keys(newErrors).length === 0
+//   }
+
+//   const handleSave = async () => {
+//     if (!validateCourse()) return
+
+//     try {
+//       setLoading(true)
+//       const step3Data = {
+//         sections: courseData.sections.map((section) => ({
+//           name: section.name,
+//           lessons: section.lessons.map((lesson) => ({
+//             name: lesson.name,
+//             content_type: lesson.content_type,
+//             content_url: lesson.content_url,
+//             duration: lesson.duration,
+//             description: lesson.description,
+//           })),
+//         })),
+//       }
+
+//       await courseAPI.updateStep3(courseId, step3Data)
+//       navigate("/instructor/courses")
+//     } catch (error) {
+//       console.error("Error saving course:", error)
+//     } finally {
+//       setLoading(false)
+//     }
+//   }
+
+//   if (loading) {
+//     return (
+//       <div className="min-h-screen flex items-center justify-center">
+//         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+//       </div>
+//     )
+//   }
+
+//   return (
+//     <div className="min-h-screen bg-gray-50">
+//       <div className="max-w-6xl mx-auto py-8 px-4">
+//         <div className="bg-white rounded-lg shadow-sm">
+//           <div className="border-b border-gray-200 px-6 py-4">
+//             <div className="flex items-center justify-between">
+//               <div>
+//                 <h1 className="text-2xl font-semibold text-gray-900">{courseData.title || "Course Creation"}</h1>
+//                 <p className="text-gray-600 mt-1">Create sections and lessons for your course</p>
+//               </div>
+//               <div className="flex space-x-3">
+//                 <button
+//                   onClick={() => navigate("/instructor/courses")}
+//                   className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+//                 >
+//                   Cancel
+//                 </button>
+//                 <button
+//                   onClick={handleSave}
+//                   disabled={loading}
+//                   className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+//                 >
+//                   {loading ? "Saving..." : "Save Course"}
+//                 </button>
+//               </div>
+//             </div>
+//           </div>
+
+//           <div className="p-6">
+//             <SectionManager sections={courseData.sections} onChange={handleSectionsChange} />
+
+//             {errors.sections && (
+//               <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+//                 <p className="text-red-700 text-sm">{errors.sections}</p>
+//               </div>
+//             )}
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   )
+// }
+
+// export default CourseCreationPage
+
+
 "use client"
 
 import { useState, useEffect } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { useAuth } from "../../context/AuthContext"
-import { courseAPI, adminAPI } from "../../services/api"
+import { instructorAPI } from "../../services/instructorAPI"
+import { adminAPI,courseAPI } from "../../services/api"
 import LoadingSpinner from "../../components/common/LoadingSpinner"
 import ArrayInputField from "../../components/course/ArrayInputField"
 import FileUpload from "../../components/course/FileUpload"
-import SectionEditor from "../../components/course/SectionEditor"
+import EnhancedSectionEditor from "../../components/course/EnhancedSectionEditor"
 import InstructorSearch from "../../components/course/InstructorSearch"
 import { ChevronRight, Check } from "lucide-react"
 
@@ -89,7 +233,7 @@ const CreateCourse = () => {
   const fetchCourseData = async (id) => {
     try {
       setLoading(true)
-      const data = await courseAPI.getCourse(id)
+      const data = await instructorAPI.getCourseDetail(id)
       const transformedData = {
         ...data,
         category_id: data.category_id?.toString() || "",
@@ -105,9 +249,20 @@ const CreateCourse = () => {
           data.sections?.map((section) => ({
             id: section.id,
             name: section.name,
-            lessons: section.lessons || [],
+            lessons:
+              section.lessons?.map((lesson) => ({
+                id: lesson.id,
+                name: lesson.name,
+                content_type: lesson.content_type,
+                content_url: lesson.content_url,
+                duration: lesson.duration,
+                description: lesson.description,
+                content: lesson.content_data || {},
+                assessment: lesson.assessment || null,
+                order_index: lesson.order_index || 0,
+              })) || [],
           })) || [],
-        co_instructors: [], 
+        co_instructors: [],
         cover_image: null,
         trailer_video: null,
       }
@@ -140,7 +295,17 @@ const CreateCourse = () => {
           newErrors.target_audiences = "At least one target audience is required"
         break
       case 3:
-        if (courseData.sections.length === 0) newErrors.sections = "At least one section is required"
+        if (courseData.sections.length === 0) {
+          newErrors.sections = "At least one section is required"
+        } else {
+          // Check if all sections have at least one lesson
+          const sectionsWithoutLessons = courseData.sections.filter(
+            (section) => !section.lessons || section.lessons.length === 0,
+          )
+          if (sectionsWithoutLessons.length > 0) {
+            newErrors.sections = "Each section must have at least one lesson"
+          }
+        }
         break
       case 4:
         if (!courseData.price || Number.parseFloat(courseData.price) <= 0) newErrors.price = "Valid price is required"
@@ -189,55 +354,13 @@ const CreateCourse = () => {
     }))
   }
 
-  // Section and lesson handlers
-  const handleAddSection = (name) => {
-    setCourseData((prev) => ({
-      ...prev,
-      sections: [...prev.sections, { name, lessons: [] }],
-    }))
+  const handleSectionsChange = (sections) => {
+    setCourseData((prev) => ({ ...prev, sections }))
+    if (errors.sections) {
+      setErrors((prev) => ({ ...prev, sections: "" }))
+    }
   }
 
-  const handleEditSection = (sectionIndex, newName) => {
-    setCourseData((prev) => ({
-      ...prev,
-      sections: prev.sections.map((section, index) =>
-        index === sectionIndex ? { ...section, name: newName } : section,
-      ),
-    }))
-  }
-
-  const handleDeleteSection = (sectionIndex) => {
-    setCourseData((prev) => ({
-      ...prev,
-      sections: prev.sections.filter((_, index) => index !== sectionIndex),
-    }))
-  }
-
-  const handleAddLesson = (sectionId, lesson) => {
-    setCourseData((prev) => ({
-      ...prev,
-      sections: prev.sections.map((section, index) =>
-        index === sectionId ? { ...section, lessons: [...(section.lessons || []), lesson] } : section,
-      ),
-    }))
-  }
-
-  const handleEditLesson = (sectionId, lessonIndex) => {
-    console.log("Edit lesson:", sectionId, lessonIndex)
-  }
-
-  const handleDeleteLesson = (sectionId, lessonIndex) => {
-    setCourseData((prev) => ({
-      ...prev,
-      sections: prev.sections.map((section, index) =>
-        index === sectionId
-          ? { ...section, lessons: section.lessons.filter((_, lIndex) => lIndex !== lessonIndex) }
-          : section,
-      ),
-    }))
-  }
-
-  // Instructor handlers
   const handleInstructorAdd = (instructor) => {
     setCourseData((prev) => ({
       ...prev,
@@ -271,8 +394,13 @@ const CreateCourse = () => {
             duration: Number.parseInt(courseData.duration) || null,
             duration_unit: courseData.duration_unit,
           }
-          response = await courseAPI.createStep1(step1Data)
-          setCourseData((prev) => ({ ...prev, id: response.id }))
+
+          if (courseData.id) {
+            response = await instructorAPI.updateCourseStep1(courseData.id, step1Data)
+          } else {
+            response = await instructorAPI.createStep1(step1Data)
+            setCourseData((prev) => ({ ...prev, id: response.id }))
+          }
           break
 
         case 2:
@@ -298,8 +426,7 @@ const CreateCourse = () => {
             formData.append("trailer_video", courseData.trailer_video)
           }
 
-          response = await courseAPI.updateStep2(courseData.id, formData)
-          // Update the URLs after successful upload
+          response = await instructorAPI.updateStep2(courseData.id, formData)
           setCourseData((prev) => ({
             ...prev,
             cover_image_url: response.cover_image ? getImageUrl(response.cover_image) : prev.cover_image_url,
@@ -308,10 +435,8 @@ const CreateCourse = () => {
           break
 
         case 3:
-          const step3Data = {
-            sections: courseData.sections.map((section) => ({ name: section.name })),
-          }
-          response = await courseAPI.updateStep3(courseData.id, step3Data)
+          // Sections are handled by EnhancedSectionEditor
+          // Just validate and proceed
           break
 
         case 4:
@@ -321,7 +446,7 @@ const CreateCourse = () => {
             congratulation_message: courseData.congratulation_message,
             co_instructor_ids: courseData.co_instructors.map((instructor) => instructor.id),
           }
-          response = await courseAPI.updateStep4(courseData.id, step4Data)
+          response = await instructorAPI.updateStep4(courseData.id, step4Data)
           break
       }
 
@@ -338,7 +463,6 @@ const CreateCourse = () => {
 
     setLoading(true)
     try {
-      // First, ensure step 4 data is saved before submitting
       const step4Data = {
         price: Number.parseFloat(courseData.price) || null,
         welcome_message: courseData.welcome_message,
@@ -346,18 +470,12 @@ const CreateCourse = () => {
         co_instructor_ids: courseData.co_instructors.map((instructor) => instructor.id),
       }
 
-      console.log("Saving step 4 data before submission:", step4Data)
-      await courseAPI.updateStep4(courseData.id, step4Data)
-
-      // Then submit for review
-      console.log("Submitting course for review...")
-      await courseAPI.submitCourse(courseData.id)
+      await instructorAPI.updateStep4(courseData.id, step4Data)
+      await instructorAPI.submitCourse(courseData.id)
 
       navigate("/instructor/pending-approval")
     } catch (error) {
       console.error("Error submitting course:", error)
-
-      // Show more detailed error message
       const errorMessage =
         error.response?.data?.detail || "Error submitting course. Please check all required fields are filled."
       alert(errorMessage)
@@ -366,7 +484,7 @@ const CreateCourse = () => {
     }
   }
 
-  if (loading) return <LoadingSpinner size="large" />
+  if (loading && !courseData.id) return <LoadingSpinner size="large" />
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -499,8 +617,8 @@ const CreateCourse = () => {
                     }`}
                   >
                     <option value="ENGLISH">ENGLISH</option>
-                    <option value="SPANISH">HINDI</option>
-                    <option value="FRENCH">MALAYALAM</option>
+                    <option value="HINDI">HINDI</option>
+                    <option value="MALAYALAM">MALAYALAM</option>
                   </select>
                   {errors.language && <span className="text-red-500 text-sm">{errors.language}</span>}
                 </div>
@@ -561,9 +679,10 @@ const CreateCourse = () => {
               </button>
               <button
                 onClick={handleNext}
-                className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                disabled={loading}
+                className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
               >
-                Save & Next
+                {loading ? "Saving..." : "Save & Next"}
               </button>
             </div>
           </div>
@@ -653,9 +772,10 @@ const CreateCourse = () => {
               </button>
               <button
                 onClick={handleNext}
-                className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                disabled={loading}
+                className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
               >
-                Save & Next
+                {loading ? "Saving..." : "Save & Next"}
               </button>
             </div>
           </div>
@@ -665,17 +785,12 @@ const CreateCourse = () => {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <h2 className="text-xl font-semibold mb-6">Course Curriculum</h2>
 
-            <SectionEditor
+            <EnhancedSectionEditor
               sections={courseData.sections}
-              onAddSection={handleAddSection}
-              onEditSection={handleEditSection}
-              onDeleteSection={handleDeleteSection}
-              onAddLesson={handleAddLesson}
-              onEditLesson={handleEditLesson}
-              onDeleteLesson={handleDeleteLesson}
+              onSectionsChange={handleSectionsChange}
+              courseId={courseData.id}
+              errors={errors}
             />
-
-            {errors.sections && <span className="text-red-500 text-sm mt-2">{errors.sections}</span>}
 
             <div className="flex justify-between mt-8">
               <button
@@ -686,9 +801,10 @@ const CreateCourse = () => {
               </button>
               <button
                 onClick={handleNext}
-                className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                disabled={loading}
+                className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
               >
-                Save & Next
+                {loading ? "Saving..." : "Save & Next"}
               </button>
             </div>
           </div>
