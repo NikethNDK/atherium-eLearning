@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import { useParams, useNavigate, Link } from "react-router-dom"
 import { adminAPI } from "../../services/api"
 import LoadingSpinner from "../../components/common/LoadingSpinner"
-import { ArrowLeft, Play, FileText, Link as LinkIcon, CheckCircle } from "lucide-react"
+import { ArrowLeft, Play, FileText, Link as LinkIcon, CheckCircle, BookOpen } from "lucide-react"
 
 const DetailedView = () => {
   const { courseId } = useParams()
@@ -39,6 +39,167 @@ const DetailedView = () => {
     if (imagePath.startsWith("http")) return imagePath
     const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
     return `${baseUrl}/${imagePath}`
+  }
+
+  const renderAssessmentQuestions = () => {
+    if (!selectedLesson.assessments?.[0]?.questions?.length) {
+      return (
+        <div className="text-center py-8">
+          <p className="text-gray-500">No questions available for this assessment</p>
+        </div>
+      )
+    }
+
+    const assessment = selectedLesson.assessments[0]
+    const questions = assessment.questions
+
+    return (
+      <div className="space-y-6">
+        {/* Assessment Header */}
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center space-x-2 text-red-600 mb-2">
+            <CheckCircle size={20} />
+            <h3 className="text-xl font-semibold">{assessment.title}</h3>
+          </div>
+          {assessment.description && (
+            <p className="text-gray-700 mb-3">{assessment.description}</p>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div className="bg-white p-3 rounded-lg border">
+              <div className="text-gray-500">Passing Score</div>
+              <div className="font-medium text-red-600">
+                {assessment.passing_score || "Not specified"}%
+              </div>
+            </div>
+            <div className="bg-white p-3 rounded-lg border">
+              <div className="text-gray-500">Max Attempts</div>
+              <div className="font-medium text-red-600">
+                {assessment.max_attempts || "Unlimited"}
+              </div>
+            </div>
+            <div className="bg-white p-3 rounded-lg border">
+              <div className="text-gray-500">Total Questions</div>
+              <div className="font-medium text-red-600">
+                {questions.length}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Questions and Solutions */}
+        <div className="space-y-4">
+          <h4 className="text-lg font-semibold text-gray-900 border-b pb-2">
+            Questions & Solutions
+          </h4>
+          
+          {questions.map((question, index) => (
+            <div key={question.id} className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+              {/* Question Header */}
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <span className="bg-blue-100 text-blue-800 text-sm font-medium px-2 py-1 rounded">
+                      Question {index + 1}
+                    </span>
+                    <span className="text-sm text-gray-500">
+                      {question.points} point{question.points !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  <h5 className="text-lg font-medium text-gray-900 mb-4">
+                    {question.question_text}
+                  </h5>
+                </div>
+              </div>
+
+              {/* Answer Options */}
+              <div className="space-y-2 mb-4">
+                <div className="text-sm font-medium text-gray-700 mb-2">Options:</div>
+                {question.options.map((option, optionIndex) => {
+                  const isCorrect = option === question.correct_answer
+                  return (
+                    <div
+                      key={optionIndex}
+                      className={`flex items-center space-x-3 p-3 rounded-lg border ${
+                        isCorrect
+                          ? 'bg-green-50 border-green-200'
+                          : 'bg-gray-50 border-gray-200'
+                      }`}
+                    >
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                        isCorrect
+                          ? 'border-green-500 bg-green-500'
+                          : 'border-gray-300'
+                      }`}>
+                        {isCorrect && (
+                          <CheckCircle className="w-3 h-3 text-white" />
+                        )}
+                      </div>
+                      <span className={`flex-1 ${
+                        isCorrect
+                          ? 'text-green-800 font-medium'
+                          : 'text-gray-700'
+                      }`}>
+                        {option}
+                      </span>
+                      {isCorrect && (
+                        <span className="text-xs font-medium text-green-600 bg-green-100 px-2 py-1 rounded">
+                          Correct Answer
+                        </span>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Solution/Explanation Section */}
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="flex items-center space-x-2 mb-2">
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <span className="text-sm font-medium text-green-800">Solution</span>
+                </div>
+                <p className="text-green-700">
+                  The correct answer is: <span className="font-semibold">"{question.correct_answer}"</span>
+                </p>
+                {/* You can add more explanation here if available in your data structure */}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Assessment Summary */}
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <h4 className="font-medium text-gray-900 mb-2">Assessment Summary</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="text-gray-500">Total Points:</span>
+              <span className="ml-2 font-medium">
+                {questions.reduce((total, q) => total + q.points, 0)}
+              </span>
+            </div>
+            <div>
+              <span className="text-gray-500">Time Limit:</span>
+              <span className="ml-2 font-medium">
+                {assessment.time_limit ? `${assessment.time_limit} minutes` : 'No limit'}
+              </span>
+            </div>
+            <div>
+              <span className="text-gray-500">Created:</span>
+              <span className="ml-2 font-medium">
+                {new Date(assessment.created_at).toLocaleDateString()}
+              </span>
+            </div>
+            <div>
+              <span className="text-gray-500">Status:</span>
+              <span className={`ml-2 font-medium ${
+                assessment.is_active ? 'text-green-600' : 'text-red-600'
+              }`}>
+                {assessment.is_active ? 'Active' : 'Inactive'}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   const renderLessonContent = () => {
@@ -129,46 +290,8 @@ const DetailedView = () => {
         )
       case "ASSESSMENT":
         return (
-          <div className="p-6 bg-white rounded-lg border border-gray-200">
-            <h3 className="text-xl font-semibold mb-4">{selectedLesson.name}</h3>
-            <div className="flex items-center space-x-2 text-red-600 mb-4">
-              <CheckCircle size={20} />
-              <span>Assessment</span>
-            </div>
-            {selectedLesson.assessments?.length > 0 ? (
-              <div>
-                <div className="mb-4">
-                  <h4 className="font-medium">{selectedLesson.assessments[0].title}</h4>
-                  {selectedLesson.assessments[0].description && (
-                    <p className="text-sm text-gray-600 mt-1">
-                      {selectedLesson.assessments[0].description}
-                    </p>
-                  )}
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <div className="text-gray-500">Passing Score</div>
-                    <div className="font-medium">
-                      {selectedLesson.assessments[0].passing_score || "Not specified"}%
-                    </div>
-                  </div>
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <div className="text-gray-500">Max Attempts</div>
-                    <div className="font-medium">
-                      {selectedLesson.assessments[0].max_attempts || "Unlimited"}
-                    </div>
-                  </div>
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <div className="text-gray-500">Questions</div>
-                    <div className="font-medium">
-                      {selectedLesson.assessments[0].questions?.length || 0}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <p className="text-gray-500">No assessment details available</p>
-            )}
+          <div className="bg-white rounded-lg border border-gray-200">
+            {renderAssessmentQuestions()}
           </div>
         )
       default:
@@ -249,10 +372,10 @@ const DetailedView = () => {
                               <span className="w-4 h-4 text-gray-500 block">T</span>
                             )}
                             {lesson.content_type === "ASSESSMENT" && (
-                              <span className="w-4 h-4 text-red-500 block">Q</span>
+                              <CheckCircle className="w-4 h-4 text-red-500" />
                             )}
                             {lesson.content_type === "REFERENCE_LINK" && (
-                              <span className="w-4 h-4 text-green-500 block">L</span>
+                              <LinkIcon className="w-4 h-4 text-green-500" />
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
@@ -278,35 +401,39 @@ const DetailedView = () => {
             {selectedLesson ? (
               <div className="space-y-4">
                 {renderLessonContent()}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                  <h3 className="font-medium mb-2">Lesson Details</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <div className="text-gray-500">Content Type</div>
-                      <div className="font-medium capitalize">
-                        {selectedLesson.content_type.toLowerCase().replace("_", " ")}
+                
+                {/* Lesson Details - Only show for non-assessment lessons */}
+                {selectedLesson.content_type !== "ASSESSMENT" && (
+                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                    <h3 className="font-medium mb-2">Lesson Details</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <div className="text-gray-500">Content Type</div>
+                        <div className="font-medium capitalize">
+                          {selectedLesson.content_type.toLowerCase().replace("_", " ")}
+                        </div>
                       </div>
-                    </div>
-                    <div>
-                      <div className="text-gray-500">Duration</div>
-                      <div className="font-medium">
-                        {selectedLesson.duration || 0} minutes
+                      <div>
+                        <div className="text-gray-500">Duration</div>
+                        <div className="font-medium">
+                          {selectedLesson.duration || 0} minutes
+                        </div>
                       </div>
-                    </div>
-                    <div>
-                      <div className="text-gray-500">Created At</div>
-                      <div className="font-medium">
-                        {new Date(selectedLesson.created_at).toLocaleDateString()}
+                      <div>
+                        <div className="text-gray-500">Created At</div>
+                        <div className="font-medium">
+                          {new Date(selectedLesson.created_at).toLocaleDateString()}
+                        </div>
                       </div>
-                    </div>
-                    <div>
-                      <div className="text-gray-500">Active</div>
-                      <div className="font-medium">
-                        {selectedLesson.is_active ? "Yes" : "No"}
+                      <div>
+                        <div className="text-gray-500">Active</div>
+                        <div className="font-medium">
+                          {selectedLesson.is_active ? "Yes" : "No"}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
             ) : (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">

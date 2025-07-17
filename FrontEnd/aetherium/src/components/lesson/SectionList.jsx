@@ -875,38 +875,144 @@ const SectionList = ({ sections, onChange, courseId }) => {
     [sections]
   )
 
-  // const editLesson = useCallback(
-  //   (sectionIndex, lessonIndex) => {
-  //     setApiError("")
-  //     const lesson = sections[sectionIndex].lessons[lessonIndex]
+
+// const editLesson = useCallback((sectionIndex, lessonIndex) => {
+//   setApiError("");
+//   const section = sections[sectionIndex];
+  
+//   if (!section || !section.lessons) {
+//     console.error("Section or lessons not found");
+//     return;
+//   }
+
+//   const lesson = section.lessons[lessonIndex];
+//   console.log("Original lesson data:", lesson);
+
+//   if (!lesson) {
+//     console.error("Lesson not found at index:", lessonIndex);
+//     return;
+//   }
+
+//   // Use lesson.content if it exists, otherwise use lesson.lesson_content
+//   const content = lesson.content || lesson.lesson_content || getInitialContent(lesson.content_type || "TEXT");
+
+//   const transformedLesson = {
+//     ...lesson,
+//     content: {
+//       // Text content
+//       text_content: content.text_content || "",
       
-  //     // Transform lesson data to match editor expectations
-  //     const transformedLesson = {
-  //       ...lesson,
-  //       // Map lesson_content to content for the editor
-  //       content: lesson.lesson_content ? {
-  //         text_content: lesson.lesson_content.text_content || "",
-  //         file_url: lesson.lesson_content.file_url || "",
-  //         file_public_id: lesson.lesson_content.file_public_id || "",
-  //         file_type: lesson.lesson_content.file_type || "",
-  //         file_size: lesson.lesson_content.file_size || null,
-  //         video_duration: lesson.lesson_content.video_duration || null,
-  //         video_thumbnail: lesson.lesson_content.video_thumbnail || "",
-  //         external_url: lesson.lesson_content.external_url || "",
-  //         link_title: lesson.lesson_content.link_title || "",
-  //         link_description: lesson.lesson_content.link_description || ""
-  //       } : {}
-  //     }
+//       // File content
+//       file_url: content.file_url || "",
+//       file_public_id: content.file_public_id || "",
+//       file_type: content.file_type || "",
+//       file_size: content.file_size || null,
       
-  //     setEditingLesson({
-  //       sectionIndex,
-  //       lessonIndex,
-  //       lesson: transformedLesson
-  //     })
-  //     setIsLessonEditorOpen(true)
-  //   },
-  //   [sections]
-  // )
+//       // Video specific
+//       video_duration: content.video_duration || null,
+//       video_thumbnail: content.video_thumbnail || "",
+      
+//       // Reference link
+//       external_url: content.external_url || "",
+//       link_title: content.link_title || "",
+//       link_description: content.link_description || "",
+      
+//       // For new uploads
+//       file: null,
+//       fileName: null
+//     }
+//   };
+
+//   console.log("Transformed lesson:", transformedLesson);
+  
+//   setEditingLesson({
+//     sectionIndex,
+//     lessonIndex,
+//     lesson: transformedLesson
+//   });
+//   setIsLessonEditorOpen(true);
+// }, [sections]);
+
+// const editLesson = useCallback((sectionIndex, lessonIndex) => {
+//   setApiError("");
+//   const section = sections[sectionIndex];
+  
+//   if (!section || !section.lessons) {
+//     console.error("Section or lessons not found");
+//     return;
+//   }
+
+//   const lesson = section.lessons[lessonIndex];
+//   console.log("Original lesson data:", lesson);
+
+//   if (!lesson) {
+//     console.error("Lesson not found at index:", lessonIndex);
+//     return;
+//   }
+
+//   // Start with your existing transformation logic
+//   const content = lesson.content || lesson.lesson_content || getInitialContent(lesson.content_type || "TEXT");
+
+//   const transformedLesson = {
+//     ...lesson,
+//     content: {
+//       // Text content
+//       text_content: content.text_content || "",
+      
+//       // File content
+//       file_url: content.file_url || "",
+//       file_public_id: content.file_public_id || "",
+//       file_type: content.file_type || "",
+//       file_size: content.file_size || null,
+      
+//       // Video specific
+//       video_duration: content.video_duration || null,
+//       video_thumbnail: content.video_thumbnail || "",
+      
+//       // Reference link
+//       external_url: content.external_url || "",
+//       link_title: content.link_title || "",
+//       link_description: content.link_description || "",
+      
+//       // For new uploads
+//       file: null,
+//       fileName: null
+//     }
+//   };
+
+//   // SPECIAL HANDLING ONLY FOR ASSESSMENTS
+//   if (lesson.content_type === "ASSESSMENT" && lesson.assessments?.length > 0) {
+//     const assessment = lesson.assessments[0];
+//     transformedLesson.assessment = {
+//       ...assessment,
+//       questions: assessment.questions.map(q => ({
+//         ...q,
+//         // Ensure options is always an array
+//         options: q.options || [],
+//         // Ensure correct_answer exists
+//         correct_answer: q.correct_answer || null
+//       }))
+//     };
+//   } else if (lesson.content_type === "ASSESSMENT") {
+//     // Initialize empty assessment if none exists (shouldn't happen for assessment lessons)
+//     transformedLesson.assessment = {
+//       title: "",
+//       description: "",
+//       passing_score: 70,
+//       questions: []
+//     };
+//   }
+
+//   console.log("Transformed lesson:", transformedLesson);
+  
+//   setEditingLesson({
+//     sectionIndex,
+//     lessonIndex,
+//     lesson: transformedLesson
+//   });
+//   setIsLessonEditorOpen(true);
+// }, [sections]);
+
 const editLesson = useCallback((sectionIndex, lessonIndex) => {
   setApiError("");
   const section = sections[sectionIndex];
@@ -924,7 +1030,7 @@ const editLesson = useCallback((sectionIndex, lessonIndex) => {
     return;
   }
 
-  // Use lesson.content if it exists, otherwise use lesson.lesson_content
+  // Start with your existing transformation logic
   const content = lesson.content || lesson.lesson_content || getInitialContent(lesson.content_type || "TEXT");
 
   const transformedLesson = {
@@ -954,6 +1060,29 @@ const editLesson = useCallback((sectionIndex, lessonIndex) => {
     }
   };
 
+  // SPECIAL HANDLING ONLY FOR ASSESSMENTS
+  if (lesson.content_type === "ASSESSMENT" && lesson.assessments?.length > 0) {
+    const assessment = lesson.assessments[0];
+    transformedLesson.assessment = {
+      ...assessment,
+      questions: assessment.questions.map(q => ({
+        ...q,
+        // Ensure options is always an array
+        options: q.options || [],
+        // Ensure correct_answer exists
+        correct_answer: q.correct_answer || null
+      }))
+    };
+  } else if (lesson.content_type === "ASSESSMENT") {
+    // Initialize empty assessment if none exists (shouldn't happen for assessment lessons)
+    transformedLesson.assessment = {
+      title: "",
+      description: "",
+      passing_score: 70,
+      questions: []
+    };
+  }
+
   console.log("Transformed lesson:", transformedLesson);
   
   setEditingLesson({
@@ -963,6 +1092,7 @@ const editLesson = useCallback((sectionIndex, lessonIndex) => {
   });
   setIsLessonEditorOpen(true);
 }, [sections]);
+
 
   const deleteLesson = useCallback(
     async (sectionIndex, lessonIndex) => {

@@ -195,7 +195,10 @@ export const instructorAPI = {
     const response = await api.get(`/instructor/lessons/upload-status/${taskId}`)
     return response.data
   },
-
+getLessonAssessment: async (lessonId) => {
+  const response = await api.get(`/instructor/lessons/${lessonId}/assessment`);
+  return response.data;
+},
 
 
 

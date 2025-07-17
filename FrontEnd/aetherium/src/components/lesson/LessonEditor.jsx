@@ -70,35 +70,39 @@ const LessonEditor = ({
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState("");
-  const [lessonData, setLessonData] = useState(() => {
-    if (!lesson) {
-      return {
-        name: "",
-        content_type: "TEXT",
-        duration: "",
-        description: "",
-        order_index: 0,
-        content: getInitialContent("TEXT"),
-        assessment: null,
-      };
-    }
-
-    // For existing lessons
+ const [lessonData, setLessonData] = useState(() => {
+  if (!lesson) {
     return {
-      ...lesson,
-      content:
-        lesson.content || getInitialContent(lesson.content_type || "TEXT"),
-      assessment:
-        lesson.content_type === "ASSESSMENT"
-          ? lesson.assessment || {
-              title: "",
-              description: "",
-              passing_score: 70,
-              questions: [],
-            }
-          : null,
+      name: "",
+      content_type: "TEXT",
+      duration: "",
+      description: "",
+      order_index: 0,
+      content: getInitialContent("TEXT"),
+      assessment: null,
     };
-  });
+  }
+
+  // For existing lessons
+  const initialState = {
+    ...lesson,
+    content: lesson.content || getInitialContent(lesson.content_type || "TEXT"),
+  };
+
+  // Special handling for assessments
+  if (lesson.content_type === "ASSESSMENT") {
+    initialState.assessment = lesson.assessment?.[0] || {
+      title: "",
+      description: "",
+      passing_score: 70,
+      questions: [],
+    };
+  } else {
+    initialState.assessment = null;
+  }
+
+  return initialState;
+});
 
   const handleAssessmentChange = useCallback((updatedAssessment) => {
     setLessonData((prev) => {
@@ -233,64 +237,64 @@ const LessonEditor = ({
     return Object.keys(newErrors).length === 0;
   }, [lessonData]);
 
-  const handleSave = async () => {
-    setApiError("");
-    if (!validateLesson()) return;
+const handleSave = async () => {
+  setApiError("");
+  if (!validateLesson()) return;
 
-    setLoading(true);
-    try {
-      const payload = {
-        name: lessonData.name.trim(),
-        content_type: lessonData.content_type,
-        duration: lessonData.duration ? parseInt(lessonData.duration) : null,
-        description: lessonData.description.trim(),
-        order_index: lessonData.order_index || 0,
+  setLoading(true);
+  try {
+    const payload = {
+      name: lessonData.name.trim(),
+      content_type: lessonData.content_type,
+      duration: lessonData.duration ? parseInt(lessonData.duration) : null,
+      description: lessonData.description.trim(),
+      order_index: lessonData.order_index || 0,
+    };
+
+    if (lessonData.content_type === "ASSESSMENT" && lessonData.assessment) {
+      payload.assessment = {
+        title: lessonData.assessment.title.trim(),
+        description: lessonData.assessment.description.trim(),
+        passing_score: parseFloat(lessonData.assessment.passing_score) || 70,
+        time_limit: lessonData.assessment.time_limit 
+          ? parseInt(lessonData.assessment.time_limit) 
+          : null,
+        max_attempts: lessonData.assessment.max_attempts 
+          ? parseInt(lessonData.assessment.max_attempts) 
+          : 3,
+        questions: lessonData.assessment.questions
+          .map((q, i) => ({
+            question_text: q.question_text.trim(),
+            options: q.options?.map(opt => opt.trim()).filter(opt => opt) || [],
+            correct_answer: q.correct_answer,
+            points: parseFloat(q.points) || 1.0,
+            order_index: i,
+          }))
+          .filter(q => q.question_text),
       };
-
-      if (lessonData.content_type === "ASSESSMENT" && lessonData.assessment) {
-        // Send assessments as an array to match backend expectation
-        payload.assessments = [
-          {
-            title: lessonData.assessment.title.trim(),
-            description: lessonData.assessment.description.trim(),
-            passing_score:
-              parseFloat(lessonData.assessment.passing_score) || 70,
-            questions: lessonData.assessment.questions
-              .map((q, i) => ({
-                question_text: q.question_text.trim(),
-                options:
-                  q.options?.map((opt) => opt.trim()).filter((opt) => opt) ||
-                  [],
-                correct_answer: q.correct_answer?.trim(),
-                points: parseFloat(q.points) || 1.0,
-                order_index: i,
-              }))
-              .filter((q) => q.question_text),
-          },
-        ];
-        payload.content = null;
-      } else {
-        payload.content = lessonData.content;
-        payload.assessments = []; // Clear assessments for non-assessment types
-      }
-
-      let savedLesson;
-      if (lesson?.id) {
-        savedLesson = await instructorAPI.updateLesson(lesson.id, payload);
-      } else {
-        savedLesson = await instructorAPI.createLesson(sectionId, payload);
-      }
-
-      onSave(savedLesson);
-    } catch (error) {
-      console.error("Error saving lesson:", error);
-      setApiError(
-        error.response?.data?.detail || error.message || "Error saving lesson"
-      );
-    } finally {
-      setLoading(false);
+      payload.content = null;
+    } else {
+      payload.content = lessonData.content;
+      payload.assessment = null;
     }
-  };
+
+    let savedLesson;
+    if (lesson?.id) {
+      savedLesson = await instructorAPI.updateLesson(lesson.id, payload);
+    } else {
+      savedLesson = await instructorAPI.createLesson(sectionId, payload);
+    }
+
+    onSave(savedLesson);
+  } catch (error) {
+    console.error("Error saving lesson:", error);
+    setApiError(
+      error.response?.data?.detail || error.message || "Error saving lesson"
+    );
+  } finally {
+    setLoading(false);
+  }
+};
   // const handleSave = async () => {
   //   setApiError("")
   //   if (!validateLesson()) {
@@ -535,16 +539,27 @@ const LessonEditor = ({
           </div>
 
           {lessonData.content_type === "ASSESSMENT" ? (
-            <div>
-              <AssessmentEditor
-                key={lessonData.assessment?.id || "new-assessment"} // Add key to force re-render
-                assessment={
-                  lessonData.content_type === "ASSESSMENT"
-                    ? lessonData.assessment
-                    : null
-                }
-                onChange={handleAssessmentChange}
-              />
+            // <div>
+            //   <AssessmentEditor
+            //     key={lessonData.assessment?.id || "new-assessment"} // Add key to force re-render
+            //     assessment={
+            //       lessonData.content_type === "ASSESSMENT"
+            //         ? lessonData.assessment
+            //         : null
+            //     }
+            //     onChange={handleAssessmentChange}
+            //   />
+              <div>
+      <AssessmentEditor
+    lessonId={lessonData.id}
+    isNewAssessment={!lessonData.id} 
+    onChange={(updatedAssessment) => {
+      setLessonData(prev => ({
+        ...prev,
+        assessment: updatedAssessment
+      }));
+    }}
+  />
 
               {errors.assessment_title && (
                 <p className="text-red-500 text-sm mt-1">
