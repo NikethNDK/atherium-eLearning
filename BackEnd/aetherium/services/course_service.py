@@ -271,7 +271,8 @@ class CourseService:
             joinedload(Course.instructor)
         ).filter(
             Course.instructor_id == instructor_id,
-            Course.verification_status == VerificationStatus.PENDING or Course.verification_status == VerificationStatus.REJECTED
+            Course.verification_status.in_([VerificationStatus.PENDING, VerificationStatus.REJECTED])
+            # Course.verification_status == VerificationStatus.PENDING or Course.verification_status == VerificationStatus.REJECTED
         ).all()
 
     @staticmethod

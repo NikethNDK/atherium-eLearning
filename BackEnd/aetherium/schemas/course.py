@@ -31,50 +31,6 @@ class CourseCreateStep2(BaseModel):
     target_audiences: List[str] = []
     requirements: List[str] = []
 
-# class LessonCreate(BaseModel):
-#     name:str
-#     content_type:ContentType
-#     content_url:Optional[str]=None
-#     # duration:Optional[Union[int,str]]
-#     duration: Optional[int] = None
-#     description:Optional[str]=None
-#     content_data:Optional[str]=None
-#     order_index:Optional[int]=0
-#     assessment:Optional[Dict[str,Any]]=None
-    
-#     @field_validator('content_type', mode='before')
-#     @classmethod
-#     def validate_content_type(cls, v):
-#         if v is None or v == "":
-#             raise ValueError("content_type is required")
-#         if isinstance(v, str):
-#             try:
-#                 return ContentType(v)
-#             except ValueError:
-#                 raise ValueError(f"Invalid content_type: {v}")
-#         return v
-
-#     @field_validator('duration', mode='before')
-#     @classmethod
-#     def parse_duration(cls, v):
-#         if v is None or v == "":
-#             return None
-#         if isinstance(v, str):
-#             try:
-#                 return int(v) if v.strip() else None
-#             except ValueError:
-#                 return None
-#         return v
-
-#     @field_validator('content_data', mode='before')
-#     @classmethod
-#     def parse_content_data(cls, v):
-#         if v is None:
-#             return None
-#         if isinstance(v, dict):
-#             import json
-#             return json.dumps(v)
-#         return str(v)
 
 class SectionCreate(BaseModel):
     name: str
@@ -114,45 +70,6 @@ class RequirementResponse(BaseModel):
     description: str
     
     model_config = ConfigDict(from_attributes=True)
-
-
-
-# class LessonResponse(BaseModel):
-#     id: int
-#     name: str
-#     content_type: ContentType
-#     content_url: Optional[str] = None
-#     duration: Optional[int] = None
-#     description: Optional[str] = None
-#     content_data: Optional[str] = None
-#     order_index: int
-#     is_published: bool = True
-#     created_at: Optional[datetime] = None
-#     updated_at: Optional[datetime] = None
-#     assessment: Optional[Dict[str, Any]] = None
-    
-#     @field_validator('content_data', mode='before')
-#     @classmethod
-#     def serialize_content_data(cls, v):
-#         if v is None:
-#             return None
-#         if isinstance(v, dict):
-#             return json.dumps(v)
-#         return str(v)
-    
-#     @field_validator('assessment', mode='before')
-#     @classmethod
-#     def serialize_assessment(cls, v):
-#         if v is None:
-#             return None
-#         if isinstance(v, str):
-#             try:
-#                 return json.loads(v)
-#             except json.JSONDecodeError:
-#                 return None
-#         return v
-    
-#     model_config = ConfigDict(from_attributes=True)
 
 class SectionResponse(BaseModel):
     id: int

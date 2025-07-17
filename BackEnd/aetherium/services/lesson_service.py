@@ -246,25 +246,112 @@ class LessonService:
         return lessons
     
     #update lesson
+    # async def update_lesson(self, lesson_id: int, lesson_data: LessonUpdate) -> LessonResponse:
+    #     lesson = self.db.query(Lesson).filter(Lesson.id == lesson_id).first()
+    #     if not lesson:
+    #         raise HTTPException(status_code=404, detail="Lesson not found")
+
+    #     update_data = lesson_data.model_dump(exclude_none=True, exclude={"content"})
+    #     for key, value in update_data.items():
+    #         setattr(lesson, key, value)
+ 
+    #     if lesson_data.content:
+    #         content = self.db.query(LessonContent).filter(
+    #             LessonContent.lesson_id == lesson_id
+    #         ).first()
+
+    #         if content:
+    #             content_data = lesson_data.content.model_dump(exclude_none=True)
+    #             for key, value in content_data.items():
+    #                 setattr(content, key, value)
+
+    #     self.db.commit()
+    #     self.db.refresh(lesson)
+    #     return LessonResponse.model_validate(lesson)
     async def update_lesson(self, lesson_id: int, lesson_data: LessonUpdate) -> LessonResponse:
         lesson = self.db.query(Lesson).filter(Lesson.id == lesson_id).first()
         if not lesson:
             raise HTTPException(status_code=404, detail="Lesson not found")
-
-        update_data = lesson_data.model_dump(exclude_none=True, exclude={"content"})
+    
+        # Update basic lesson fields
+        update_data = lesson_data.model_dump(exclude_none=True, exclude={"content", "assessment"})
         for key, value in update_data.items():
             setattr(lesson, key, value)
- 
-        if lesson_data.content:
+    
+        # Handle content update (for non-assessment lessons)
+        if lesson_data.content and lesson.content_type != ContentType.ASSESSMENT:
             content = self.db.query(LessonContent).filter(
                 LessonContent.lesson_id == lesson_id
             ).first()
-
+    
             if content:
                 content_data = lesson_data.content.model_dump(exclude_none=True)
                 for key, value in content_data.items():
                     setattr(content, key, value)
-
+            else:
+                # Create new content if it doesn't exist
+                content = LessonContent(
+                    lesson_id=lesson_id,
+                    **lesson_data.content.model_dump(exclude_none=True)
+                )
+                self.db.add(content)
+    
+        # Handle assessment update (for assessment lessons)
+        if lesson_data.assessment and lesson.content_type == ContentType.ASSESSMENT:
+            assessment = self.db.query(Assessment).filter(
+                Assessment.lesson_id == lesson_id
+            ).first()
+    
+            if assessment:
+                # Update existing assessment
+                assessment_data = lesson_data.assessment.model_dump(exclude_none=True, exclude={"questions"})
+                for key, value in assessment_data.items():
+                    setattr(assessment, key, value)
+    
+                # Handle questions update
+                if lesson_data.assessment.questions:
+                    # First delete existing questions
+                    self.db.query(Question).filter(
+                        Question.assessment_id == assessment.id
+                    ).delete()
+    
+                    # Then add all questions (including updates and new ones)
+                    for i, question_data in enumerate(lesson_data.assessment.questions):
+                        question = Question(
+                            assessment_id=assessment.id,
+                            question_text=question_data.question_text,
+                            options=question_data.options,
+                            correct_answer=question_data.correct_answer,
+                            points=question_data.points,
+                            order_index=i
+                        )
+                        self.db.add(question)
+            else:
+                # Create new assessment if it doesn't exist
+                assessment = Assessment(
+                    lesson_id=lesson_id,
+                    title=lesson_data.assessment.title,
+                    description=lesson_data.assessment.description,
+                    passing_score=lesson_data.assessment.passing_score,
+                    time_limit=lesson_data.assessment.time_limit,
+                    max_attempts=lesson_data.assessment.max_attempts,
+                    is_active=True
+                )
+                self.db.add(assessment)
+                self.db.flush()
+    
+                # Add questions
+                for i, question_data in enumerate(lesson_data.assessment.questions):
+                    question = Question(
+                        assessment_id=assessment.id,
+                        question_text=question_data.question_text,
+                        options=question_data.options,
+                        correct_answer=question_data.correct_answer,
+                        points=question_data.points,
+                        order_index=i
+                    )
+                    self.db.add(question)
+    
         self.db.commit()
         self.db.refresh(lesson)
         return LessonResponse.model_validate(lesson)

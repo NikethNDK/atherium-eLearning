@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from aetherium.database.db import get_db
 from aetherium.utils.jwt_utils import get_current_user
 from aetherium.models.user import User
-from aetherium.models.courses import Course,Section
+from aetherium.models.courses import Course,Section,Lesson
 from aetherium.services.course_service import CourseService
 from aetherium.schemas.course import *
 from typing import List, Optional
@@ -44,10 +44,7 @@ async def update_course_step1(
         raise HTTPException(status_code=403, detail="Instructor access required")
     
     # Get existing course and update it
-    course = db.query(Course).filter(
-        Course.id == course_id,
-        Course.instructor_id == current_user.id
-    ).first()
+    course = db.query(Course).filter(Course.id == course_id,Course.instructor_id == current_user.id).first()
     
     if not course:
         raise HTTPException(status_code=404, detail="Course not found or not authorized")
@@ -198,11 +195,9 @@ async def get_drafts(
     
     return CourseService.get_instructor_drafts(db, current_user.id)
 
+
 @router.get("/courses/pending-approval", response_model=List[CourseResponse])
-async def get_pending_approval(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
+async def get_pending_approval(db: Session = Depends(get_db),current_user: User = Depends(get_current_user)):
     if current_user.role.name != "instructor":
         raise HTTPException(status_code=403, detail="Instructor access required")
     
@@ -423,6 +418,44 @@ async def update_lesson(
     """Update lesson"""
     service = LessonService(db)
     return await service.update_lesson(lesson_id, lesson)
+
+@router.get("/lessons/{lesson_id}/assessment")
+async def get_lesson_assessment(
+    lesson_id: int,
+    db: Session = Depends(get_db)
+):
+    """Get assessment details for a lesson (returns empty object if no assessment exists)"""
+    lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+    
+    # Return empty assessment structure if no assessment exists
+    if not lesson.assessments:
+        return {
+            "title": "",
+            "description": "",
+            "passing_score": 70,
+            "time_limit": None,
+            "max_attempts": 3,
+            "questions": []
+        }
+    
+    assessment = lesson.assessments[0]
+    return {
+        "title": assessment.title,
+        "description": assessment.description,
+        "passing_score": assessment.passing_score,
+        "time_limit": assessment.time_limit,
+        "max_attempts": assessment.max_attempts,
+        "questions": [{
+            "id": q.id,
+            "question_text": q.question_text,
+            "options": q.options or [],
+            "correct_answer": q.correct_answer,
+            "points": q.points,
+            "order_index": q.order_index
+        } for q in assessment.questions]
+    }
 
 @router.delete("/lessons/{lesson_id}")
 async def delete_lesson(

@@ -116,6 +116,7 @@ class LessonUpdate(BaseModel):
     order_index: Optional[int] = Field(default=None, ge=0)
     is_active: Optional[bool] = None
     content: Optional[LessonContentCreate] = None
+    assessment: Optional[AssessmentCreate] = None
 
 
 class LessonResponse(BaseModel):
