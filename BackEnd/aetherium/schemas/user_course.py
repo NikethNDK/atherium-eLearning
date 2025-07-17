@@ -241,6 +241,9 @@ class RazorpayOrderResponse(BaseModel):
     course_title:str
     user_email:str
     user_name:Optional[str]
+    subtotal: float  
+    tax_amount: float  
+    total_amount: float
 
 class RazorpayPaymentVerify(BaseModel):
     razorpay_order_id:str
@@ -253,6 +256,6 @@ class PaymentSuccessResponse(BaseModel):
     message:str
     purchase_id:int
     course_id:int
-    trasaction_id:int
+    transaction_id:str
 
 

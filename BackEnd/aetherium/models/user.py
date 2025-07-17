@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime,Float
+from datetime import datetime,timezone
 from sqlalchemy.orm import relationship
 from aetherium.database.db import Base
 # from imports import *
@@ -42,3 +43,28 @@ class User(Base):
     course_reviews = relationship("CourseReview", back_populates="user")
     lesson_progress=relationship("LessonProgress",back_populates="user",cascade="all, delete-orphan")
     section_progress=relationship("SectionProgress",back_populates="user",cascade="all, delete-orphan")
+    wallet = relationship("Wallet", back_populates="user", uselist=False)
+
+class Wallet(Base):
+    __tablename__ = "wallets"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    balance = Column(Float, default=0.0)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    
+    user = relationship("User", back_populates="wallet")
+
+class WalletTransaction(Base):
+    __tablename__ = "wallet_transactions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    wallet_id = Column(Integer, ForeignKey("wallets.id"), nullable=False)
+    transaction_type = Column(String(20), nullable=False) 
+    amount = Column(Float, nullable=False)
+    description = Column(String(255))
+    reference_id = Column(String(100))  
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    
+    wallet = relationship("Wallet")

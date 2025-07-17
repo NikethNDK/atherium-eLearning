@@ -13,7 +13,7 @@ from aetherium.schemas.user_course import *
 from aetherium.schemas.user_course import CourseFilters,CartItemCreate,CartResponse,PurchaseResponse,PurchaseCreate,CourseProgressResponse,CourseProgressUpdate,CourseReviewUpdate,CourseReviewResponse,CourseReviewCreate,WishlistItemCreate,WishlistItemResponse,PaginatedCoursesResponse,OrderHistoryResponse,OrderDetailResponse
 from aetherium.schemas.course import CourseResponse
 from aetherium.models.enum import PurchaseStatus
-from aetherium.models import User
+from aetherium.models.user import User,WalletTransaction
 from aetherium.models.courses import Course,Section
 from aetherium.models.user_course import Purchase,Cart
 from aetherium.models.courses.progress import CourseProgress
@@ -22,7 +22,7 @@ from aetherium.schemas.progress import (
     LessonProgressUpdate, LessonProgressResponse,
     SectionProgressResponse, CourseProgressResponse
 )
-
+from aetherium.services.wallet_service import wallet_service
 from aetherium.utils.jwt_utils import get_current_user
 from sqlalchemy.sql import func
 
@@ -238,46 +238,76 @@ async def get_order_detail(
     
     return order
 
-@router.post("/payment/create-razorpay-order",response_model=RazorpayOrderResponse)
-async def create_razorpay_order(order_data:RazorpayOrderCreate,current_user:User=Depends(get_current_user),db:Session=Depends(get_db)):
-    course=db.query(Course).filter(Course.id==order_data.course_id).first()
-    if not course:
-        raise HTTPException(status_code=404, detail="Course not found")
-    
-    exsisting_purchase=db.query(Purchase).filter(
-        Purchase.course_id==order_data.course_id,
-        Purchase.user_id==current_user.id,
-        Purchase.status==PurchaseStatus.COMPLETED).first()
-    
-    if exsisting_purchase:
-        raise HTTPException(status_code=400,detail="Course Already Purchased")
-    
-    amount=course.discount_price if course.discount_price else course.price
-    reciept=f"course_{course.id}_user_{current_user.id}"
-    razorpay_order=razorpay_service.create_order(amount=amount,receipt=reciept)
 
-    razorpay_service.create_purchase_record(
-        db=db,
-        user_id=current_user.id,
-        course_id=course.id,
-        amount=amount,
-        order_id=razorpay_order['id'],
-        status=PurchaseStatus.PENDING
-    )
+@router.post("/payment/create-razorpay-order", response_model=RazorpayOrderResponse)
+async def create_razorpay_order(order_data: RazorpayOrderCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    try:
+        # Fetch course details
+        course = db.query(Course).filter(Course.id == order_data.course_id).first()
+        if not course:
+            raise HTTPException(status_code=404, detail="Course not found")
+        
+        # Calculate subtotal (base price)
+        subtotal = course.discount_price if course.discount_price else course.price
+        
+        if subtotal <= 0:
+            raise HTTPException(status_code=400, detail="Invalid course price")
+        
+        # Calculate tax (18% GST)
+        tax_amount = subtotal * 0.18
+        
+        # Calculate total amount (subtotal + tax)
+        total_amount = subtotal + tax_amount
+        
+        # Create receipt
+        receipt = f"course_{course.id}_user_{current_user.id}"
+        
+        # Create Razorpay order with total amount
+        razorpay_order = razorpay_service.create_order(
+            amount=total_amount,
+            receipt=receipt
+        )
+        
+        # Create purchase record with updated amounts
+        purchase = razorpay_service.create_purchase_record_safe(
+            db=db,
+            user_id=current_user.id,
+            course_id=course.id,
+            subtotal=subtotal,
+            tax_amount=tax_amount,
+            total_amount=total_amount,
+            order_id=razorpay_order['id'],
+            status=PurchaseStatus.PENDING
+        )
+        
+        logger.info(f"Order created successfully: {razorpay_order['id']} for user {current_user.id}")
+        
+        return RazorpayOrderResponse(
+            order_id=razorpay_order['id'],
+            amount=razorpay_order['amount'],
+            currency=razorpay_order['currency'],
+            key_id=razorpay_service.key_id,
+            course_id=course.id,
+            course_title=course.title,
+            user_email=current_user.email,
+            user_name=f"{current_user.firstname} {current_user.lastname}",
+            subtotal=subtotal,
+            tax_amount=tax_amount,
+            total_amount=total_amount
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in create_razorpay_order: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to create order. Please try again."
+        )
 
-    return RazorpayOrderResponse(
-        order_id=razorpay_order['id'],
-        amount=razorpay_order['amount'],
-        currency=razorpay_order['currency'],
-        key_id=razorpay_service.key_id,
-        course_id=course.id,
-        course_title=course.title,
-        user_email=current_user.email,
-        user_name=f"{current_user.firstname}{current_user.lastname}"
-    )
 
-@router.post("/payment/verify-razorpay",response_model=PaymentSuccessResponse)
-async def verify_razorpay_payment(payment_data:RazorpayPaymentVerify,current_user:User=Depends(get_current_user),db:Session=Depends(get_db)):
+@router.post("/payment/verify-razorpay", response_model=PaymentSuccessResponse)
+async def verify_razorpay_payment(payment_data: RazorpayPaymentVerify, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     is_valid = razorpay_service.verify_payment_signature(
         order_id=payment_data.razorpay_order_id,
         payment_id=payment_data.razorpay_payment_id,
@@ -285,8 +315,17 @@ async def verify_razorpay_payment(payment_data:RazorpayPaymentVerify,current_use
     )
     
     if not is_valid:
-        razorpay_service.update_purchase_status(db=db,order_id=payment_data.razorpay_order_id,payment_id=payment_data.razorpay_payment_id,status=PurchaseStatus.FAILED)
-        raise HTTPException(status_code=400,detail="Payment verification failed")
+        try:
+            razorpay_service.update_purchase_status(
+                db=db,
+                order_id=payment_data.razorpay_order_id,
+                payment_id=payment_data.razorpay_payment_id,
+                status=PurchaseStatus.FAILED
+            )
+        except Exception as e:
+            logger.error(f"Failed to update purchase status to FAILED: {e}")
+    
+        raise HTTPException(status_code=400, detail="Payment verification failed")
     
     purchase = razorpay_service.update_purchase_status(
         db=db,
@@ -295,7 +334,44 @@ async def verify_razorpay_payment(payment_data:RazorpayPaymentVerify,current_use
         status=PurchaseStatus.COMPLETED
     )
 
-    cart_item = db.query(Cart).filter(Cart.user_id == current_user.id,Cart.course_id == payment_data.course_id).first()
+    # Get course details to find instructor for wallet distribution
+    course = db.query(Course).filter(Course.id == purchase.course_id).first()
+    if course:
+        # Calculate wallet distribution amounts (excluding tax)
+        subtotal = purchase.subtotal  # Amount without tax
+        admin_commission = subtotal * 0.10  # 10% to admin
+        instructor_amount = subtotal * 0.90  # 90% to instructor
+        
+        # Distribute funds to wallets
+        try:
+            # Add to instructor wallet
+            wallet_service.add_funds(
+                db=db,
+                user_id=course.instructor_id,
+                amount=instructor_amount,
+                description=f"Course sale commission: {course.title}",
+                reference_id=purchase.order_id
+            )
+            
+            # Add to admin wallet
+            admin_user_id = wallet_service.get_admin_user_id(db)
+            wallet_service.add_funds(
+                db=db,
+                user_id=admin_user_id,
+                amount=admin_commission,
+                description=f"Platform commission: {course.title}",
+                reference_id=purchase.order_id
+            )
+            
+            logger.info(f"Wallet distribution completed for order {purchase.order_id}")
+            
+        except Exception as wallet_error:
+            logger.error(f"Error in wallet distribution: {wallet_error}")
+            # Don't fail the payment verification, but log the error
+            # You might want to have a retry mechanism or manual processing
+
+    # Remove item from cart
+    cart_item = db.query(Cart).filter(Cart.user_id == current_user.id, Cart.course_id == payment_data.course_id).first()
     
     if cart_item:
         db.delete(cart_item)
@@ -309,6 +385,65 @@ async def verify_razorpay_payment(payment_data:RazorpayPaymentVerify,current_use
         transaction_id=payment_data.razorpay_payment_id
     )
 
+
+# @router.post("/payment/verify-razorpay",response_model=PaymentSuccessResponse)
+# async def verify_razorpay_payment(payment_data:RazorpayPaymentVerify,current_user:User=Depends(get_current_user),db:Session=Depends(get_db)):
+#     is_valid = razorpay_service.verify_payment_signature(
+#         order_id=payment_data.razorpay_order_id,
+#         payment_id=payment_data.razorpay_payment_id,
+#         signature=payment_data.razorpay_signature
+#     )
+    
+#     if not is_valid:
+#         try:
+#             razorpay_service.update_purchase_status(
+#                 db=db,
+#                 order_id=payment_data.razorpay_order_id,
+#                 payment_id=payment_data.razorpay_payment_id,
+#                 status=PurchaseStatus.FAILED
+#             )
+#         except Exception as e:
+#             logger.error(f"Failed to update purchase status to FAILED: {e}")
+    
+#         raise HTTPException(status_code=400, detail="Payment verification failed")
+    
+#     purchase = razorpay_service.update_purchase_status(
+#         db=db,
+#         order_id=payment_data.razorpay_order_id,
+#         payment_id=payment_data.razorpay_payment_id,
+#         status=PurchaseStatus.COMPLETED
+#     )
+
+#     cart_item = db.query(Cart).filter(Cart.user_id == current_user.id,Cart.course_id == payment_data.course_id).first()
+    
+#     if cart_item:
+#         db.delete(cart_item)
+#         db.commit()
+    
+#     return PaymentSuccessResponse(
+#         success=True,
+#         message="Payment successful! Course purchased successfully.",
+#         purchase_id=purchase.id,
+#         course_id=payment_data.course_id,
+#         transaction_id=payment_data.razorpay_payment_id
+#     )
+
+
+
+##Wallet endpoints to check the balance
+@router.get("/wallet/balance")
+async def get_wallet_balance(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    wallet = wallet_service.get_or_create_wallet(db, current_user.id)
+    return {"balance": wallet.balance, "updated_at": wallet.updated_at}
+
+@router.get("/wallet/transactions")
+async def get_wallet_transactions(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    wallet = wallet_service.get_or_create_wallet(db, current_user.id)
+    transactions = db.query(WalletTransaction).filter(
+        WalletTransaction.wallet_id == wallet.id
+    ).order_by(WalletTransaction.created_at.desc()).limit(50).all()
+    
+    return {"transactions": transactions}
 
 @router.get("/progress/courses", response_model=List[CourseProgressResponse])
 async def get_user_course_progress(

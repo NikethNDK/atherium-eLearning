@@ -15,6 +15,12 @@ class Purchase(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
+    
+    # Updated amount fields
+    subtotal = Column(Float, nullable=False)  # Base price without tax
+    tax_amount = Column(Float, nullable=False)  # Tax amount (18% GST)
+    total_amount = Column(Float, nullable=False)  # Total amount (subtotal + tax)
+
     amount = Column(Float, nullable=False)
     payment_method = Column(payment_method_enum, nullable=False)
     status = Column(purchase_status_enum, default=PurchaseStatus.PENDING, nullable=False)
