@@ -8,7 +8,7 @@ import MyLearning from "../pages/user/MyLearning";
 import CourseDetail from "../pages/user/CourseDetail";
 import PaymentSuccess from "../pages/user/PaymentSuccess";
 import OrderHistory from "../pages/user/OrderHistory";
-
+import LearningLayout from "../pages/user/LearningLayout"
 export default function UserRoutes() {
   return (
     <>
@@ -16,7 +16,7 @@ export default function UserRoutes() {
       <Route path="/user/profile" element={<ProtectedRoute allowedRoles={["user"]}><UserProfile /></ProtectedRoute>} />
       <Route path="/cart" element={<ProtectedRoute allowedRoles={["user"]}><Cart /></ProtectedRoute>} />
       <Route path="/my-learning" element={<ProtectedRoute allowedRoles={["user"]}><MyLearning /></ProtectedRoute>} />
-      <Route path="/my-learning/:courseId" element={<ProtectedRoute allowedRoles={["user"]}><CourseDetail /></ProtectedRoute>} />
+      <Route path="/my-learning/:courseId" element={<ProtectedRoute allowedRoles={["user"]}><LearningLayout /></ProtectedRoute>} />
       <Route path="/payment-success" element={<ProtectedRoute allowedRoles={["user"]}><PaymentSuccess /></ProtectedRoute>} />
       <Route path="/user/orders" element={<ProtectedRoute allowedRoles={["user"]}><OrderHistory /></ProtectedRoute>} />
     </>

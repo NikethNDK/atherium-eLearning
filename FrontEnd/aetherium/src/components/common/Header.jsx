@@ -94,7 +94,7 @@ const Header = () => {
     // For unauthenticated users
     return [
       { to: "/", label: "Home" },
-      { to: "/courses", label: "Courses" },
+      // { to: "/courses", label: "Courses" },
       { to: "/about", label: "About" },
       { to: "/contact", label: "Contact" }
     ]

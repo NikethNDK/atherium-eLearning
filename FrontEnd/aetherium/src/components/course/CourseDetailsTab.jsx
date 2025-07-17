@@ -476,24 +476,30 @@ const CourseDetailsTab = ({ course, isPurchased, onPurchase }) => {
           </div>
         )}
         {activeTab === "instructor" && (
-          <div>
-            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">About the Instructor</h2>
-            <div className="flex items-center mb-3 sm:mb-4">
-              <img
-                src={course.instructor?.profile_picture || "/placeholder.svg?height=40&width=40"}
-                alt={course.instructor?.firstname}
-                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full mr-2 sm:mr-3"
-              />
-              <div>
-                <p className="font-medium">
-                  {course.instructor?.firstname} {course.instructor?.lastname}
-                </p>
-                <p className="text-gray-500 text-xs sm:text-sm">{course.instructor?.title}</p>
-              </div>
-            </div>
-            <p>{course.instructor?.bio || "No bio available."}</p>
-          </div>
-        )}
+  <div>
+    <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">About the Instructor</h2>
+    <div className="flex items-center mb-3 sm:mb-4">
+      {course.instructor?.profile_picture ? (
+        <img
+          src={course.instructor.profile_picture}
+          alt={course.instructor?.firstname}
+          className="w-8 h-8 sm:w-10 sm:h-10 rounded-full mr-2 sm:mr-3"
+        />
+      ) : (
+        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full mr-2 sm:mr-3 flex items-center justify-center bg-[#1a1b3a] text-white font-semibold text-sm sm:text-base uppercase">
+          {course.instructor?.firstname?.[0] || "?"}
+        </div>
+      )}
+      <div>
+        <p className="font-medium">
+          {course.instructor?.firstname} {course.instructor?.lastname}
+        </p>
+        <p className="text-gray-500 text-xs sm:text-sm">{course.instructor?.title}</p>
+      </div>
+    </div>
+    <p>{course.instructor?.bio || "No bio available."}</p>
+  </div>
+)}
         {activeTab === "reviews" && (
           <div>
             <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Reviews</h2>
