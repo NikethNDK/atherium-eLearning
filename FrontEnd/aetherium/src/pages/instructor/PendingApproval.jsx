@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { courseAPI } from "../../services/api"
 import LoadingSpinner from "../../components/common/LoadingSpinner"
-import { Clock, CheckCircle, XCircle, Edit, Eye } from "lucide-react"
+import { Clock, CheckCircle, XCircle, Edit, Eye, Pencil } from "lucide-react"
 
 const PendingApproval = () => {
   const [courses, setCourses] = useState([])
@@ -182,7 +182,7 @@ const PendingApproval = () => {
                           Disable
                         </button>
                       )}
-                      {course.verification_status === "rejected" && (
+                      {course.verification_status === "REJECTED" && (
                         <button
                           onClick={() => handleEdit(course.id)}
                           className="text-blue-600 hover:text-blue-900 flex items-center space-x-1"
@@ -191,6 +191,16 @@ const PendingApproval = () => {
                           <span>Edit</span>
                         </button>
                       )}
+
+
+                       {/* <button
+                        onClick={() => navigate(`/instructor/create-course/${course.id}`)}
+                        className="text-gray-600 hover:text-gray-900 flex items-center space-x-1"
+                      >
+                        <Pencil size={14} />
+                        <span>Edit</span>
+                      </button> */}
+
                       <button
                         onClick={() => navigate(`/instructor/courses/${course.id}/preview`)}
                         className="text-gray-600 hover:text-gray-900 flex items-center space-x-1"

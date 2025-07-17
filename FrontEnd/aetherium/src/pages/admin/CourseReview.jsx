@@ -1,10 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams, useNavigate } from "react-router-dom"
+import { useParams, useNavigate,Link } from "react-router-dom"
 import { adminAPI } from "../../services/api"
 import LoadingSpinner from "../../components/common/LoadingSpinner"
-import { ArrowLeft, CheckCircle, XCircle, User, Clock, BookOpen, Play } from "lucide-react"
+import { ArrowLeft, CheckCircle, XCircle, User, Clock, BookOpen, Play, ChevronDown, ChevronRight } from "lucide-react"
+
 
 const CourseReview = () => {
   const { courseId } = useParams()
@@ -17,6 +18,7 @@ const CourseReview = () => {
     admin_response: "",
   })
   const [submitting, setSubmitting] = useState(false)
+  const [expandedSections, setExpandedSections] = useState({})
 
   useEffect(() => {
     fetchCourse()
@@ -26,11 +28,23 @@ const CourseReview = () => {
     try {
       const data = await adminAPI.getCourse(courseId)
       setCourse(data)
+       const expanded = {}
+      data.sections?.forEach(section => {
+        expanded[section.id] = true
+      })
+      setExpandedSections(expanded)
     } catch (error) {
       console.error("Error fetching course:", error)
     } finally {
       setLoading(false)
     }
+  }
+
+  const toggleSection = (sectionId) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId]
+    }))
   }
 
   const getImageUrl = (imagePath) => {
@@ -233,37 +247,77 @@ const CourseReview = () => {
               <div className="space-y-4">
                 <div className="flex flex-wrap items-center justify-between mb-6">
                   <h3 className="text-lg font-semibold">Curriculum</h3>
-                  <div className="flex items-center space-x-4 text-sm text-gray-600">
-                    <span>{course.sections?.length || 0} Sections</span>
-                    <span>
-                      {course.sections?.reduce((total, section) => total + (section.lessons?.length || 0), 0) || 0}{" "}
-                      Lessons
-                    </span>
+                  <div className="flex items-center space-x-4">
+                    <div className="text-sm text-gray-600">
+                      <span>{course.sections?.length || 0} Sections</span>
+                      <span className="mx-2">•</span>
+                      <span>
+                        {course.sections?.reduce((total, section) => total + (section.lessons?.length || 0), 0) || 0}{" "}
+                        Lessons
+                      </span>
+                    </div>
+                    <Link
+                      to={`/admin/courses/${courseId}/review/detailed-view`}
+                      className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                    >
+                      Detailed View
+                    </Link>
                   </div>
                 </div>
 
                 {course.sections && course.sections.length > 0 ? (
-                  course.sections.map((section, index) => (
-                    <div key={section.id} className="border border-gray-200 rounded-lg">
-                      <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-                        <div className="flex items-center justify-between">
+                  course.sections.map((section) => (
+                    <div key={section.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                      <button
+                        onClick={() => toggleSection(section.id)}
+                        className="w-full bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between hover:bg-gray-100 transition-colors"
+                      >
+                        <div className="flex items-center">
+                          {expandedSections[section.id] ? (
+                            <ChevronDown className="text-gray-500 mr-2" size={18} />
+                          ) : (
+                            <ChevronRight className="text-gray-500 mr-2" size={18} />
+                          )}
                           <h4 className="font-medium text-gray-900">{section.name}</h4>
-                          <div className="text-sm text-gray-600">{section.lessons?.length || 0} lessons</div>
                         </div>
-                      </div>
-                      {section.lessons && section.lessons.length > 0 && (
-                        <div className="p-4">
-                          <div className="space-y-2">
-                            {section.lessons.map((lesson, lessonIndex) => (
-                              <div key={lesson.id} className="flex items-center space-x-3 py-2">
-                                <div className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center">
-                                  <Play className="w-3 h-3 text-gray-600" />
+                        <div className="text-sm text-gray-600">
+                          {section.lessons?.length || 0} lessons • {section.lessons?.reduce((sum, lesson) => sum + (lesson.duration || 0), 0) || 0} min
+                        </div>
+                      </button>
+                      {expandedSections[section.id] && section.lessons && section.lessons.length > 0 && (
+                        <div className="divide-y divide-gray-200">
+                          {section.lessons.map((lesson) => (
+                            <div key={lesson.id} className="p-4 hover:bg-gray-50">
+                              <div className="flex items-start space-x-3">
+                                <div className="mt-1">
+                                  {lesson.content_type === "VIDEO" && (
+                                    <Play className="w-4 h-4 text-blue-500" />
+                                  )}
+                                  {lesson.content_type === "PDF" && (
+                                    <BookOpen className="w-4 h-4 text-purple-500" />
+                                  )}
+                                  {lesson.content_type === "TEXT" && (
+                                    <span className="w-4 h-4 text-gray-500">T</span>
+                                  )}
+                                  {lesson.content_type === "ASSESSMENT" && (
+                                    <span className="w-4 h-4 text-red-500">Q</span>
+                                  )}
+                                  {lesson.content_type === "REFERENCE_LINK" && (
+                                    <span className="w-4 h-4 text-green-500">L</span>
+                                  )}
                                 </div>
-                                <span className="flex-1 text-gray-700">{lesson.name}</span>
-                                <span className="text-sm text-gray-500">{lesson.duration || "00:00"}</span>
+                                <div className="flex-1">
+                                  <h5 className="font-medium text-gray-800">{lesson.name}</h5>
+                                  {lesson.description && (
+                                    <p className="text-sm text-gray-600 mt-1">{lesson.description}</p>
+                                  )}
+                                </div>
+                                <div className="text-sm text-gray-500 whitespace-nowrap">
+                                  {lesson.duration || 0} min
+                                </div>
                               </div>
-                            ))}
-                          </div>
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>

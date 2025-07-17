@@ -729,6 +729,43 @@ const SectionList = ({ sections, onChange, courseId }) => {
   const [loading, setLoading] = useState(false)
 
   // Sort sections by ID (created order) or by a custom order field if you have one
+  const getInitialContent = (contentType) => {
+  switch (contentType) {
+    case "TEXT":
+      return { text_content: "" };
+    case "PDF":
+      return {
+        file_url: "",
+        file_public_id: "",
+        file_type: "",
+        file_size: null
+      };
+    case "VIDEO":
+      return {
+        file_url: "",
+        file_public_id: "",
+        file_type: "",
+        file_size: null,
+        video_duration: null,
+        video_thumbnail: ""
+      };
+    case "REFERENCE_LINK":
+      return {
+        external_url: "",
+        link_title: "",
+        link_description: ""
+      };
+    case "ASSESSMENT":
+      return {
+        title: "",
+        description: "",
+        passing_score: 70,
+        questions: []
+      };
+    default:
+      return {};
+  }
+};
   const sortedSections = sections ? [...sections].sort((a, b) => {
     // If you have an order field, use it, otherwise sort by ID
     if (a.order_index !== undefined && b.order_index !== undefined) {

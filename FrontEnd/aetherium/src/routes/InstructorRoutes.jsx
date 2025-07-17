@@ -10,6 +10,7 @@ import PendingApproval from "../pages/instructor/PendingApproval";
 import MyCourses from "../pages/instructor/MyCourses";
 import InstrtructorCourseView from "../pages/instructor/InstructorCourseView";
 import Topics from "../pages/admin/Topics"; // assumed shared
+import DetailedView from "../pages/admin/DetailedView";
 
 export default function InstructorRoutes() {
   return (
@@ -23,9 +24,12 @@ export default function InstructorRoutes() {
       <Route path="pending-approval" element={<PendingApproval />} />
       <Route path="my-courses" element={<MyCourses />} />
       <Route path="courses/:courseId/InstrtructorCourseView" element={<InstrtructorCourseView />} />
+      <Route path="courses/${course.id}/preview" element={<DetailedView />}/>
       <Route path="earnings" element={<div className="p-8"><h1 className="text-3xl font-bold">Earnings</h1></div>} />
       <Route path="messages" element={<div className="p-8"><h1 className="text-3xl font-bold">Messages</h1></div>} />
       <Route path="topics" element={<Topics />} />
+
+      {/* /instructor/courses/${courseId}/review/detailed-view */}
     </Route>
   );
 }
