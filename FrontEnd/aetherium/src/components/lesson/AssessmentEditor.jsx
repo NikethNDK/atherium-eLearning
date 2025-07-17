@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Plus, Trash2, ChevronUp, ChevronDown } from "lucide-react";
 
 const QuestionEditor = ({ question, index, onChange, onRemove, onMove }) => {
+
+  
   const [localQuestion, setLocalQuestion] = useState({
     question_text: "",
     options: [],
@@ -125,7 +127,7 @@ const QuestionEditor = ({ question, index, onChange, onRemove, onMove }) => {
   );
 };
 
-const AssessmentEditor = ({ assessment, onChange }) => {
+const AssessmentEditor = ({ type,assessment, onChange }) => {
   const [localAssessment, setLocalAssessment] = useState({
     title: "",
     description: "",
@@ -134,6 +136,7 @@ const AssessmentEditor = ({ assessment, onChange }) => {
     ...assessment
   });
 
+  
   useEffect(() => {
     onChange(localAssessment);
   }, [localAssessment]);

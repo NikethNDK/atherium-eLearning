@@ -173,6 +173,7 @@
 
 // export { ContentTypeSelector, LessonContentEditor }
 import { FileText, Link, Video, FileQuestion, Type } from "lucide-react"
+import AssessmentEditor from './AssessmentEditor';
 
 const ContentTypeSelector = ({ selectedType, onTypeChange }) => {
   const contentTypes = [
@@ -418,53 +419,53 @@ const ReferenceLinkEditor = ({ lesson_content, onChange }) =>{
   );
 };
 
-const AssessmentEditor = ({ assessment, onChange }) => (
-  <div className="space-y-4">
-    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-      <h4 className="font-medium text-yellow-800 mb-2">Assessment Content</h4>
-      <p className="text-sm text-yellow-700">
-        Assessment functionality will be implemented in a future update. 
-        For now, you can use this as a placeholder for quiz content.
-      </p>
-    </div>
+// const AssessmentEditor = ({ assessment, onChange }) => (
+//   <div className="space-y-4">
+//     <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+//       <h4 className="font-medium text-yellow-800 mb-2">Assessment Content</h4>
+//       <p className="text-sm text-yellow-700">
+//         Assessment functionality will be implemented in a future update. 
+//         For now, you can use this as a placeholder for quiz content.
+//       </p>
+//     </div>
     
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">Assessment Instructions</label>
-      <textarea
-        value={assessment.instructions || ""}
-        onChange={(e) => onChange({ ...assessment, instructions: e.target.value })}
-        placeholder="Instructions for students taking this assessment..."
-        rows={4}
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-      />
-    </div>
+//     <div>
+//       <label className="block text-sm font-medium text-gray-700 mb-2">Assessment Instructions</label>
+//       <textarea
+//         value={assessment.instructions || ""}
+//         onChange={(e) => onChange({ ...assessment, instructions: e.target.value })}
+//         placeholder="Instructions for students taking this assessment..."
+//         rows={4}
+//         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+//       />
+//     </div>
     
-    <div className="grid grid-cols-2 gap-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Time Limit (minutes)</label>
-        <input
-          type="number"
-          value={assessment.time_limit || ""}
-          onChange={(e) => onChange({ ...assessment, time_limit: parseInt(e.target.value) })}
-          placeholder="e.g., 30"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Total Questions</label>
-        <input
-          type="number"
-          value={assessment.total_questions || ""}
-          onChange={(e) => onChange({ ...assessment, total_questions: parseInt(e.target.value) })}
-          placeholder="e.g., 10"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        />
-      </div>
-    </div>
-  </div>
-)
+//     <div className="grid grid-cols-2 gap-4">
+//       <div>
+//         <label className="block text-sm font-medium text-gray-700 mb-2">Time Limit (minutes)</label>
+//         <input
+//           type="number"
+//           value={assessment.time_limit || ""}
+//           onChange={(e) => onChange({ ...assessment, time_limit: parseInt(e.target.value) })}
+//           placeholder="e.g., 30"
+//           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+//         />
+//       </div>
+//       <div>
+//         <label className="block text-sm font-medium text-gray-700 mb-2">Total Questions</label>
+//         <input
+//           type="number"
+//           value={assessment.total_questions || ""}
+//           onChange={(e) => onChange({ ...assessment, total_questions: parseInt(e.target.value) })}
+//           placeholder="e.g., 10"
+//           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+//         />
+//       </div>
+//     </div>
+//   </div>
+// )
 
-const LessonContentEditor = ({ contentType, lesson_content, onChange }) => {
+const LessonContentEditor = ({ contentType, lesson_content,assessment, onChange }) => {
   console.log('LessonContentEditor received:', { contentType, lesson_content });
 
   const renderEditor = () => {
@@ -478,7 +479,7 @@ const LessonContentEditor = ({ contentType, lesson_content, onChange }) => {
       case "REFERENCE_LINK":
         return <ReferenceLinkEditor lesson_content={lesson_content} onChange={onChange} />;
       case "ASSESSMENT":
-        return <AssessmentEditor assessment={lesson_content} onChange={onChange} />;
+        return <AssessmentEditor type={'fromLessoon 482'} assessment={assessment} onChange={onChange} />;
       default:
         return (
           <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg text-center text-gray-500">

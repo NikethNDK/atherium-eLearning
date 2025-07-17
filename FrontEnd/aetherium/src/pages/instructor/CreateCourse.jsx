@@ -390,14 +390,14 @@ const CreateCourse = () => {
             <p className="text-sm text-gray-600">Good Morning</p>
             <h1 className="text-2xl font-semibold text-gray-900">{courseId ? "Edit Course" : "Create a new course"}</h1>
           </div>
-          <div className="flex space-x-3">
+          {/* <div className="flex space-x-3">
             <button
               onClick={() => navigate("/instructor/drafts")}
               className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
             >
               Save & Exit
             </button>
-          </div>
+          </div> */}
         </div>
       </div>
 

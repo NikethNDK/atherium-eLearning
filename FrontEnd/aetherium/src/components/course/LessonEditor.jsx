@@ -364,7 +364,11 @@ const LessonEditor = ({ lesson, onSave, onCancel, isOpen }) => {
 
           {lessonData.content_type === "ASSESSMENT" ? (
             <div>
-              <AssessmentEditor assessment={lessonData.assessment} onChange={handleAssessmentChange} />
+              <AssessmentEditor type={'fromLessoon 367'} assessment={
+                  lessonData.content_type === "ASSESSMENT"
+                    ? lessonData.assessment
+                    : null
+                } onChange={handleAssessmentChange} />
               {errors.assessment_title && <p className="text-red-500 text-sm mt-1">{errors.assessment_title}</p>}
               {errors.assessment_questions && (
                 <p className="text-red-500 text-sm mt-1">{errors.assessment_questions}</p>
@@ -381,6 +385,7 @@ const LessonEditor = ({ lesson, onSave, onCancel, isOpen }) => {
             <LessonContentEditor
               contentType={lessonData.content_type}
               content={lessonData.content}
+              assessment = {lessonData.assessment}
               onChange={handleContentChange}
             />
           )}
