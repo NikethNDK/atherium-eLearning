@@ -1,8 +1,8 @@
-"""one_initial_migration_centralized_enums
+"""one_new_migration_with_all_tables_for_course_creation
 
-Revision ID: 52c374a8ffab
+Revision ID: 53827d36d09a
 Revises: 
-Create Date: 2025-06-24 11:26:12.124339
+Create Date: 2025-07-15 20:49:34.270275
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '52c374a8ffab'
+revision: str = '53827d36d09a'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -98,6 +98,7 @@ def upgrade() -> None:
     sa.Column('congratulation_message', sa.Text(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('curriculum_complete', sa.Boolean(), nullable=True),
     sa.ForeignKeyConstraint(['category_id'], ['categories.id'], ),
     sa.ForeignKeyConstraint(['instructor_id'], ['users.id'], ),
     sa.ForeignKeyConstraint(['topic_id'], ['topics.id'], ),
@@ -124,6 +125,24 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_course_instructors_id'), 'course_instructors', ['id'], unique=False)
+    op.create_table('course_progress',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('course_id', sa.Integer(), nullable=False),
+    sa.Column('is_completed', sa.Boolean(), nullable=True),
+    sa.Column('progress_percentage', sa.Float(), nullable=True),
+    sa.Column('sections_completed', sa.Integer(), nullable=True),
+    sa.Column('total_sections', sa.Integer(), nullable=True),
+    sa.Column('lessons_completed', sa.Integer(), nullable=True),
+    sa.Column('total_lessons', sa.Integer(), nullable=True),
+    sa.Column('last_accessed', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+    sa.Column('completed_at', sa.DateTime(timezone=True), nullable=True),
+    sa.ForeignKeyConstraint(['course_id'], ['courses.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('user_id', 'course_id', name='unique_user_course_progress')
+    )
+    op.create_index(op.f('ix_course_progress_id'), 'course_progress', ['id'], unique=False)
     op.create_table('course_reviews',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
@@ -201,40 +220,110 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=200), nullable=False),
     sa.Column('section_id', sa.Integer(), nullable=False),
-    sa.Column('content_type', postgresql.ENUM('FILE', 'VIDEO', 'CAPTIONS', 'DESCRIPTION', 'QUIZ', 'LECTURE_NOTES', name='contenttype'), nullable=False),
-    sa.Column('content_url', sa.String(length=255), nullable=True),
+    sa.Column('content_type', postgresql.ENUM('FILE', 'VIDEO', 'CAPTIONS', 'DESCRIPTION', 'QUIZ', 'LECTURE_NOTES', 'TEXT', 'ASSESSMENT', 'PDF', 'REFERENCE_LINK', name='contenttype'), nullable=False),
     sa.Column('duration', sa.Integer(), nullable=True),
     sa.Column('description', sa.Text(), nullable=True),
+    sa.Column('order_index', sa.Integer(), nullable=True),
+    sa.Column('is_active', sa.Boolean(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
     sa.ForeignKeyConstraint(['section_id'], ['sections.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_lessons_id'), 'lessons', ['id'], unique=False)
-    op.create_table('course_progress',
+    op.create_table('section_progress',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.Column('course_id', sa.Integer(), nullable=False),
-    sa.Column('lesson_id', sa.Integer(), nullable=True),
+    sa.Column('section_id', sa.Integer(), nullable=False),
     sa.Column('is_completed', sa.Boolean(), nullable=True),
     sa.Column('progress_percentage', sa.Float(), nullable=True),
+    sa.Column('lessons_completed', sa.Integer(), nullable=True),
+    sa.Column('total_lessons', sa.Integer(), nullable=True),
     sa.Column('last_accessed', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
     sa.Column('completed_at', sa.DateTime(timezone=True), nullable=True),
-    sa.ForeignKeyConstraint(['course_id'], ['courses.id'], ),
+    sa.ForeignKeyConstraint(['section_id'], ['sections.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('user_id', 'section_id', name='unique_user_section_progress')
+    )
+    op.create_index(op.f('ix_section_progress_id'), 'section_progress', ['id'], unique=False)
+    op.create_table('assessments',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('lesson_id', sa.Integer(), nullable=False),
+    sa.Column('title', sa.String(length=200), nullable=False),
+    sa.Column('description', sa.Text(), nullable=True),
+    sa.Column('passing_score', sa.Float(), nullable=True),
+    sa.Column('time_limit', sa.Integer(), nullable=True),
+    sa.Column('max_attempts', sa.Integer(), nullable=True),
+    sa.Column('is_active', sa.Boolean(), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
+    sa.ForeignKeyConstraint(['lesson_id'], ['lessons.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_assessments_id'), 'assessments', ['id'], unique=False)
+    op.create_table('lesson_contents',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('lesson_id', sa.Integer(), nullable=False),
+    sa.Column('text_content', sa.Text(), nullable=True),
+    sa.Column('file_url', sa.String(length=500), nullable=True),
+    sa.Column('file_public_id', sa.String(length=255), nullable=True),
+    sa.Column('file_type', sa.String(length=50), nullable=True),
+    sa.Column('file_size', sa.Integer(), nullable=True),
+    sa.Column('video_duration', sa.Integer(), nullable=True),
+    sa.Column('video_thumbnail', sa.String(length=500), nullable=True),
+    sa.Column('external_url', sa.String(length=500), nullable=True),
+    sa.Column('link_title', sa.String(length=200), nullable=True),
+    sa.Column('link_description', sa.Text(), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
+    sa.ForeignKeyConstraint(['lesson_id'], ['lessons.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_lesson_contents_id'), 'lesson_contents', ['id'], unique=False)
+    op.create_table('lesson_progress',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('lesson_id', sa.Integer(), nullable=False),
+    sa.Column('is_completed', sa.Boolean(), nullable=True),
+    sa.Column('progress_percentage', sa.Float(), nullable=True),
+    sa.Column('time_spent', sa.Integer(), nullable=True),
+    sa.Column('last_accessed', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+    sa.Column('completed_at', sa.DateTime(timezone=True), nullable=True),
     sa.ForeignKeyConstraint(['lesson_id'], ['lessons.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('user_id', 'course_id', name='unique_user_course_progress')
+    sa.UniqueConstraint('user_id', 'lesson_id', name='unique_user_lesson_progress')
     )
-    op.create_index(op.f('ix_course_progress_id'), 'course_progress', ['id'], unique=False)
+    op.create_index(op.f('ix_lesson_progress_id'), 'lesson_progress', ['id'], unique=False)
+    op.create_table('questions',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('assessment_id', sa.Integer(), nullable=False),
+    sa.Column('question_text', sa.Text(), nullable=False),
+    sa.Column('options', sa.JSON(), nullable=True),
+    sa.Column('correct_answer', sa.JSON(), nullable=True),
+    sa.Column('points', sa.Float(), nullable=True),
+    sa.Column('order_index', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['assessment_id'], ['assessments.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_questions_id'), 'questions', ['id'], unique=False)
     # ### end Alembic commands ###
 
 
 def downgrade() -> None:
     """Downgrade schema."""
     # ### commands auto generated by Alembic - please adjust! ###
-    op.drop_index(op.f('ix_course_progress_id'), table_name='course_progress')
-    op.drop_table('course_progress')
+    op.drop_index(op.f('ix_questions_id'), table_name='questions')
+    op.drop_table('questions')
+    op.drop_index(op.f('ix_lesson_progress_id'), table_name='lesson_progress')
+    op.drop_table('lesson_progress')
+    op.drop_index(op.f('ix_lesson_contents_id'), table_name='lesson_contents')
+    op.drop_table('lesson_contents')
+    op.drop_index(op.f('ix_assessments_id'), table_name='assessments')
+    op.drop_table('assessments')
+    op.drop_index(op.f('ix_section_progress_id'), table_name='section_progress')
+    op.drop_table('section_progress')
     op.drop_index(op.f('ix_lessons_id'), table_name='lessons')
     op.drop_table('lessons')
     op.drop_index(op.f('ix_wishlist_id'), table_name='wishlist')
@@ -251,6 +340,8 @@ def downgrade() -> None:
     op.drop_table('learning_objectives')
     op.drop_index(op.f('ix_course_reviews_id'), table_name='course_reviews')
     op.drop_table('course_reviews')
+    op.drop_index(op.f('ix_course_progress_id'), table_name='course_progress')
+    op.drop_table('course_progress')
     op.drop_index(op.f('ix_course_instructors_id'), table_name='course_instructors')
     op.drop_table('course_instructors')
     op.drop_index(op.f('ix_cart_id'), table_name='cart')

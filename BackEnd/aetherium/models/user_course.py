@@ -58,25 +58,25 @@ class Wishlist(Base):
     user = relationship("User", back_populates="wishlist_items")
     course = relationship("Course", back_populates="wishlist_items")
 
-class CourseProgress(Base):
-    __tablename__ = "course_progress"
+# class CourseProgress(Base):
+#     __tablename__ = "course_progress"
     
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
-    lesson_id = Column(Integer, ForeignKey("lessons.id"), nullable=True)
-    is_completed = Column(Boolean, default=False)
-    progress_percentage = Column(Float, default=0.0)
-    last_accessed = Column(DateTime(timezone=True), server_default=func.now())
-    completed_at = Column(DateTime(timezone=True), nullable=True)
+#     id = Column(Integer, primary_key=True, index=True)
+#     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+#     course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
+#     lesson_id = Column(Integer, ForeignKey("lessons.id"), nullable=True)
+#     is_completed = Column(Boolean, default=False)
+#     progress_percentage = Column(Float, default=0.0)
+#     last_accessed = Column(DateTime(timezone=True), server_default=func.now())
+#     completed_at = Column(DateTime(timezone=True), nullable=True)
     
-    __table_args__ = (
-        UniqueConstraint('user_id', 'course_id', name='unique_user_course_progress'),
-    )
+#     __table_args__ = (
+#         UniqueConstraint('user_id', 'course_id', name='unique_user_course_progress'),
+#     )
 
-    user = relationship("User", back_populates="course_progress")
-    course = relationship("Course", back_populates="course_progress")
-    lesson = relationship("Lesson", backref="course_progress")
+#     user = relationship("User", back_populates="course_progress")
+#     course = relationship("Course", back_populates="course_progress")
+#     lesson = relationship("Lesson", backref="course_progress")
 
 class CourseReview(Base):
     __tablename__ = "course_reviews"
@@ -101,6 +101,6 @@ __all__ = [
     "Purchase",
     "Cart", 
     "Wishlist",
-    "CourseProgress",
+    # "CourseProgress",
     "CourseReview"
 ]

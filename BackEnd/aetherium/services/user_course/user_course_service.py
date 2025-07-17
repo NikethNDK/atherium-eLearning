@@ -3,8 +3,9 @@ from sqlalchemy import or_,func,desc
 from aetherium.models.courses import Course, VerificationStatus, Section,Category
 from aetherium.models.user import User
 # from aetherium.models.user_course import Purchase,PurchaseStatus
-from aetherium.models.user_course import Cart, Purchase, Wishlist, CourseProgress, CourseReview, PurchaseStatus, PaymentMethod
+from aetherium.models.user_course import Cart, Purchase, Wishlist,CourseReview, PurchaseStatus, PaymentMethod
 from aetherium.schemas.user_course import CourseFilters,CourseResponse,InstructorResponse,CategoryResponse,CourseProgressUpdate,CourseReviewCreate
+from aetherium.models.courses.progress import CourseProgress
 from fastapi import HTTPException
 from typing import Optional,Dict
 import uuid

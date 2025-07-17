@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session,joinedload
 from aetherium.models.courses import Course
 from aetherium.models.user_course import Purchase, PurchaseStatus, Cart
-from aetherium.models.user_course import CourseProgress
+from aetherium.models.courses.progress import CourseProgress
 from aetherium.schemas.user_course import PurchaseResponse
 from fastapi import HTTPException
 import uuid

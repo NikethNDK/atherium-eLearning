@@ -40,3 +40,5 @@ class User(Base):
     wishlist_items=relationship("Wishlist",back_populates="user")
     course_progress = relationship("CourseProgress", back_populates="user")
     course_reviews = relationship("CourseReview", back_populates="user")
+    lesson_progress=relationship("LessonProgress",back_populates="user",cascade="all, delete-orphan")
+    section_progress=relationship("SectionProgress",back_populates="user",cascade="all, delete-orphan")

@@ -128,12 +128,7 @@ async def get_course_for_review(
     return CourseService.get_course_by_id(db, course_id)
 
 @router.post("/courses/{course_id}/review", response_model=CourseResponse)
-async def review_course(
-    course_id: int,
-    review_data: CourseReviewRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
+async def review_course(course_id: int,review_data: CourseReviewRequest,db: Session = Depends(get_db),current_user: User = Depends(get_current_user)):
     if current_user.role.name != "admin":
         raise HTTPException(status_code=403, detail="Not authorized")
     return CourseService.review_course(db, course_id, review_data.status, review_data.admin_response)

@@ -3,10 +3,11 @@ from .section import Section
 from .category import *
 from .course_instructor import *
 from .learning_objective import *
-from .lesson import *
+from .lesson import Lesson,LessonContent,Assessment,Question
 from .target_audience import *
 from .topic import *
 from .requirement import *
+from .progress import *
 
 
 from ..enum import CourseLevel, DurationUnit, VerificationStatus,ContentType
@@ -14,5 +15,6 @@ from ..enum import CourseLevel, DurationUnit, VerificationStatus,ContentType
 __all__ = [
     "Course", "CourseLevel", "DurationUnit", "VerificationStatus","ContentType",
     "Section", "Category", "CourseInstructor", "LearningObjective",
-    "Lesson", "TargetAudience", "Topic", "Requirement"
-]
+    "Lesson","LessonContent", "Assessment", "Question", "LessonProgress",
+    "TargetAudience", "Topic", "Requirement",
+    'CourseProgress','SectionProgress',]

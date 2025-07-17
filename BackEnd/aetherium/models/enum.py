@@ -30,13 +30,7 @@ class DurationUnit(enum.Enum):
     DAYS = "DAYS"
 
 
-# class ContentType(enum.Enum):
-#     FILE = "FILE"
-#     VIDEO = "VIDEO"
-#     CAPTIONS = "CAPTIONS"
-#     DESCRIPTION = "DESCRIPTION"
-#     QUIZ = "QUIZ"
-#     LECTURE_NOTES = "LECTURE_NOTES"
+
 class ContentType(str, enum.Enum):
     FILE = "FILE"
     VIDEO = "VIDEO"

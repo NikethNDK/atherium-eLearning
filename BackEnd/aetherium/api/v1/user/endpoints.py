@@ -16,6 +16,12 @@ from aetherium.models.enum import PurchaseStatus
 from aetherium.models import User
 from aetherium.models.courses import Course,Section
 from aetherium.models.user_course import Purchase,Cart
+from aetherium.models.courses.progress import CourseProgress
+from aetherium.services.progress_service import ProgressService
+from aetherium.schemas.progress import (
+    LessonProgressUpdate, LessonProgressResponse,
+    SectionProgressResponse, CourseProgressResponse
+)
 
 from aetherium.utils.jwt_utils import get_current_user
 from sqlalchemy.sql import func
@@ -302,3 +308,165 @@ async def verify_razorpay_payment(payment_data:RazorpayPaymentVerify,current_use
         course_id=payment_data.course_id,
         transaction_id=payment_data.razorpay_payment_id
     )
+
+
+@router.get("/progress/courses", response_model=List[CourseProgressResponse])
+async def get_user_course_progress(
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    """Get all course progress for current user"""
+    service = ProgressService(db)
+    return service.get_user_course_progress_summary(current_user.id)
+
+@router.get("/progress/courses/{course_id}", response_model=CourseProgressResponse)
+async def get_course_progress(
+    course_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    """Get course progress for current user"""
+    service = ProgressService(db)
+    progress = service.get_course_progress(current_user.id, course_id)
+    
+    if not progress:
+        raise HTTPException(status_code=404, detail="Course progress not found")
+    
+    return progress
+
+@router.get("/progress/sections/{section_id}", response_model=SectionProgressResponse)
+async def get_section_progress(
+    section_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    """Get section progress for current user"""
+    service = ProgressService(db)
+    progress = service.get_section_progress(current_user.id, section_id)
+    
+    if not progress:
+        raise HTTPException(status_code=404, detail="Section progress not found")
+    
+    return progress
+
+@router.get("/progress/lessons/{lesson_id}", response_model=LessonProgressResponse)
+async def get_lesson_progress(
+    lesson_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    """Get lesson progress for current user"""
+    service = ProgressService(db)
+    progress = service.get_lesson_progress(current_user.id, lesson_id)
+    
+    if not progress:
+        raise HTTPException(status_code=404, detail="Lesson progress not found")
+    
+    return progress
+
+@router.post("/progress/lessons/{lesson_id}", response_model=LessonProgressResponse)
+async def update_lesson_progress(
+    lesson_id: int,
+    progress_data: LessonProgressUpdate,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    """Update lesson progress for current user"""
+    service = ProgressService(db)
+    return await service.update_lesson_progress(
+        current_user.id, lesson_id, progress_data
+    )
+
+@router.post("/progress/lessons/{lesson_id}/complete")
+async def complete_lesson(
+    lesson_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    """Mark lesson as completed"""
+    service = ProgressService(db)
+    progress_update = LessonProgressUpdate(
+        progress_percentage=100.0,
+        is_completed=True
+    )
+    
+    return await service.update_lesson_progress(
+        current_user.id, lesson_id, progress_update
+    )
+
+@router.post("/progress/lessons/{lesson_id}/time")
+async def update_lesson_time(
+    lesson_id: int,
+    time_spent: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    """Update time spent on lesson"""
+    service = ProgressService(db)
+    progress_update = LessonProgressUpdate(time_spent=time_spent)
+    
+    return await service.update_lesson_progress(
+        current_user.id, lesson_id, progress_update
+    )
+
+# Analytics endpoints (for instructors/admins)
+@router.get("/analytics/courses/{course_id}")
+async def get_course_analytics(
+    course_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    """Get course analytics (instructor/admin only)"""
+    # Add role check here
+    # if current_user.role not in ["instructor", "admin"]:
+    #     raise HTTPException(status_code=403, detail="Insufficient permissions")
+    
+    service = ProgressService(db)
+    return service.get_course_analytics(course_id)
+
+@router.get("/analytics/courses/{course_id}/students")
+async def get_course_student_progress(
+    course_id: int,
+    limit: int = Query(default=50, le=100),
+    offset: int = Query(default=0, ge=0),
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    """Get student progress for a course (instructor/admin only)"""
+    # Add role check here
+    
+
+    
+    # Get paginated student progress
+    progress_query = db.query(CourseProgress).filter(
+        CourseProgress.course_id == course_id
+    ).join(User).offset(offset).limit(limit)
+    
+    progress_list = progress_query.all()
+    
+    # Get total count
+    total_count = db.query(CourseProgress).filter(
+        CourseProgress.course_id == course_id
+    ).count()
+    
+    result = []
+    for progress in progress_list:
+        user = db.query(User).filter(User.id == progress.user_id).first()
+        result.append({
+            "user_id": progress.user_id,
+            "user_name": user.name if user else "Unknown",
+            "user_email": user.email if user else "Unknown",
+            "progress_percentage": progress.progress_percentage,
+            "is_completed": progress.is_completed,
+            "lessons_completed": progress.lessons_completed,
+            "total_lessons": progress.total_lessons,
+            "last_accessed": progress.last_accessed,
+            "completed_at": progress.completed_at
+        })
+    
+    return {
+        "students": result,
+        "total_count": total_count,
+        "page": offset // limit + 1,
+        "per_page": limit
+    }

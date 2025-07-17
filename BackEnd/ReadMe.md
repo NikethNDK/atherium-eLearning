@@ -61,5 +61,19 @@ Now do the alembic revision and upgrade commands to create the migration history
 alembic revision --autogenerate -m "Initital Migration"
 alembic upgrade head
 
+after creating the table create the roles using the sql query
+role        |   role_id
+---------------------
+user               1
+instructor         2
+admin              3
+
 Now run the create_admin.py script using the below command. This will create teh admin user with the given email and password
 python -m aetherium.scripts.create_admin  <abc@example.com> <password>
+
+now run the below command to to initialize the redis server in the ubuntu wsl
+sudo service redis-server start 
+
+run the below command to initialize the celery
+celery -A aetherium.utils.celery_worker worker --loglevel=info --pool=solo
+

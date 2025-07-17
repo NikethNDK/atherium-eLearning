@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
-from aetherium.models.user_course import CourseProgress, Purchase, PurchaseStatus
+from aetherium.models.user_course import Purchase, PurchaseStatus
+from aetherium.models.courses.progress import CourseProgress
 from aetherium.schemas.user_course import CourseProgressUpdate, CourseProgressResponse
 from fastapi import HTTPException
 from datetime import datetime, timezone

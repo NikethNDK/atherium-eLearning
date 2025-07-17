@@ -33,6 +33,7 @@ class Course(Base):
     congratulation_message = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    curriculum_complete=Column(Boolean,default=False)
 
     # Relationships
     category = relationship("Category", back_populates="courses")
