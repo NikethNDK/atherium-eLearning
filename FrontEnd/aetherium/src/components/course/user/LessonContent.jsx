@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { userAPI } from "../../services/userApi";
+import { userAPI } from "../../../services/userApi"
 import TextContent from "./lesson-types/TextContent";
 import VideoContent from "./lesson-types/VideoContent";
-import PdfContent from "./lesson-types/PdfContent";
+import PdfContent from "./lesson-types/VideoContent";
 import AssessmentContent from "./lesson-types/AssessmentContent";
 import CompletionMessage from "./CompletionMessage";
 

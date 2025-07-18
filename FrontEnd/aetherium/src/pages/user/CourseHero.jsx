@@ -1,6 +1,7 @@
 import { Clock, BookOpen } from "lucide-react";
 import { getImageUrl } from "../../components/common/ImageURL";
 
+
 const CourseHero = ({ course }) => {
   // Calculate total lessons
   const totalLessons = course.sections?.reduce(

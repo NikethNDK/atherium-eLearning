@@ -225,4 +225,34 @@ export const userAPI = {
   getPurchaseHistory: async (page = 1) => {
     return userAPI.getOrderHistory(page)
   },
+
+  // Progress Tracking
+  getCourseProgress: async (courseId) => {
+    const response = await api.get(`/user/progress/courses/${courseId}`);
+    return response.data;
+  },
+
+  getSectionProgress: async (sectionId) => {
+    const response = await api.get(`/user/progress/sections/${sectionId}`);
+    return response.data;
+  },
+
+  getLessonProgress: async (lessonId) => {
+    const response = await api.get(`/user/progress/lessons/${lessonId}`);
+    return response.data;
+  },
+  updateLessonProgress: async (lessonId, data) => {
+    const response = await api.post(`/user/progress/lessons/${lessonId}`, data)
+    return response.data
+  },
+
+  completeLesson: async (lessonId) => {
+    const response = await api.post(`/user/progress/lessons/${lessonId}/complete`);
+    return response.data;
+  },
+
+  updateLessonTime: async (lessonId, timeSpent) => {
+    const response = await api.post(`/user/progress/lessons/${lessonId}/time`, { time_spent: timeSpent });
+    return response.data;
+  }
 }

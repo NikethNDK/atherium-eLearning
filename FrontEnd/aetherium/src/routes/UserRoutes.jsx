@@ -5,10 +5,13 @@ import UserDashboard from "../pages/user/UserDashboard";
 import UserProfile from "../pages/user/UserProfile";
 import Cart from "../pages/user/Cart";
 import MyLearning from "../pages/user/MyLearning";
-import CourseDetail from "../pages/user/CourseDetail";
+// import CourseDetail from "../pages/user/CourseDetail";
 import PaymentSuccess from "../pages/user/PaymentSuccess";
 import OrderHistory from "../pages/user/OrderHistory";
-import LearningLayout from "../pages/user/LearningLayout"
+import MyLearningCoursePage from "../pages/user/MyLearningCoursePage";
+import MyCourseView from "../pages/user/MyCourseView";
+
+
 export default function UserRoutes() {
   return (
     <>
@@ -16,7 +19,8 @@ export default function UserRoutes() {
       <Route path="/user/profile" element={<ProtectedRoute allowedRoles={["user"]}><UserProfile /></ProtectedRoute>} />
       <Route path="/cart" element={<ProtectedRoute allowedRoles={["user"]}><Cart /></ProtectedRoute>} />
       <Route path="/my-learning" element={<ProtectedRoute allowedRoles={["user"]}><MyLearning /></ProtectedRoute>} />
-      <Route path="/my-learning/:courseId" element={<ProtectedRoute allowedRoles={["user"]}><LearningLayout /></ProtectedRoute>} />
+      <Route path="/my-learning/:courseId" element={<ProtectedRoute allowedRoles={["user"]}><MyCourseView /></ProtectedRoute>} />
+      <Route path="/my-learning/course-curriculum/:courseId" element={<ProtectedRoute allowedRoles={["user"]}><MyLearningCoursePage /></ProtectedRoute>} />
       <Route path="/payment-success" element={<ProtectedRoute allowedRoles={["user"]}><PaymentSuccess /></ProtectedRoute>} />
       <Route path="/user/orders" element={<ProtectedRoute allowedRoles={["user"]}><OrderHistory /></ProtectedRoute>} />
     </>
