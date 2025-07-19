@@ -357,9 +357,9 @@ const InstructorSettings = () => {
         </div>
         <div className="flex items-center space-x-4">
           <div className="relative">
-            <span className="text-2xl cursor-pointer">🔔</span>
+            {/* <span className="text-2xl cursor-pointer">🔔</span> */}
           </div>
-          <div className="flex items-center space-x-3">
+          {/* <div className="flex items-center space-x-3">
             <img
               src={
                 user?.profile_picture
@@ -369,7 +369,7 @@ const InstructorSettings = () => {
               alt="Profile"
               className="w-10 h-10 rounded-full object-cover"
             />
-          </div>
+          </div> */}
         </div>
       </div>
 

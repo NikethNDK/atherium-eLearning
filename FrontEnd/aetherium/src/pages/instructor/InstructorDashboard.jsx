@@ -413,7 +413,7 @@ const InstructorDashboard = () => {
               <div className="ml-3 sm:ml-5 w-0 flex-1">
                 <dl>
                   <dt className="text-xs sm:text-sm font-medium text-gray-500 truncate">Total Revenue</dt>
-                  <dd className="text-lg sm:text-xl font-semibold text-gray-900">${stats.totalRevenue}</dd>
+                  <dd className="text-lg sm:text-xl font-semibold text-gray-900">₹{stats.totalRevenue}</dd>
                 </dl>
               </div>
             </div>

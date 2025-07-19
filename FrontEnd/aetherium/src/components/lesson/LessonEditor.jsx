@@ -237,7 +237,7 @@ const LessonEditor = ({
     return Object.keys(newErrors).length === 0;
   }, [lessonData]);
 
-const handleSave = async () => {
+  const handleSave = async () => {
   setApiError("");
   if (!validateLesson()) return;
 
@@ -285,7 +285,122 @@ const handleSave = async () => {
       savedLesson = await instructorAPI.createLesson(sectionId, payload);
     }
 
-    onSave(savedLesson);
+    // Handle file upload if needed (for PDF/VIDEO content types)
+    if (
+      (lessonData.content_type === "PDF" || lessonData.content_type === "VIDEO") &&
+      lessonData.content?.file &&
+      savedLesson?.id
+    ) {
+      try {
+        const fileTypeMap = {
+          VIDEO: "video",
+          PDF: "pdf",
+        };
+        const backendFileType = fileTypeMap[lessonData.content_type];
+
+        const uploadResult = await instructorAPI.uploadLessonFile(
+          savedLesson.id,
+          lessonData.content.file,
+          backendFileType
+        );
+
+        // Check if it's an async upload (has task_id)
+        if (uploadResult.task_id) {
+          // Handle async upload with polling
+          setApiError("File upload started. Please wait...");
+
+          const pollUploadStatus = async (taskId) => {
+            const maxAttempts = 60; // 5 minutes with 5-second intervals
+            let attempts = 0;
+
+            const poll = async () => {
+              try {
+                const statusResult = await instructorAPI.getUploadStatus(taskId);
+
+                if (statusResult.state === "SUCCESS") {
+                  // Upload completed successfully
+                  const finalResult = statusResult.result;
+                  const updatedLesson = {
+                    ...savedLesson,
+                    content: {
+                      ...savedLesson.content,
+                      file_url: finalResult.url,
+                      file_public_id: finalResult.public_id,
+                      file_type: finalResult.file_type,
+                      file_size: finalResult.file_size,
+                      ...(lessonData.content_type === "VIDEO" && {
+                        video_duration: finalResult.duration,
+                        video_thumbnail: finalResult.thumbnail,
+                      }),
+                    },
+                  };
+                  setApiError("");
+                  onSave(updatedLesson);
+                  return;
+                } else if (statusResult.state === "FAILURE") {
+                  // Upload failed
+                  setApiError(`File upload failed: ${statusResult.status}`);
+                  return;
+                } else {
+                  // Still processing
+                  const progress = Math.round(
+                    (statusResult.current / statusResult.total) * 100
+                  );
+                  setApiError(
+                    `Upload progress: ${progress}% - ${statusResult.status}`
+                  );
+
+                  attempts++;
+                  if (attempts < maxAttempts) {
+                    setTimeout(poll, 5000); // Poll every 5 seconds
+                  } else {
+                    setApiError("Upload timeout. Please try again.");
+                  }
+                }
+              } catch (error) {
+                console.error("Error polling upload status:", error);
+                setApiError(
+                  "Error checking upload status. Please refresh and try again."
+                );
+              }
+            };
+
+            poll();
+          };
+
+          await pollUploadStatus(uploadResult.task_id);
+        } else {
+          // Direct upload completed
+          const updatedLesson = {
+            ...savedLesson,
+            content: {
+              ...savedLesson.content,
+              file_url: uploadResult.url,
+              file_public_id: uploadResult.public_id,
+              file_type: uploadResult.file_type,
+              file_size: uploadResult.file_size,
+              ...(lessonData.content_type === "VIDEO" && {
+                video_duration: uploadResult.duration,
+                video_thumbnail: uploadResult.thumbnail,
+              }),
+            },
+          };
+          onSave(updatedLesson);
+        }
+      } catch (uploadError) {
+        console.error("Error uploading lesson file:", uploadError);
+        setApiError(
+          `File upload failed: ${
+            uploadError.response?.data?.detail || uploadError.message
+          }`
+        );
+        // Still call onSave with the saved lesson (without file)
+        onSave(savedLesson);
+      }
+    } else {
+      // No file upload needed
+      onSave(savedLesson);
+    }
   } catch (error) {
     console.error("Error saving lesson:", error);
     setApiError(
@@ -295,6 +410,66 @@ const handleSave = async () => {
     setLoading(false);
   }
 };
+
+//   //currently working but pdf urls not genereted in backend
+// const handleSave = async () => {
+//   setApiError("");
+//   if (!validateLesson()) return;
+
+//   setLoading(true);
+//   try {
+//     const payload = {
+//       name: lessonData.name.trim(),
+//       content_type: lessonData.content_type,
+//       duration: lessonData.duration ? parseInt(lessonData.duration) : null,
+//       description: lessonData.description.trim(),
+//       order_index: lessonData.order_index || 0,
+//     };
+
+//     if (lessonData.content_type === "ASSESSMENT" && lessonData.assessment) {
+//       payload.assessment = {
+//         title: lessonData.assessment.title.trim(),
+//         description: lessonData.assessment.description.trim(),
+//         passing_score: parseFloat(lessonData.assessment.passing_score) || 70,
+//         time_limit: lessonData.assessment.time_limit 
+//           ? parseInt(lessonData.assessment.time_limit) 
+//           : null,
+//         max_attempts: lessonData.assessment.max_attempts 
+//           ? parseInt(lessonData.assessment.max_attempts) 
+//           : 3,
+//         questions: lessonData.assessment.questions
+//           .map((q, i) => ({
+//             question_text: q.question_text.trim(),
+//             options: q.options?.map(opt => opt.trim()).filter(opt => opt) || [],
+//             correct_answer: q.correct_answer,
+//             points: parseFloat(q.points) || 1.0,
+//             order_index: i,
+//           }))
+//           .filter(q => q.question_text),
+//       };
+//       payload.content = null;
+//     } else {
+//       payload.content = lessonData.content;
+//       payload.assessment = null;
+//     }
+
+//     let savedLesson;
+//     if (lesson?.id) {
+//       savedLesson = await instructorAPI.updateLesson(lesson.id, payload);
+//     } else {
+//       savedLesson = await instructorAPI.createLesson(sectionId, payload);
+//     }
+
+//     onSave(savedLesson);
+//   } catch (error) {
+//     console.error("Error saving lesson:", error);
+//     setApiError(
+//       error.response?.data?.detail || error.message || "Error saving lesson"
+//     );
+//   } finally {
+//     setLoading(false);
+//   }
+// };
   // const handleSave = async () => {
   //   setApiError("")
   //   if (!validateLesson()) {

@@ -211,11 +211,15 @@ export const userAPI = {
 
   // =================== ORDER HISTORY APIs ===================
 
+  // getOrderHistory: async (page = 1) => {
+  //   // const response = await api.get(`/user/orders?page=${page}`)
+  //   const response = await api.get('/user/orders')
+  //   return response.data
+  // },
   getOrderHistory: async (page = 1) => {
-    // const response = await api.get(`/user/orders?page=${page}`)
-    const response = await api.get('/user/orders')
-    return response.data
-  },
+  const response = await api.get(`/user/orders?page=${page}&limit=10`)
+  return response.data
+},
 
   getOrderDetail: async (orderId) => {
     const response = await api.get(`/user/orders/${orderId}`)
