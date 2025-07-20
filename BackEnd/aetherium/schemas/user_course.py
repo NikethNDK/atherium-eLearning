@@ -22,6 +22,7 @@ class InstructorResponse(BaseModel):
     profile_picture: Optional[str]
     title: Optional[str]
     # bio: Optional[str]
+    model_config=ConfigDict(from_attributes=True)
 
 class CategoryResponse(BaseModel):
     id: int
@@ -178,7 +179,8 @@ class OrderCourseResponse(BaseModel):
     subtitle: Optional[str]
     cover_image: Optional[str]
     category: Optional[dict]
-    instructor: dict
+    instructor: InstructorResponse
+    category: CategoryResponse | None
     
     class Config:
         from_attributes = True
@@ -186,7 +188,7 @@ class OrderCourseResponse(BaseModel):
 class OrderHistoryResponse(BaseModel):
     id: int
     course: OrderCourseResponse
-    amount: float
+    total_amount: float
     payment_method: str
     status: str
     transaction_id: str
@@ -197,7 +199,7 @@ class OrderHistoryResponse(BaseModel):
 class OrderDetailResponse(BaseModel):
     id: int
     course: dict  
-    amount: float
+    total_amount: float
     payment_method: str
     status: str
     transaction_id: str

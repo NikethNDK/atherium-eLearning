@@ -36,7 +36,7 @@ class ProgressService:
             self.db.add(progress)
         
         # Update progress fields
-        update_data = progress_data.model_validate(exclude_none=True)
+        update_data = progress_data.model_dump(exclude_none=True)
         for key, value in update_data.items():
             setattr(progress, key, value)
         
@@ -200,7 +200,7 @@ class ProgressService:
         if not progress:
             return None
         
-        return LessonProgressResponse.from_orm(progress)
+        return progress
     
     def get_section_progress(self, user_id: int, section_id: int) -> Optional[SectionProgressResponse]:
         """Get section progress for a user"""
@@ -214,9 +214,9 @@ class ProgressService:
         if not progress:
             return None
         
-        return SectionProgressResponse.from_orm(progress)
+        return progress
     
-    def get_course_progress(self, user_id: int, course_id: int) -> Optional[CourseProgressResponse]:
+    def get_course_progress(self, user_id: int, course_id: int):
         """Get course progress for a user"""
         progress = self.db.query(CourseProgress).filter(
             and_(
@@ -228,7 +228,7 @@ class ProgressService:
         if not progress:
             return None
         
-        return CourseProgressResponse.from_orm(progress)
+        return progress
     
     def get_user_course_progress_summary(self, user_id: int) -> List[CourseProgressResponse]:
         """Get all course progress for a user"""

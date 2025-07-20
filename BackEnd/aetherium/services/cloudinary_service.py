@@ -237,88 +237,93 @@ class CloudinaryService:
 # # Initialize service
 # cloudinary_service = CloudinaryService()
 
-    async def upload_video_from_stream(self, file_stream: io.BytesIO, filename: str, folder: str = "elearning/videos") -> Dict[str, Any]:
-        """Upload video file from stream with video-specific optimizations"""
+    async def upload_video_from_stream(
+    self, 
+    file_stream: io.BytesIO, 
+    filename: str, 
+    folder: str = "elearning/videos") -> Dict[str, Any]:
+        """Robust video upload with chunking support"""
         try:
-            # Use asyncio to run the blocking upload in a thread pool
+            # Create isolated copy of the stream
+            file_stream.seek(0)
+            file_content = file_stream.read()
+            new_stream = io.BytesIO(file_content)
+
             def _upload():
+                new_stream.seek(0)
                 return cloudinary.uploader.upload(
-                    file_stream,
+                    new_stream,
                     resource_type="video",
                     folder=folder,
-                    overwrite=True,
-                    invalidate=True,
-                    quality="auto",
-                    video_codec="h264",
-                    audio_codec="aac",
-                    timeout=120,  # 2 minutes timeout
-                    filename=filename
+                    filename=filename,
+                    use_filename=True,
+                    unique_filename=True,
+                    timeout=300,  # 5 minute timeout
+                    chunk_size=6*1024*1024,  # 6MB chunks
+                    eager=[  # Generate thumbnail eagerly
+                        {
+                            "width": 400,
+                            "height": 300,
+                            "crop": "fill",
+                            "format": "jpg"
+                        }
+                    ]
                 )
-            
-            # Run upload in thread pool to avoid blocking
+
             result = await asyncio.get_event_loop().run_in_executor(None, _upload)
-            
-            # Generate thumbnail only if public_id exists
-            thumbnail_url = ""
-            if result.get("public_id"):
-                try:
-                    def _generate_thumbnail():
-                        return cloudinary.CloudinaryImage(result["public_id"]).image(
-                            resource_type="video",
-                            format="jpg",
-                            transformation=[
-                                {"width": 400, "height": 300, "crop": "fill"},
-                                {"quality": "auto"}
-                            ]
-                        )
-                    
-                    thumbnail_url = await asyncio.get_event_loop().run_in_executor(None, _generate_thumbnail)
-                except Exception as thumb_error:
-                    print(f"Failed to generate thumbnail: {thumb_error}")
-                    thumbnail_url = ""
-            
+
+            # Ensure we have required fields
+            if not all(k in result for k in ['secure_url', 'public_id']):
+                raise ValueError("Invalid Cloudinary response")
+
             return {
-                "public_id": result.get("public_id", ""),
-                "url": result.get("secure_url", ""),
+                "public_id": result["public_id"],
+                "url": result["secure_url"],
                 "file_type": "video",
-                "file_size": result.get("bytes", 0),
-                "duration": result.get("duration"),
-                "width": result.get("width"),
-                "height": result.get("height"),
-                "thumbnail": thumbnail_url,
-                "format": result.get("format", "")
+                "file_size": result.get("bytes", len(file_content)),
+                "duration": result.get("duration", 0),
+                "thumbnail": result.get("thumbnail_url", "")
             }
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
                 detail=f"Failed to upload video: {str(e)}"
             )
-    
+
+
     async def upload_pdf_from_stream(self, file_stream: io.BytesIO, filename: str, folder: str = "elearning/pdfs") -> Dict[str, Any]:
-        """Upload PDF file from stream"""
+        """Upload PDF file from stream with robust handling"""
         try:
+            # Create a fresh copy of the stream to ensure isolation
+            file_stream.seek(0)
+            file_content = file_stream.read()
+            new_stream = io.BytesIO(file_content)
+
             def _upload():
+                new_stream.seek(0)
                 return cloudinary.uploader.upload(
-                    file_stream,
+                    new_stream,
                     resource_type="raw",
                     folder=folder,
-                    overwrite=True,
-                    invalidate=True,
-                    timeout=60,  # 1 minute timeout
-                    filename=filename
+                    filename=filename,
+                    use_filename=True,
+                    unique_filename=True,
+                    timeout=60
                 )
-            
+
             result = await asyncio.get_event_loop().run_in_executor(None, _upload)
 
-            return {
-                "public_id": result.get("public_id", ""),
-                "url": result.get("secure_url", ""),
-                "file_type": "pdf",
-                "file_size": result.get("bytes", 0),
-                "format": result.get("format", "") 
-            }
+            if not result.get('secure_url'):
+                raise ValueError("Cloudinary upload failed - no URL returned")
 
+            return {
+                "public_id": result["public_id"],
+                "url": result["secure_url"],
+                "file_type": "pdf",
+                "file_size": result.get("bytes", len(file_content)),
+                "format": result.get("format", "pdf")
+            }
         except Exception as e:
             raise HTTPException(
                 status_code=500,

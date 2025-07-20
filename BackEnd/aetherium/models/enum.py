@@ -18,6 +18,7 @@ class VerificationStatus(enum.Enum):
     PENDING = "PENDING"
     VERIFIED = "VERIFIED"
     REJECTED = "REJECTED"
+    DRAFT = "DRAFT"
 
 class CourseLevel(enum.Enum):
     BEGINNER = "BEGINNER"

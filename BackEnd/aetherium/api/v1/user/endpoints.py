@@ -386,49 +386,6 @@ async def verify_razorpay_payment(payment_data: RazorpayPaymentVerify, current_u
     )
 
 
-# @router.post("/payment/verify-razorpay",response_model=PaymentSuccessResponse)
-# async def verify_razorpay_payment(payment_data:RazorpayPaymentVerify,current_user:User=Depends(get_current_user),db:Session=Depends(get_db)):
-#     is_valid = razorpay_service.verify_payment_signature(
-#         order_id=payment_data.razorpay_order_id,
-#         payment_id=payment_data.razorpay_payment_id,
-#         signature=payment_data.razorpay_signature
-#     )
-    
-#     if not is_valid:
-#         try:
-#             razorpay_service.update_purchase_status(
-#                 db=db,
-#                 order_id=payment_data.razorpay_order_id,
-#                 payment_id=payment_data.razorpay_payment_id,
-#                 status=PurchaseStatus.FAILED
-#             )
-#         except Exception as e:
-#             logger.error(f"Failed to update purchase status to FAILED: {e}")
-    
-#         raise HTTPException(status_code=400, detail="Payment verification failed")
-    
-#     purchase = razorpay_service.update_purchase_status(
-#         db=db,
-#         order_id=payment_data.razorpay_order_id,
-#         payment_id=payment_data.razorpay_payment_id,
-#         status=PurchaseStatus.COMPLETED
-#     )
-
-#     cart_item = db.query(Cart).filter(Cart.user_id == current_user.id,Cart.course_id == payment_data.course_id).first()
-    
-#     if cart_item:
-#         db.delete(cart_item)
-#         db.commit()
-    
-#     return PaymentSuccessResponse(
-#         success=True,
-#         message="Payment successful! Course purchased successfully.",
-#         purchase_id=purchase.id,
-#         course_id=payment_data.course_id,
-#         transaction_id=payment_data.razorpay_payment_id
-#     )
-
-
 
 ##Wallet endpoints to check the balance
 @router.get("/wallet/balance")
@@ -454,11 +411,10 @@ async def get_user_course_progress(
     service = ProgressService(db)
     return service.get_user_course_progress_summary(current_user.id)
 
+
+
 @router.get("/progress/courses/{course_id}", response_model=CourseProgressResponse)
-async def get_course_progress(
-    course_id: int,
-    db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+async def get_course_progress(course_id: int,db: Session = Depends(get_db),current_user = Depends(get_current_user)
 ):
     """Get course progress for current user"""
     service = ProgressService(db)
@@ -469,13 +425,11 @@ async def get_course_progress(
     
     return progress
 
+
+"""Get section progress for current user"""
 @router.get("/progress/sections/{section_id}", response_model=SectionProgressResponse)
-async def get_section_progress(
-    section_id: int,
-    db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
-):
-    """Get section progress for current user"""
+async def get_section_progress(section_id: int,db: Session = Depends(get_db),current_user = Depends(get_current_user)):
+
     service = ProgressService(db)
     progress = service.get_section_progress(current_user.id, section_id)
     
