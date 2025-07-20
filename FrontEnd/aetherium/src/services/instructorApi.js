@@ -201,9 +201,6 @@ getLessonAssessment: async (lessonId) => {
 },
 
 
-
-
-
   getDrafts: async () => {
     const response = await api.get("/instructor/courses/drafts")
     return response.data
