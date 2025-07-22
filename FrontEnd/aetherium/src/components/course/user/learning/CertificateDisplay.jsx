@@ -16,7 +16,7 @@ const CertificateDisplay = ({ course }) => {
         You have successfully completed the course: <span className="font-semibold">{course.title}</span>!
       </p>
       <button
-        onClick={handleGenerateCertificate}
+        onClick={() => navigate("/generate-certificate")}
         className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium text-base transition-colors"
       >
         Generate Your Certificate

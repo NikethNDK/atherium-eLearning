@@ -11,6 +11,7 @@ import FileUpload from "../../components/course/FileUpload"
 import EnhancedSectionEditor from "../../components/course/EnhancedSectionEditor"
 import InstructorSearch from "../../components/course/InstructorSearch"
 import { ChevronRight, Check } from "lucide-react"
+import{getImageUrl} from '../../components/common/ImageURL'
 
 const CreateCourse = () => {
   const { user } = useAuth()
@@ -83,12 +84,12 @@ const CreateCourse = () => {
     }
   }
 
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return null
-    if (imagePath.startsWith("http")) return imagePath
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
-    return `${baseUrl}/${imagePath}`
-  }
+  // const getImageUrl = (imagePath) => {
+  //   if (!imagePath) return null
+  //   if (imagePath.startsWith("http")) return imagePath
+  //   const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
+  //   return `${baseUrl}/${imagePath}`
+  // }
 
   const fetchCourseData = async (id) => {
     setLoading(true)
