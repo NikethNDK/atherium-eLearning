@@ -259,5 +259,16 @@ export const userAPI = {
   updateLessonTime: async (lessonId, timeSpent) => {
     const response = await api.post(`/user/progress/lessons/${lessonId}/time`, { time_spent: timeSpent });
     return response.data;
+  },
+  verifyCertificate: async (courseId) => {
+    try{
+      const response = await api.get(`/user/verify-certificate/${courseId}`)
+      return response.data
+    }catch(error){
+      console.error("Error verifying certificate:", error)
+      throw error
+    }
   }
+
+
 }

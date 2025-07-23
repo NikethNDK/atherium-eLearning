@@ -10,7 +10,7 @@ import PaymentSuccess from "../pages/user/PaymentSuccess";
 import OrderHistory from "../pages/user/OrderHistory";
 import MyLearningCoursePage from "../pages/user/MyLearningCoursePage";
 import MyCourseView from "../pages/user/MyCourseView";
-
+// import DownloadCertificate from "../components/course/user/learning/DownloadCertificate";
 
 export default function UserRoutes() {
   return (
@@ -23,6 +23,7 @@ export default function UserRoutes() {
       <Route path="/my-learning/course-curriculum/:courseId" element={<ProtectedRoute allowedRoles={["user"]}><MyLearningCoursePage /></ProtectedRoute>} />
       <Route path="/payment-success" element={<ProtectedRoute allowedRoles={["user"]}><PaymentSuccess /></ProtectedRoute>} />
       <Route path="/user/orders" element={<ProtectedRoute allowedRoles={["user"]}><OrderHistory /></ProtectedRoute>} />
+      {/* <Route path="/user/generate-certificate" element={<ProtectedRoute allowedRoles={["user"]}><DownloadCertificate /></ProtectedRoute>}/> */}
     </>
   );
 }
