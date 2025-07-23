@@ -49,6 +49,7 @@ class CourseResponse(BaseModel):
     created_at: datetime
     updated_at: Optional[datetime]
     # status: str
+    course_update_status: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -154,14 +155,23 @@ class PurchaseStatusCheck(BaseModel):
     purchase_date: Optional[datetime] = None
 
 
-# New schema added for user
-class CourseFilters(BaseModel):
-    search: Optional[str] = None
-    category: Optional[int] = None
-    level: Optional[str] = None
-    language: Optional[str] = None
-    page: int = 1
-    limit: int = 12
+class CertificateEligibilityResponse(BaseModel):
+    eligible:bool
+    first_name:str
+    last_name:str
+    course_title:str
+    instructor_firstname:str
+    instructor_lastname:str
+    completion_date:datetime
+
+# # New schema added for user
+# class CourseFilters(BaseModel):
+#     search: Optional[str] = None
+#     category: Optional[int] = None
+#     level: Optional[str] = None
+#     language: Optional[str] = None
+#     page: int = 1
+#     limit: int = 12
 
 
 

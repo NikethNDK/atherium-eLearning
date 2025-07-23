@@ -125,6 +125,8 @@ class CourseResponse(BaseModel):
     congratulation_message: Optional[str]
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
+    course_update_status: Optional[str] = None
+    
     
     learning_objectives: List[LearningObjectiveResponse] = []
     target_audiences: List[TargetAudienceResponse] = []

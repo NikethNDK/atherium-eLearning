@@ -483,6 +483,44 @@ async def complete_lesson(
         current_user.id, lesson_id, progress_update
     )
 
+from aetherium.schemas.user_course import CertificateEligibilityResponse
+from aetherium.models.courses.progress import CourseProgress
+
+@router.get("/verify-certificate/{course_id}",response_model=CertificateEligibilityResponse)
+def verify_certificate_generation(course_id:int,db:Session=Depends(get_db),current_user=Depends(get_current_user)):
+    
+    #check if user purchased the coures
+    purchase_history=db.query(Purchase).filter(
+        Purchase.course_id==course_id,
+        Purchase.user_id==current_user.id).first()
+    
+    if not purchase_history:
+        raise HTTPException(status_code=403,detail="Course not purchased")
+    
+    course_progress=db.query(CourseProgress).filter(
+        CourseProgress.course_id==course_id,
+        CourseProgress.user_id==current_user.id).first()
+
+    if not course_progress:
+        raise HTTPException(status_code=404,detail="Course progress not found")
+    
+    
+    if not (course_progress.is_completed or course_progress.progress_percentage==100):
+        raise HTTPException(status_code=403,detail="Course not completed")
+    
+    course=db.query(Course).options(
+        joinedload(Course.instructor)).filter(Course.id==course_id).first()  
+    
+    return CertificateEligibilityResponse(
+        eligible=True,
+        first_name=current_user.firstname,
+        last_name=current_user.lastname,
+        course_title=course.title,
+        instructor_firstname=course.instructor.firstname,
+        instructor_lastname=course.instructor.lastname,
+        completion_date=course_progress.completed_at
+    )
+
 @router.post("/progress/lessons/{lesson_id}/time")
 async def update_lesson_time(
     lesson_id: int,

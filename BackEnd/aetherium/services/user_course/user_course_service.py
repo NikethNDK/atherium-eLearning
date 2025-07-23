@@ -6,6 +6,7 @@ from aetherium.models.user import User
 from aetherium.models.user_course import Cart, Purchase, Wishlist,CourseReview, PurchaseStatus, PaymentMethod
 from aetherium.schemas.user_course import CourseFilters,CourseResponse,InstructorResponse,CategoryResponse,CourseProgressUpdate,CourseReviewCreate
 from aetherium.models.courses.progress import CourseProgress
+from aetherium.models.user_course import CourseReview
 from fastapi import HTTPException
 from typing import Optional,Dict
 import uuid
