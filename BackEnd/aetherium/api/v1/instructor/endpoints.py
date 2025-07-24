@@ -470,34 +470,6 @@ async def delete_lesson(
     return {"message": "Lesson deleted successfully"}
 
 
-"""Upload file for lesson content"""
-# @router.post("/lessons/{lesson_id}/upload-file")
-# async def upload_lesson_file(lesson_id: int,file: UploadFile = File(...),file_type: str = Form(...), db: Session = Depends(get_db),current_user = Depends(get_current_user)):
-
-#     # Validate file type
-#     allowed_types = ["video", "pdf", "image", "document"]
-#     if file_type not in allowed_types:
-#         raise HTTPException(status_code=400, detail=f"File type must be one of: {', '.join(allowed_types)}"
-#                             )
-#     print("this is file_type",file_type)
-#     # Validate file size (50MB limit)
-#     content_length = file.size
-#     if content_length and content_length > 50 * 1024 * 1024:  # 50MB
-#         raise HTTPException(status_code=400, detail="File size too large. Maximum 50MB allowed.")
-    
-#     # Read file content once and store in memory for smaller files
-#     # For larger files, we'll use Celery
-#     if content_length and content_length > 10 * 1024 * 1024:  # 10MB threshold for async processing
-#         # Use Celery for large files
-#         service = LessonService(db)
-#         return await service.upload_lesson_file_async(lesson_id, file, file_type)
-#     else:
-#         # Direct upload for smaller files
-#         service = LessonService(db)
-#         return await service.upload_lesson_file(lesson_id, file, file_type)
-
-from werkzeug.utils import secure_filename
-import tempfile
 import os
 import io
 @router.post("/lessons/{lesson_id}/upload-file")
@@ -586,86 +558,6 @@ async def check_task_status(
             status_code=500,
             detail=f"Failed to check task status: {str(e)}"
         )
-
-# from aetherium.models.courses.lesson import LessonContent
-# from fastapi import Query
-# @router.get("/lessons/{lesson_id}/upload-status")
-# async def check_upload_status(
-#     lesson_id: int,
-#     task_id: Optional[str] = Query(default=None, description="Task ID for async uploads"),
-#     db: Session = Depends(get_db),
-#     current_user = Depends(get_current_user)
-# ):
-#     """
-#     Unified endpoint to check upload status
-#     - For direct uploads: Returns current database status
-#     - For async uploads: Requires task_id parameter, returns detailed status
-#     """
-#     try:
-#         # Get lesson content from database
-#         content = db.query(LessonContent).filter(
-#             LessonContent.lesson_id == lesson_id
-#         ).first()
-        
-#         if not content:
-#             raise HTTPException(status_code=404, detail="Lesson content not found")
-        
-#         # Base response with database info
-#         response = {
-#             "lesson_id": lesson_id,
-#             "status": content.upload_status or "unknown",
-#             "file_type": content.file_type,
-#             "upload_type": "async" if task_id else "direct"
-#         }
-        
-#         # If completed, add file details
-#         if content.upload_status == "completed" and content.file_url:
-#             response.update({
-#                 "file_url": content.file_url,
-#                 "file_size": content.file_size,
-#                 "public_id": content.file_public_id
-#             })
-            
-#             # Video-specific fields
-#             if content.file_type == "video":
-#                 response.update({
-#                     "duration": content.video_duration,
-#                     "thumbnail": content.video_thumbnail
-#                 })
-        
-#         # If task_id provided, get detailed Celery task status
-#         if task_id:
-#             try:
-#                 from celery.result import AsyncResult
-#                 task_result = AsyncResult(task_id)
-                
-#                 response.update({
-#                     "task_id": task_id,
-#                     "celery_state": task_result.state,
-#                 })
-                
-#                 # Add task-specific details based on state
-#                 if task_result.state == 'PROGRESS':
-#                     response.update(task_result.info)
-#                 elif task_result.state == 'FAILURE':
-#                     response["error"] = str(task_result.info)
-#                 elif task_result.state == 'SUCCESS':
-#                     response["task_result"] = task_result.info
-                    
-#             except Exception as task_error:
-#                 logger.warning(f"Could not fetch task status for {task_id}: {str(task_error)}")
-#                 response["task_status_error"] = "Could not fetch task details"
-        
-#         return response
-        
-#     except HTTPException:
-#         raise
-#     except Exception as e:
-#         logger.error(f"Failed to check upload status: {str(e)}")
-#         raise HTTPException(
-#             status_code=500, 
-#             detail=f"Failed to check upload status: {str(e)}"
-#         )
     
 @router.post("/lessons/{lesson_id}/link-content")
 async def add_link_content(
