@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
-from aetherium.models.user import User, Role
+from aetherium.models.user import User, Role,Wallet
 from aetherium.models.courses import Course, VerificationStatus
 from typing import List, Dict, Any
 
@@ -23,7 +23,7 @@ class AdminService:
         
         average_rating = 4.8
         
-        total_revenue = 10000
+        # total_revenue = db.query(Course).func(sum())
         
         return {
             "total_users": total_users,

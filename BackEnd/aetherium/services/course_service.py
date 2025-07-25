@@ -1,6 +1,8 @@
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import or_, and_
+from sqlalchemy import or_, and_,func,distinct
 from aetherium.models.courses import *
+from aetherium.models.user import Wallet,User
+from aetherium.models.user_course import Purchase
 from aetherium.schemas.course import (
     CourseCreateStep1, CourseCreateStep2, CourseCreateStep3, CourseCreateStep4, 
     CourseResponse
@@ -9,23 +11,24 @@ from aetherium.schemas.category import CategoryCreate, CategoryResponse
 from aetherium.schemas.topic import TopicCreate
 from fastapi import HTTPException
 from typing import List,Optional
+from aetherium.core.logger import logger
 
 class CourseService:
     @staticmethod
-    def create_or_update_course_step1(db: Session, course_data: CourseCreateStep1, instructor_id: int):
-        course = db.query(Course).filter(
-            Course.instructor_id == instructor_id, 
-            Course.verification_status == VerificationStatus.PENDING,
-            Course.is_published == False
-        ).first()
+    def create_step1(db: Session, course_data: CourseCreateStep1, instructor_id: int):
+        # course = db.query(Course).filter(
+        #     Course.instructor_id == instructor_id, 
+        #     Course.verification_status == VerificationStatus.PENDING,
+        #     Course.is_published == False
+        # ).first()
 
-        if not course:
-            course = Course(
-                instructor_id=instructor_id,
-                verification_status=VerificationStatus.PENDING,
-                is_published=False
-            )
-            db.add(course)
+        # if not course:
+        course = Course(
+            instructor_id=instructor_id,
+            verification_status=VerificationStatus.PENDING,
+            is_published=False
+        )
+        db.add(course)
 
         # Update course data
         for field, value in course_data.model_dump().items():
@@ -512,7 +515,7 @@ class CourseService:
         
         if not course:
             raise HTTPException(status_code=404, detail="Course not found or not authorized")
-        
+        logger.info(f"The course which is called for course_id {course_id} and the details is {course}")
         return course
 
     @staticmethod
@@ -534,10 +537,20 @@ class CourseService:
             Course.instructor_id == instructor_id,
             Course.verification_status == VerificationStatus.REJECTED
         ).count()
-        
-    
-        total_students = 0  
-        total_revenue = 0.0 
+        from aetherium.models.enum import PurchaseStatus
+        student_count=(db.query(func.count(distinct(Purchase.user_id))).join
+                        (Course,Purchase.course_id ==Course.id).filter(
+                            Course.instructor_id==instructor_id,
+                            Purchase.status==PurchaseStatus.COMPLETED
+                        ).scalar()
+                        )
+
+        total_students = student_count or 0  
+        if instructor_id!=1:
+            total_earned=(db.query(func.sum(Wallet.balance)).filter(Wallet.user_id==instructor_id)).scalar()
+            logger.info(f"Total amount for this instructor{total_earned}")
+        total_revenue = round(total_earned,2) if total_earned else 0.0
+
         pending_reviews = 0  
         
         return {

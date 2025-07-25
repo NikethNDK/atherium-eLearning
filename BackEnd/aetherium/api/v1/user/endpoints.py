@@ -350,7 +350,7 @@ async def verify_razorpay_payment(payment_data: RazorpayPaymentVerify, current_u
                 user_id=course.instructor_id,
                 amount=instructor_amount,
                 description=f"Course sale commission: {course.title}",
-                reference_id=purchase.order_id
+                reference_id=purchase.transaction_id
             )
             
             # Add to admin wallet
@@ -360,10 +360,10 @@ async def verify_razorpay_payment(payment_data: RazorpayPaymentVerify, current_u
                 user_id=admin_user_id,
                 amount=admin_commission,
                 description=f"Platform commission: {course.title}",
-                reference_id=purchase.order_id
+                reference_id=purchase.transaction_id
             )
             
-            logger.info(f"Wallet distribution completed for order {purchase.order_id}")
+            logger.info(f"Wallet distribution completed for order {purchase.transaction_id}")
             
         except Exception as wallet_error:
             logger.error(f"Error in wallet distribution: {wallet_error}")

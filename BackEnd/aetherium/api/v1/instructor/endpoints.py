@@ -29,7 +29,7 @@ async def create_course_step1(
     if current_user.role.name != "instructor":
         raise HTTPException(status_code=403, detail="Instructor access required")
     
-    course = CourseService.create_or_update_course_step1(db, course_data, current_user.id)
+    course = CourseService.create_step1(db, course_data, current_user.id)
     return course
 
 @router.put("/courses/{course_id}/step1", response_model=CourseResponse)
@@ -116,24 +116,6 @@ async def update_course_step2(
     )
     return course
 
-# @router.put("/courses/{course_id}/step3", response_model=CourseResponse)
-# async def update_course_step3(
-#     course_id: int,
-#     course_data: CourseCreateStep3,
-#     db: Session = Depends(get_db),
-#     current_user: User = Depends(get_current_user)
-# ):
-#     if current_user.role.name != "instructor":
-#         raise HTTPException(status_code=403, detail="Instructor access required")
-    
-#     try:
-#         print(f"Received course_data: {course_data}")  # Debug log
-#         course = CourseService.update_course_step3(db, course_id, course_data, current_user.id)
-#         return course
-#     except Exception as e:
-#         print(f"Error in update_course_step3: {str(e)}")  # Debug log
-#         raise HTTPException(status_code=422, detail=f"Validation error: {str(e)}")
-
 
 @router.put("/courses/{course_id}/step3", response_model=CourseResponse)
 async def update_course_step3(course_id: int,db: Session = Depends(get_db),current_user: User = Depends(get_current_user)):
@@ -211,17 +193,6 @@ async def get_my_courses(
         raise HTTPException(status_code=403, detail="Instructor access required")
     
     return CourseService.get_instructor_published_courses(db, current_user.id)
-
-# @router.get("/courses/{course_id}", response_model=CourseResponse)
-# async def get_course(
-#     course_id: int,
-#     db: Session = Depends(get_db),
-#     current_user: User = Depends(get_current_user)
-# ):
-#     if current_user.role.name != "instructor":
-#         raise HTTPException(status_code=403, detail="Instructor access required")
-    
-#     return CourseService.get_instructor_course(db, course_id, current_user.id)
 
 
 @router.get("/courses/{course_id}", response_model=CourseResponse)
