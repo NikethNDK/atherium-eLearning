@@ -6,8 +6,7 @@ from sqlalchemy import and_
 from aetherium.models.user_course import Purchase
 from aetherium.models.enum import PaymentMethod,PurchaseStatus
 from aetherium.config import settings
-import logging
-logger = logging.getLogger(__name__) 
+from aetherium.core.logger import logger
 class RazorpayService:
     def __init__(self):
         self.key_id=settings.RAZORPAY_KEY_ID

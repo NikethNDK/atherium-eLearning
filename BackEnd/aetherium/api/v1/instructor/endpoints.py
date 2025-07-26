@@ -161,11 +161,6 @@ async def submit_course(
     return course
 
 
-
-
-
-
-
 @router.get("/courses/drafts", response_model=List[CourseResponse])
 async def get_drafts(
     db: Session = Depends(get_db),

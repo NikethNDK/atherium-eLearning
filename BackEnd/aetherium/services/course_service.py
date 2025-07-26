@@ -25,7 +25,7 @@ class CourseService:
         # if not course:
         course = Course(
             instructor_id=instructor_id,
-            verification_status=VerificationStatus.PENDING,
+            verification_status=VerificationStatus.DRAFT,
             is_published=False
         )
         db.add(course)
@@ -86,78 +86,6 @@ class CourseService:
         db.commit()
         db.refresh(course)
         return course
-
-    # @staticmethod
-    # def update_course_step3(db: Session, course_id: int, course_data: CourseCreateStep3, instructor_id: int):
-    #     course = db.query(Course).filter(
-    #         Course.id == course_id, 
-    #         Course.instructor_id == instructor_id
-    #     ).first()
-
-    #     if not course:
-    #         raise HTTPException(status_code=404, detail="Course not found or not authorized")
-        
-    #     try:
-        
-    #         sections = db.query(Section).filter(Section.course_id == course_id).all()
-
-    #         for section in sections:
-    #             db.query(Lesson).filter(Lesson.section_id == section.id).delete()
-
-    #         db.query(Section).filter(Section.course_id == course_id).delete()
-    #         db.flush()
-
-    #         for section_data in course_data.sections:
-    #             if section_data.name.strip():
-    #                 section = Section(course_id=course_id, name=section_data.name.strip())
-    #                 db.add(section)
-    #                 db.flush()  
-
-    #                 for lesson_data in section_data.lessons:
-    #                     if lesson_data.name.strip():
-             
-    #                         assessment_json = None
-    #                         if lesson_data.assessment and lesson_data.content_type == ContentType.ASSESSMENT:
-    #                             assessment_json = lesson_data.assessment
-
-    #                         duration_value = None
-    #                         if lesson_data.duration is not None:
-    #                             try:
-    #                                 duration_value = int(lesson_data.duration)
-    #                             except (ValueError, TypeError):
-    #                                 duration_value = None
-
-    #                         lesson = Lesson(
-    #                             section_id=section.id,
-    #                             name=lesson_data.name.strip(),
-    #                             content_type=lesson_data.content_type,
-    #                             content_url=lesson_data.content_url,
-    #                             duration=duration_value,  # Ensure it's an integer
-    #                             description=lesson_data.description,
-    #                             content_data=lesson_data.content_data,
-    #                             order_index=lesson_data.order_index or 0,
-    #                             assessment=assessment_json
-    #                         )
-    #                         db.add(lesson)
-
-    #         db.commit()
-             
-    #         return db.query(Course).options(
-    #             joinedload(Course.learning_objectives),
-    #             joinedload(Course.target_audiences),
-    #             joinedload(Course.requirements),
-    #             joinedload(Course.sections).joinedload(Section.lessons),
-    #             joinedload(Course.category),
-    #             joinedload(Course.topic),
-    #             joinedload(Course.instructor)
-    #         ).filter(Course.id == course_id).first()
-            
-    #     except Exception as e:
-    #         db.rollback()
-    #         print(f"Error in update_course_step3: {str(e)}")
-    #         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
-          
-
 
     @staticmethod
     def update_course_step4(db: Session, course_id: int, course_data: CourseCreateStep4, instructor_id: int):
@@ -258,7 +186,7 @@ class CourseService:
             joinedload(Course.instructor)
         ).filter(
             Course.instructor_id == instructor_id,
-            Course.verification_status == VerificationStatus.PENDING,
+            Course.verification_status == VerificationStatus.DRAFT,
             Course.is_published == False
         ).all()
 

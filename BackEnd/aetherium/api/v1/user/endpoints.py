@@ -105,7 +105,7 @@ async def purchase_course(
 ):
     if current_user.role.name != "user":
         raise HTTPException(status_code=403, detail="User access required")
-    return PurchaseService.purchase_course(
+    return await PurchaseService.purchase_course(
         db, current_user.id, purchase_data.course_id, purchase_data.payment_method
     )
 
@@ -239,62 +239,91 @@ async def get_order_detail(
     return order
 
 
+# @router.post("/payment/create-razorpay-order", response_model=RazorpayOrderResponse)
+# async def create_razorpay_order(order_data: RazorpayOrderCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+#     try:
+#         # Fetch course details
+#         course = db.query(Course).filter(Course.id == order_data.course_id).first()
+#         if not course:
+#             raise HTTPException(status_code=404, detail="Course not found")
+        
+#         # Calculate subtotal (base price)
+#         subtotal = course.discount_price if course.discount_price else course.price
+        
+#         if subtotal <= 0:
+#             raise HTTPException(status_code=400, detail="Invalid course price")
+        
+#         # Calculate tax (18% GST)
+#         tax_amount = subtotal * 0.18
+        
+#         # Calculate total amount (subtotal + tax)
+#         total_amount = subtotal + tax_amount
+        
+#         # Create receipt
+#         receipt = f"course_{course.id}_user_{current_user.id}"
+        
+#         # Create Razorpay order with total amount
+#         razorpay_order = razorpay_service.create_order(
+#             amount=total_amount,
+#             receipt=receipt
+#         )
+        
+#         # Create purchase record with updated amounts
+#         purchase = razorpay_service.create_purchase_record_safe(
+#             db=db,
+#             user_id=current_user.id,
+#             course_id=course.id,
+#             subtotal=subtotal,
+#             tax_amount=tax_amount,
+#             total_amount=total_amount,
+#             order_id=razorpay_order['id'],
+#             status=PurchaseStatus.PENDING
+#         )
+        
+#         logger.info(f"Order created successfully: {razorpay_order['id']} for user {current_user.id}")
+        
+#         return RazorpayOrderResponse(
+#             order_id=razorpay_order['id'],
+#             amount=razorpay_order['amount'],
+#             currency=razorpay_order['currency'],
+#             key_id=razorpay_service.key_id,
+#             course_id=course.id,
+#             course_title=course.title,
+#             user_email=current_user.email,
+#             user_name=f"{current_user.firstname} {current_user.lastname}",
+#             subtotal=subtotal,
+#             tax_amount=tax_amount,
+#             total_amount=total_amount
+#         )
+        
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         logger.error(f"Unexpected error in create_razorpay_order: {e}")
+#         raise HTTPException(
+#             status_code=500,
+#             detail="Failed to create order. Please try again."
+#         )
+
 @router.post("/payment/create-razorpay-order", response_model=RazorpayOrderResponse)
-async def create_razorpay_order(order_data: RazorpayOrderCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def create_razorpay_order(
+    order_data: RazorpayOrderCreate, 
+    current_user: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
     try:
-        # Fetch course details
-        course = db.query(Course).filter(Course.id == order_data.course_id).first()
-        if not course:
-            raise HTTPException(status_code=404, detail="Course not found")
-        
-        # Calculate subtotal (base price)
-        subtotal = course.discount_price if course.discount_price else course.price
-        
-        if subtotal <= 0:
-            raise HTTPException(status_code=400, detail="Invalid course price")
-        
-        # Calculate tax (18% GST)
-        tax_amount = subtotal * 0.18
-        
-        # Calculate total amount (subtotal + tax)
-        total_amount = subtotal + tax_amount
-        
-        # Create receipt
-        receipt = f"course_{course.id}_user_{current_user.id}"
-        
-        # Create Razorpay order with total amount
-        razorpay_order = razorpay_service.create_order(
-            amount=total_amount,
-            receipt=receipt
-        )
-        
-        # Create purchase record with updated amounts
-        purchase = razorpay_service.create_purchase_record_safe(
+        # Call the service function that handles all the logic
+        order_response = await PurchaseService.create_course_order_with_notification(
             db=db,
             user_id=current_user.id,
-            course_id=course.id,
-            subtotal=subtotal,
-            tax_amount=tax_amount,
-            total_amount=total_amount,
-            order_id=razorpay_order['id'],
-            status=PurchaseStatus.PENDING
-        )
-        
-        logger.info(f"Order created successfully: {razorpay_order['id']} for user {current_user.id}")
-        
-        return RazorpayOrderResponse(
-            order_id=razorpay_order['id'],
-            amount=razorpay_order['amount'],
-            currency=razorpay_order['currency'],
-            key_id=razorpay_service.key_id,
-            course_id=course.id,
-            course_title=course.title,
+            course_id=order_data.course_id,
             user_email=current_user.email,
-            user_name=f"{current_user.firstname} {current_user.lastname}",
-            subtotal=subtotal,
-            tax_amount=tax_amount,
-            total_amount=total_amount
+            user_firstname=current_user.firstname,
+            user_lastname=current_user.lastname
         )
+        
+        logger.info(f"Order created successfully: {order_response.order_id} for user {current_user.id}")
+        return order_response
         
     except HTTPException:
         raise
@@ -304,7 +333,6 @@ async def create_razorpay_order(order_data: RazorpayOrderCreate, current_user: U
             status_code=500,
             detail="Failed to create order. Please try again."
         )
-
 
 @router.post("/payment/verify-razorpay", response_model=PaymentSuccessResponse)
 async def verify_razorpay_payment(payment_data: RazorpayPaymentVerify, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):

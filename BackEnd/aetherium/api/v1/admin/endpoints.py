@@ -1,10 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from aetherium.database.db import get_db
 from aetherium.services.user_service import get_all_users, block_user
 from aetherium.utils.jwt_utils import get_current_user
-from aetherium.schemas.user import UserResponse, UserBlockRequest
+from aetherium.schemas.user import (
+    UserResponse, UserBlockRequest, BasicStatsResponse, 
+    RevenueAnalyticsResponse, CategoryAnalyticsResponse, 
+    InstructorAnalyticsResponse, BestSellingCourseResponse, 
+    TopInstructorResponse, ComprehensiveDashboardResponse
+)
 from aetherium.schemas.category import CategoryCreate, CategoryResponse
 from aetherium.schemas.topic import TopicCreate, TopicResponse
 from aetherium.schemas.course import CourseResponse, CourseReviewRequest
@@ -36,7 +41,7 @@ def block_user_endpoint(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
     return block_user(db, user_id, block_data.block)
 
-@router.get("/dashboard/stats")
+@router.get("/dashboard/stats", response_model=BasicStatsResponse)
 def get_dashboard_stats(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -45,7 +50,59 @@ def get_dashboard_stats(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
     return AdminService.get_dashboard_stats(db)
 
-@router.get("/top-instructors")
+@router.get("/dashboard/comprehensive", response_model=ComprehensiveDashboardResponse)
+def get_comprehensive_dashboard_data(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get comprehensive dashboard data including all analytics"""
+    if current_user.role.name != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+    return AdminService.get_comprehensive_dashboard_data(db)
+
+@router.get("/dashboard/revenue-analytics", response_model=RevenueAnalyticsResponse)
+def get_revenue_analytics(
+    days: int = Query(30, description="Number of days for analytics", ge=1, le=365),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get revenue analytics for graphs and charts"""
+    if current_user.role.name != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+    return AdminService.get_revenue_analytics(db, days)
+
+@router.get("/dashboard/category-analytics", response_model=List[CategoryAnalyticsResponse])
+def get_category_analytics(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get analytics for each category"""
+    if current_user.role.name != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+    return AdminService.get_category_analytics(db)
+
+@router.get("/dashboard/instructor-analytics", response_model=List[InstructorAnalyticsResponse])
+def get_instructor_analytics(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get analytics for each instructor"""
+    if current_user.role.name != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+    return AdminService.get_instructor_analytics(db)
+
+@router.get("/dashboard/best-selling-courses", response_model=List[BestSellingCourseResponse])
+def get_best_selling_courses(
+    limit: int = Query(10, description="Number of courses to return", ge=1, le=50),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get best selling courses with actual sales data"""
+    if current_user.role.name != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+    return AdminService.get_best_selling_courses(db, limit)
+
+@router.get("/top-instructors", response_model=List[TopInstructorResponse])
 def get_top_instructors(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
