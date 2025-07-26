@@ -15,21 +15,13 @@ class AdminService:
     def get_dashboard_stats(db: Session) -> Dict[str, Any]:
 
         total_users = db.query(User).count()
-        
-
         total_courses = db.query(Course).count()
-        
-
         total_instructors = db.query(User).join(Role).filter(Role.name == "instructor").count()
-        
 
         pending_courses = db.query(Course).filter(
 
             Course.verification_status == VerificationStatus.PENDING
-
         ).count()
-        
-
         published_courses = db.query(Course).filter(
 
             Course.is_published == True

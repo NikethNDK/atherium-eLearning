@@ -4,22 +4,22 @@ This is the **backend** of the Aetherium eLearning platform, built using **FastA
 
 ---
 
-## 📦 Technologies Used
+## Technologies Used
 
-- ⚡ FastAPI
-- 🐘 PostgreSQL
-- 🛡️ JWT for Authentication
-- 🔐 Google OAuth with Authlib
-- 🔄 SQLAlchemy & Alembic for ORM and Migrations
+-FastAPI
+- PostgreSQL
+-JWT for Authentication
+- Google OAuth with Authlib
+- SQLAlchemy & Alembic for ORM and Migrations
 - Razorpay for payment integration
 - Cloudinary for stroring the files
 - Redis for in memory caching and as a broker to the Celery
 - Celery for background task
 ---
 
-## 🚀 Getting Started
+## Getting Started
 create the environment for the aetherium project
-### 1️⃣ Clone the Repository
+### Clone the Repository
 
 ```bash
 git clone https://github.com/NikethNDK/atherium-eLearning.git
