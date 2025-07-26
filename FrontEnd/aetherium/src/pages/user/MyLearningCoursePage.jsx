@@ -39,6 +39,7 @@ const MyLearningCoursePage = () => {
           console.warn('Course progress not found:', err)
           return null
         }),
+        
         Promise.all(
           courseData.sections.map(async (section) => {
             try {
@@ -302,7 +303,111 @@ const MyLearningCoursePage = () => {
       <div className="min-h-screen bg-gray-50">
         <Header />
         <div className="container mx-auto px-4 py-16">
-          <CertificateDisplay course={course} />
+          {/* Certificate Generation Section */}
+          <div className="max-w-4xl mx-auto mb-8">
+            <CertificateDisplay course={course} />
+          </div>
+          
+          {/* Course Curriculum Section */}
+          <div className="max-w-6xl mx-auto">
+            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
+                <CheckCircle className="w-8 h-8 text-green-500" />
+                Course Completed - You can now revisit any lesson
+              </h2>
+              <p className="text-gray-600 mb-6">
+                Congratulations on completing the course! You can now revisit any lesson to refresh your knowledge.
+              </p>
+            </div>
+            
+            {/* Curriculum Content */}
+            <div className="bg-white rounded-xl shadow-lg">
+              <div className="p-6 border-b border-gray-200">
+                <h3 className="text-xl font-bold text-gray-900">Course Curriculum</h3>
+                <p className="text-gray-600 mt-1">All lessons are now unlocked for review</p>
+              </div>
+              
+              <div className="p-6">
+                <div className="space-y-6">
+                  {course?.sections?.map((section, sectionIndex) => (
+                    <div key={section.id} className="border border-gray-200 rounded-lg p-4">
+                      <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                        <CheckCircle className="w-5 h-5 text-green-500" />
+                        {section.name}
+                        <span className="ml-auto text-sm text-gray-500 bg-green-100 px-2 py-1 rounded">
+                          {sectionProgressMap[section.id]?.progress_percentage?.toFixed(0) || 0}% Complete
+                        </span>
+                      </h4>
+                      <div className="space-y-2">
+                        {section.lessons?.map((lesson) => (
+                          <button
+                            key={lesson.id}
+                            onClick={() => setActiveLessonId(lesson.id)}
+                            className={`w-full text-left p-3 rounded-lg border transition-all duration-200 flex items-center justify-between ${
+                              activeLessonId === lesson.id
+                                ? "bg-blue-50 border-blue-300 text-blue-900"
+                                : "bg-gray-50 border-gray-200 hover:bg-gray-100 text-gray-700"
+                            }`}
+                          >
+                            <span className="flex items-center gap-3">
+                              {isLessonCompleted(lesson.id) ? (
+                                <CheckCircle className="w-5 h-5 text-green-500" />
+                              ) : (
+                                <div className="w-5 h-5 border-2 border-gray-300 rounded-full"></div>
+                              )}
+                              <span className="font-medium">{lesson.name}</span>
+                            </span>
+                            <span className="text-sm text-gray-500">
+                              {lesson.duration} {lesson.content_type === "VIDEO" ? "mins" : "min"}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            {/* Lesson Content Display for Completed Course */}
+            {activeLesson && (
+              <div className="mt-8">
+                <LessonContentDisplay
+                  lesson={activeLesson}
+                  onLessonComplete={handleLessonComplete}
+                  onQuizComplete={handleQuizComplete}
+                />
+                <div className="mt-8 flex justify-between items-center">
+                  <button
+                    onClick={goToPreviousLesson}
+                    disabled={getLessonIndex(activeLessonId) === 0}
+                    className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg flex items-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                  >
+                    <ChevronLeft className="w-4 h-4 mr-2" /> Previous Lesson
+                  </button>
+                  
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600">
+                      Lesson {getLessonIndex(activeLessonId) + 1} of {allLessons.length}
+                    </p>
+                    {currentSectionIndex !== -1 && (
+                      <p className="text-xs text-gray-500">
+                        Section: {course.sections[currentSectionIndex].name}
+                      </p>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={goToNextLesson}
+                    disabled={getLessonIndex(activeLessonId) === allLessons.length - 1}
+                    className="bg-[#1a1b3a] hover:bg-[#2a2b4a] text-white px-4 py-2 rounded-lg flex items-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                  >
+                    Next Lesson <ChevronRight className="w-4 h-4 ml-2" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
         <Footer />
       </div>

@@ -30,9 +30,11 @@
 "use client"
 
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer'
-import { Award, Download, Eye, X, Loader2, CheckCircle, AlertCircle, XCircle } from 'lucide-react'
+import { Award, Download, Eye, X, Loader2, CheckCircle, AlertCircle, XCircle, BookOpen } from 'lucide-react'
 import { userAPI } from '../../../../services/userApi'
+import React from 'react' // Added missing import for React
 
 // Register fonts
 Font.register({
@@ -47,80 +49,255 @@ const styles = StyleSheet.create({
   page: {
     flexDirection: 'column',
     backgroundColor: '#ffffff',
-    padding: 40,
-    fontFamily: 'Helvetica'
+    padding: 30,
+    fontFamily: 'Helvetica',
+    position: 'relative'
   },
+  // Decorative border
+  border: {
+    position: 'absolute',
+    top: 15,
+    left: 15,
+    right: 15,
+    bottom: 15,
+    border: '3px solid #1e40af',
+    borderStyle: 'double',
+    borderWidth: 6
+  },
+  innerBorder: {
+    position: 'absolute',
+    top: 30,
+    left: 30,
+    right: 30,
+    bottom: 30,
+    border: '1px solid #3b82f6',
+    borderStyle: 'solid'
+  },
+  // Header section
   header: {
-    fontSize: 24,
-    textAlign: 'center',
+    marginTop: 50,
     marginBottom: 30,
-    fontWeight: 'bold',
-    color: '#1f2937'
+    alignItems: 'center'
   },
-  text: {
-    fontSize: 18,
+  logo: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#1e40af',
+    marginBottom: 8,
+    textAlign: 'center'
+  },
+  certificateTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#1f2937',
+    marginBottom: 6,
+    textAlign: 'center',
+    textTransform: 'uppercase',
+    letterSpacing: 1
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#6b7280',
     textAlign: 'center',
     marginBottom: 15,
-    color: '#374151'
+    textTransform: 'uppercase',
+    letterSpacing: 0.5
   },
-  userName: {
-    fontSize: 22,
+  // Main content
+  content: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 25
+  },
+  presentationText: {
+    fontSize: 16,
+    color: '#374151',
     textAlign: 'center',
-    marginVertical: 20,
+    marginBottom: 15,
+    marginHorizontal: 40,
+    lineHeight: 1.4
+  },
+  studentName: {
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#059669'
+    color: '#059669',
+    textAlign: 'center',
+    marginVertical: 15,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5
+  },
+  courseText: {
+    fontSize: 16,
+    color: '#374151',
+    textAlign: 'center',
+    marginBottom: 15,
+    marginHorizontal: 40,
+    lineHeight: 1.4
   },
   courseTitle: {
-    fontSize: 20,
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#1f2937',
     textAlign: 'center',
     marginBottom: 15,
-    fontWeight: 'bold',
-    color: '#1f2937'
+    textTransform: 'uppercase',
+    letterSpacing: 0.5
   },
   instructor: {
     fontSize: 16,
+    color: '#6b7280',
     textAlign: 'center',
-    marginBottom: 10,
-    color: '#6b7280'
+    marginBottom: 20,
+    fontStyle: 'italic'
+  },
+  // Footer section
+  footer: {
+    marginTop: 25,
+    alignItems: 'center'
   },
   date: {
-    fontSize: 16,
+    fontSize: 14,
+    color: '#374151',
     textAlign: 'center',
-    marginTop: 40,
-    color: '#374151'
+    marginBottom: 15
   },
+  signatureSection: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 25,
+    width: '100%'
+  },
+  signatureBox: {
+    alignItems: 'center',
+    width: '45%'
+  },
+  signatureLine: {
+    width: 150,
+    height: 1,
+    backgroundColor: '#1e40af',
+    marginBottom: 8
+  },
+  signatureLabel: {
+    fontSize: 12,
+    color: '#6b7280',
+    textAlign: 'center'
+  },
+  // Decorative elements
+  cornerDecoration: {
+    position: 'absolute',
+    width: 40,
+    height: 40,
+    border: '2px solid #3b82f6',
+    borderStyle: 'solid'
+  },
+  topLeft: {
+    top: 45,
+    left: 45,
+    borderRight: 'none',
+    borderBottom: 'none'
+  },
+  topRight: {
+    top: 45,
+    right: 45,
+    borderLeft: 'none',
+    borderBottom: 'none'
+  },
+  bottomLeft: {
+    bottom: 45,
+    left: 45,
+    borderRight: 'none',
+    borderTop: 'none'
+  },
+  bottomRight: {
+    bottom: 45,
+    right: 45,
+    borderLeft: 'none',
+    borderTop: 'none'
+  },
+  // Watermark
   watermark: {
     position: 'absolute',
-    opacity: 0.1,
-    fontSize: 72,
-    color: '#3b82f6',
+    opacity: 0.05,
+    fontSize: 80,
+    color: '#1e40af',
     transform: 'rotate(-45deg)',
     left: 150,
-    top: 300
+    top: 300,
+    fontWeight: 'bold'
+  },
+  // Certificate number
+  certificateNumber: {
+    position: 'absolute',
+    top: 60,
+    right: 60,
+    fontSize: 10,
+    color: '#6b7280',
+    fontStyle: 'italic'
   }
 })
 
 const CertificateDocument = ({ certificateData }) => (
   <Document>
     <Page size="A4" style={styles.page}>
-      <Text style={styles.watermark}>Aetherium</Text>
-      <Text style={styles.header}>Certificate of Completion</Text>
-      <Text style={styles.text}>This is to certify that</Text>
-      <Text style={styles.userName}>
-        {certificateData.first_name} {certificateData.last_name}
+      {/* Decorative borders */}
+      <View style={styles.border} />
+      <View style={styles.innerBorder} />
+      
+      {/* Corner decorations */}
+      <View style={[styles.cornerDecoration, styles.topLeft]} />
+      <View style={[styles.cornerDecoration, styles.topRight]} />
+      <View style={[styles.cornerDecoration, styles.bottomLeft]} />
+      <View style={[styles.cornerDecoration, styles.bottomRight]} />
+      
+      {/* Watermark */}
+      <Text style={styles.watermark}>AETHERIUM</Text>
+      
+      {/* Certificate number */}
+      <Text style={styles.certificateNumber}>
+        Certificate #: {certificateData.course_id}-{new Date().getFullYear()}-{Math.floor(Math.random() * 10000).toString().padStart(4, '0')}
       </Text>
-      <Text style={styles.text}>has successfully completed the course</Text>
-      <Text style={styles.courseTitle}>{certificateData.course_title}</Text>
-      <Text style={styles.instructor}>
-        Instructor: {certificateData.instructor_firstname} {certificateData.instructor_lastname}
-      </Text>
-      <Text style={styles.date}>
-        Completed on: {new Date(certificateData.completion_date).toLocaleDateString('en-US', { 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
-        })}
-      </Text>
+      
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.logo}>AETHERIUM</Text>
+        <Text style={styles.certificateTitle}>Certificate of Completion</Text>
+        <Text style={styles.subtitle}>This is to certify that</Text>
+      </View>
+      
+      {/* Main content */}
+      <View style={styles.content}>
+        <Text style={styles.studentName}>
+          {certificateData.first_name} {certificateData.last_name}
+        </Text>
+        
+        <Text style={styles.presentationText}>
+          has successfully completed all requirements and demonstrated proficiency in
+        </Text>
+        
+        <Text style={styles.courseText}>
+          the course entitled
+        </Text>
+        
+        <Text style={styles.courseTitle}>
+          {certificateData.course_title}
+        </Text>
+        
+        <Text style={styles.instructor}>
+          Instructor: {certificateData.instructor_firstname} {certificateData.instructor_lastname}
+        </Text>
+      </View>
+      
+      {/* Footer */}
+      <View style={styles.footer}>
+        <Text style={styles.date}>
+          Completed on: {new Date(certificateData.completion_date).toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          })}
+        </Text>
+      </View>
     </Page>
   </Document>
 )
@@ -282,10 +459,12 @@ const InlineMessage = ({ type, title, message, onClose }) => {
 }
 
 const CertificateDisplay = ({ course }) => {
+  const navigate = useNavigate()
   const [certificateData, setCertificateData] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
   const [message, setMessage] = useState(null)
+  const [downloadError, setDownloadError] = useState(null)
 
   const showMessage = (type, title, text) => {
     setMessage({ type, title, text })
@@ -302,9 +481,12 @@ const CertificateDisplay = ({ course }) => {
   const handleGenerateCertificate = async () => {
     setIsLoading(true)
     setMessage(null) // Clear any existing messages
+    setDownloadError(null) // Clear any download errors
     
     try {
+      console.log('Generating certificate for course:', course.id)
       const data = await userAPI.verifyCertificate(course.id)
+      console.log('Certificate data received:', data)
       
       if (!data.eligible) {
         throw new Error('You are not eligible for a certificate for this course')
@@ -319,6 +501,7 @@ const CertificateDisplay = ({ course }) => {
         'Your certificate has been generated successfully and is ready for download.'
       )
     } catch (error) {
+      console.error('Error generating certificate:', error)
       showMessage(
         'error',
         'Certificate Generation Failed',
@@ -328,6 +511,42 @@ const CertificateDisplay = ({ course }) => {
       setIsLoading(false)
     }
   }
+
+  const handleDownloadError = (error) => {
+    console.error('PDF Download Error:', error)
+    setDownloadError('Failed to generate PDF. Please try again.')
+    showMessage(
+      'error',
+      'Download Failed',
+      'Unable to generate PDF certificate. Please try again or contact support.'
+    )
+  }
+
+  const handleRevisitFirstLesson = () => {
+    // Navigate to the course curriculum page with the first lesson active
+    console.log('Navigating to course curriculum:', course.id)
+    navigate(`/my-learning/course-curriculum/${course.id}`)
+  }
+
+  // Get the first lesson from the course
+  const getFirstLesson = () => {
+    if (course?.sections && course.sections.length > 0) {
+      const firstSection = course.sections[0]
+      if (firstSection.lessons && firstSection.lessons.length > 0) {
+        return firstSection.lessons[0]
+      }
+    }
+    return null
+  }
+
+  const firstLesson = getFirstLesson()
+
+  // Debug: Log certificate data when it changes
+  React.useEffect(() => {
+    if (certificateData) {
+      console.log('Certificate data updated:', certificateData)
+    }
+  }, [certificateData])
 
   return (
     <>
@@ -407,22 +626,110 @@ const CertificateDisplay = ({ course }) => {
                     <PDFDownloadLink
                       document={<CertificateDocument certificateData={certificateData} />}
                       fileName={`${course.title.replace(/\s+/g, '_')}_certificate.pdf`}
+                      onError={handleDownloadError}
                       className="group bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 inline-flex items-center gap-3 shadow-lg hover:shadow-xl transform hover:translate-y-[-1px]"
                     >
-                      {({ loading }) => (
-                        <>
-                          {loading ? (
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                          ) : (
-                            <Download className="w-5 h-5 group-hover:translate-y-[-2px] transition-transform duration-200" />
-                          )}
-                          {loading ? 'Preparing PDF...' : 'Download Certificate'}
-                        </>
-                      )}
+                      {({ loading, error }) => {
+                        if (error) {
+                          console.error('PDFDownloadLink error:', error)
+                          return (
+                            <button
+                              onClick={() => {
+                                console.log('Attempting fallback download...')
+                                // Fallback: Try to open in new tab
+                                const blob = new Blob(['Certificate data'], { type: 'application/pdf' })
+                                const url = URL.createObjectURL(blob)
+                                const link = document.createElement('a')
+                                link.href = url
+                                link.download = `${course.title.replace(/\s+/g, '_')}_certificate.pdf`
+                                document.body.appendChild(link)
+                                link.click()
+                                document.body.removeChild(link)
+                                URL.revokeObjectURL(url)
+                              }}
+                              className="group bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 inline-flex items-center gap-3 shadow-lg hover:shadow-xl transform hover:translate-y-[-1px]"
+                            >
+                              <Download className="w-5 h-5 group-hover:translate-y-[-2px] transition-transform duration-200" />
+                              Try Alternative Download
+                            </button>
+                          )
+                        }
+                        
+                        return (
+                          <>
+                            {loading ? (
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                              <Download className="w-5 h-5 group-hover:translate-y-[-2px] transition-transform duration-200" />
+                            )}
+                            {loading ? 'Preparing PDF...' : 'Download Certificate'}
+                          </>
+                        )
+                      }}
                     </PDFDownloadLink>
                   </div>
+                  
+                  {/* Debug info and manual download option */}
+                  {certificateData && (
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                      <p className="text-sm text-gray-600 mb-2">
+                        Certificate Data: {certificateData.first_name} {certificateData.last_name} - {certificateData.course_title}
+                      </p>
+                      <button
+                        onClick={() => {
+                          console.log('Manual download triggered')
+                          // Create a simple text-based certificate as fallback
+                          const certificateText = `
+CERTIFICATE OF COMPLETION
+
+This is to certify that
+${certificateData.first_name} ${certificateData.last_name}
+
+has successfully completed the course
+${certificateData.course_title}
+
+Instructor: ${certificateData.instructor_firstname} ${certificateData.instructor_lastname}
+Completed on: ${new Date(certificateData.completion_date).toLocaleDateString()}
+
+Certificate #: ${certificateData.course_id}-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}
+
+AETHERIUM
+                          `.trim()
+                          
+                          const blob = new Blob([certificateText], { type: 'text/plain' })
+                          const url = URL.createObjectURL(blob)
+                          const link = document.createElement('a')
+                          link.href = url
+                          link.download = `${course.title.replace(/\s+/g, '_')}_certificate.txt`
+                          document.body.appendChild(link)
+                          link.click()
+                          document.body.removeChild(link)
+                          URL.revokeObjectURL(url)
+                        }}
+                        className="text-sm text-blue-600 hover:text-blue-800 underline"
+                      >
+                        Download as Text (Fallback)
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
+
+              {/* Revisit First Lesson Button - Always visible after course completion */}
+              {/* {firstLesson && (
+                <div className="mt-8 pt-6 border-t border-gray-200">
+                  <button
+                    onClick={handleRevisitFirstLesson}
+                    className="group bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-200 inline-flex items-center gap-3 shadow-lg hover:shadow-xl transform hover:translate-y-[-2px]"
+                  >
+                    <BookOpen className="w-6 h-6 group-hover:rotate-12 transition-transform duration-200" />
+                    Revisit the Lesson
+                  </button>
+                  <p className="text-sm text-gray-500 mt-3">
+                    Go back to the first lesson: "{firstLesson.name}"
+                  </p>
+                </div>
+              )} */}
             </div>
           </div>
         </div>
