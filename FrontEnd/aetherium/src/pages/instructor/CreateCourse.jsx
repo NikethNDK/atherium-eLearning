@@ -388,7 +388,7 @@ const CreateCourse = () => {
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-gray-600">Good Morning</p>
+            <p className="text-sm text-gray-600">Good Day</p>
             <h1 className="text-2xl font-semibold text-gray-900">{courseId ? "Edit Course" : "Create a new course"}</h1>
           </div>
           {/* <div className="flex space-x-3">

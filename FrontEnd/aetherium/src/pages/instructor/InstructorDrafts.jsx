@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom"
 import { courseAPI } from "../../services/api"
 import LoadingSpinner from "../../components/common/LoadingSpinner"
 import { Edit, Trash2 } from "lucide-react"
+import { getImageUrl } from "../../components/common/ImageURL"
 
 const InstructorDrafts = () => {
   const [drafts, setDrafts] = useState([])
@@ -41,14 +42,14 @@ const InstructorDrafts = () => {
     }
   }
 
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return null
-    // If it's already a full URL, return as is
-    if (imagePath.startsWith("http")) return imagePath
-    // Otherwise, construct the URL with your backend base URL
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
-    return `${baseUrl}/${imagePath}`
-  }
+  // const getImageUrl = (imagePath) => {
+  //   if (!imagePath) return null
+  //   // If it's already a full URL, return as is
+  //   if (imagePath.startsWith("http")) return imagePath
+  //   // Otherwise, construct the URL with your backend base URL
+  //   const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
+  //   return `${baseUrl}/${imagePath}`
+  // }
 
   if (loading) return <LoadingSpinner size="large" />
 

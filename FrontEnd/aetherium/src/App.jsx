@@ -10,6 +10,9 @@ import AdminRoutes from "./routes/AdminRoutes";
 
 import NotFound from "./pages/common/NotFound";
 
+import { Toaster } from 'react-hot-toast';
+import { NotificationProvider } from "./context/NotificationContext";
+
 const queryClient = new QueryClient();
 
 function App() { 
@@ -17,6 +20,8 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <Router>
         <AuthProvider>
+          <NotificationProvider>
+          <Toaster position="top-right" reverseOrder={false} />
             <Routes>
             {PublicRoutes()}
             {UserRoutes()}
@@ -24,6 +29,7 @@ function App() {
             {AdminRoutes()}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </NotificationProvider>
         </AuthProvider>
       </Router>
     </QueryClientProvider>

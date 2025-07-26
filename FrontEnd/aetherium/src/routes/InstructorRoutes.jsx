@@ -23,7 +23,7 @@ export default function InstructorRoutes() {
       <Route path="drafts" element={<InstructorDrafts />} />
       <Route path="pending-approval" element={<PendingApproval />} />
       <Route path="my-courses" element={<MyCourses />} />
-      <Route path="courses/:courseId/InstrtructorCourseView" element={<InstrtructorCourseView />} />
+      <Route path="courses/${courseId}/InstrtructorCourseView" element={<InstrtructorCourseView />} />
       <Route path="courses/${course.id}/preview" element={<DetailedView />}/>
       <Route path="earnings" element={<div className="p-8"><h1 className="text-3xl font-bold">Earnings</h1></div>} />
       <Route path="messages" element={<div className="p-8"><h1 className="text-3xl font-bold">Messages</h1></div>} />

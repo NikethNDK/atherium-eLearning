@@ -278,6 +278,30 @@ export const adminAPI = {
     const response = await api.get("/admin/topics")
     return response.data
   },
+  getComprehensiveDashboard: async () => {
+    const response = await api.get("/admin/dashboard/comprehensive")
+    return response.data
+  },
+
+  getRevenueAnalytics: async (days = 30) => {
+    const response = await api.get(`/admin/dashboard/revenue-analytics?days=${days}`)
+    return response.data
+  },
+
+  getCategoryAnalytics: async () => {
+    const response = await api.get("/admin/dashboard/category-analytics")
+    return response.data
+  },
+
+  getInstructorAnalytics: async () => {
+    const response = await api.get("/admin/dashboard/instructor-analytics")
+    return response.data
+  },
+
+  getBestSellingCourses: async (limit = 10) => {
+    const response = await api.get(`/admin/dashboard/best-selling-courses?limit=${limit}`)
+    return response.data
+  },
 }
 
 api.interceptors.response.use(
