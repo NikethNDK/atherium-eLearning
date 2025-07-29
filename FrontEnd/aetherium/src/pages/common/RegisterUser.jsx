@@ -134,7 +134,7 @@ const RegisterUser = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-cyan-400 text-sm font-semibold mb-2">Username</label>
+                  <label className="block text-cyan-400 text-sm font-semibold mb-2">Lastname</label>
                   <input
                     type="text"
                     name="lastname"

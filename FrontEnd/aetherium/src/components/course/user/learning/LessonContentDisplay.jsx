@@ -161,6 +161,34 @@ const LessonContentDisplay = ({ lesson, onLessonComplete, onQuizComplete }) => {
             isCompleted={lessonProgress?.is_completed}
           />
         )
+        case "REFERENCE_LINK":
+  return (
+    <div>
+      <h3>{lesson.lesson_content?.link_title || lesson.name}</h3>
+      <p>{lesson.lesson_content?.link_description || lesson.description}</p>
+      {lesson.lesson_content?.external_url && (
+        <a
+          href={lesson.lesson_content.external_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 underline"
+        >
+          Open Link
+        </a>
+      )}
+      {!lessonProgress?.is_completed && (
+        <button
+          onClick={handleMarkComplete}
+          className="mt-4 ml-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"
+        >
+          Mark as Complete
+        </button>
+      )}
+      {lessonProgress?.is_completed && (
+        <p className="mt-4 text-green-600 font-medium">Lesson completed!</p>
+      )}
+    </div>
+  );
       default:
         return <p className="text-gray-600">Unsupported content type: {lesson.content_type}</p>
     }

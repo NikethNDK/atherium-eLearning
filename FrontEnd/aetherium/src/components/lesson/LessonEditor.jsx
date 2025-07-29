@@ -114,7 +114,7 @@ const LessonEditor = ({
           ...updatedAssessment,
           questions: updatedAssessment.questions.map((q, i) => ({
             ...q,
-            order_index: i, // Ensure order_index is properly set
+            order_index: i, 
           })),
         },
       };
@@ -316,7 +316,7 @@ const LessonEditor = ({
             const poll = async () => {
               try {
                 const statusResult = await instructorAPI.getUploadStatus(taskId);
-
+                console.log("The result after saving the file to couldianry returned by getUploadStatus: ",statusResult)
                 if (statusResult.state === "SUCCESS") {
                   // Upload completed successfully
                   const finalResult = statusResult.result;

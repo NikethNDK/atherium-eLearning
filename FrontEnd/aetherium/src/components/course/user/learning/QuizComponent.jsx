@@ -58,6 +58,9 @@ const QuizComponent = ({ assessment, onQuizComplete, isCompleted }) => {
     return <p className="text-gray-600">No assessment available for this lesson.</p>
   }
 
+  const percent = totalPoints > 0 ? (score / totalPoints) * 100 : 0;
+  const passed = percent >= assessment.passing_score;
+
   return (
     <div className="space-y-6">
       <h3 className="text-lg sm:text-xl font-semibold text-gray-900">{assessment.title}</h3>
@@ -116,7 +119,10 @@ const QuizComponent = ({ assessment, onQuizComplete, isCompleted }) => {
           <h4 className="text-xl font-bold text-blue-800">
             Quiz Completed! Your Score: {score} / {totalPoints}
           </h4>
-          {score >= assessment.passing_score ? (
+          <p className="text-gray-700 mt-2">
+            Percentage: {percent.toFixed(2)}%
+          </p>
+          {passed ? (
             <p className="text-green-700 mt-2">Congratulations! You passed this assessment.</p>
           ) : (
             <p className="text-red-700 mt-2">You did not pass this assessment. Please review and try again.</p>

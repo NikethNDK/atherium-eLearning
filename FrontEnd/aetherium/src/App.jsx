@@ -2,6 +2,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { useAuth } from "./context/AuthContext";
 
 import PublicRoutes from "./routes/PublicRoutes";
 import UserRoutes from "./routes/UserRoutes";
@@ -16,11 +17,12 @@ import { NotificationProvider } from "./context/NotificationContext";
 const queryClient = new QueryClient();
 
 function App() { 
+  const { user } = useAuth();
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
-        <AuthProvider>
-          <NotificationProvider>
+     
+          <NotificationProvider userId={user?.id}>
           <Toaster position="top-right" reverseOrder={false} />
             <Routes>
             {PublicRoutes()}
@@ -30,7 +32,7 @@ function App() {
             <Route path="*" element={<NotFound />} />
           </Routes>
           </NotificationProvider>
-        </AuthProvider>
+       
       </Router>
     </QueryClientProvider>
   );

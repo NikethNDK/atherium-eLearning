@@ -14,7 +14,7 @@ const UserProfile = () => {
   const [formData, setFormData] = useState({
     firstname: "",
     lastname: "",
-    username: "",
+    // username: "",
     email: "",
     phoneNumber: "",
     dateOfBirth: "",
@@ -39,7 +39,7 @@ const UserProfile = () => {
       setFormData({
         firstname: user.firstname || "",
         lastname: user.lastname || "",
-        username: user.username || "",
+        // username: user.username || "",
         email: user.email || "",
         phoneNumber: user.phone_number || "",
         dateOfBirth: user.date_of_birth ? user.date_of_birth.split("T")[0] : "",
@@ -115,12 +115,12 @@ const UserProfile = () => {
     }
 
     // Username: Alphanumeric
-    if (formData.username) {
-      const usernameRegex = /^[a-zA-Z0-9]+$/
-      if (!usernameRegex.test(formData.username)) {
-        return "Username must be alphanumeric."
-      }
-    }
+    // if (formData.username) {
+    //   const usernameRegex = /^[a-zA-Z0-9]+$/
+    //   if (!usernameRegex.test(formData.username)) {
+    //     return "Username must be alphanumeric."
+    //   }
+    // }
 
     // Title: Letters and spaces only, non-empty
     if (formData.title) {
@@ -166,7 +166,7 @@ const UserProfile = () => {
     const payload = {
       firstname: formData.firstname || null,
       lastname: formData.lastname || null,
-      username: formData.username || null,
+      // username: formData.username || null,
       phone_number: phoneNumber,
       date_of_birth: formData.dateOfBirth || null,
       personal_website: formData.personal_website || null,
@@ -295,7 +295,7 @@ const UserProfile = () => {
                 />
               </div>
 
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
                 <input
                   type="text"
@@ -305,7 +305,7 @@ const UserProfile = () => {
                   placeholder="Enter your username"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-              </div>
+              </div> */}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>

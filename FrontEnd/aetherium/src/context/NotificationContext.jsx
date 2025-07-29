@@ -38,7 +38,8 @@ export const NotificationProvider = ({ children, userId }) => {
   const [notifications, setNotifications] = useState([]);
   const [toasts, setToasts] = useState([]);
   const baseWsUrl = import.meta.env.VITE_WS_URL;
-
+  console.log("This is the base url from the env ",baseWsUrl)
+  
   const showToast = (message, type = 'info') => {
     const id = Date.now();
     const toast = { id, message, type };

@@ -270,9 +270,10 @@ import { instructorAPI } from "../../services/instructorApi"
 import InstructorCourseCard from "../../components/course/InstructorCourseCard"
 import LoadingSpinner from "../../components/common/LoadingSpinner"
 import NotificationBell from "../../components/common/NotificationBell"
-import { NotificationProvider } from "../../context/NotificationContext"
+import { useAuth} from "../../context/AuthContext"
 
 const InstructorDashboard = () => {
+  const { user } = useAuth()
   const [courses, setCourses] = useState([])
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({
@@ -337,7 +338,7 @@ const InstructorDashboard = () => {
               </p>
             </div>
             <div className="mt-4 sm:mt-0 flex items-center space-x-3">
-              <NotificationBell />
+              <NotificationBell/>
               <Link
                 to="/instructor/courses/create"
                 className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 transition-colors"
