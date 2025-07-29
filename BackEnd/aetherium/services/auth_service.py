@@ -6,7 +6,7 @@ from fastapi import HTTPException, status
 import os
 from fastapi import UploadFile
 from aetherium.config import settings
-
+from aetherium.core.logger import logger
 def create_user(db: Session, user: UserCreate) -> User:
     existing_user = db.query(User).filter(User.email == user.email).first()
     if existing_user:
@@ -36,7 +36,7 @@ def update_user_bio(db: Session, user_update: UserUpdate, email: str) -> User:
     user = db.query(User).filter(User.email == email).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    
+    logger.info(f"Incoming update phone {user_update.phone_number}")
     if user_update.firstname is not None:
         user.firstname = user_update.firstname
     if user_update.lastname is not None:
@@ -47,11 +47,11 @@ def update_user_bio(db: Session, user_update: UserUpdate, email: str) -> User:
         user.designation = user_update.designation
     if user_update.phone_number is not None:
         user.phone_number = user_update.phone_number
-    if user_update.username is not None:
-        existing_username = db.query(User).filter(User.username == user_update.username, User.email != email).first()
-        if existing_username:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already taken")
-        user.username = user_update.username
+    # if user_update.username is not None:
+    #     existing_username = db.query(User).filter(User.username == user_update.username, User.email != email).first()
+    #     if existing_username:
+    #         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already taken")
+    #     user.username = user_update.username
     if user_update.personal_website is not None:
         user.personal_website = user_update.personal_website
     if user_update.facebook is not None:

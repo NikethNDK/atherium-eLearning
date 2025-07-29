@@ -15,6 +15,7 @@ class LessonContentCreate(BaseModel):
     external_url: Optional[str] = None
     link_title: Optional[str] = None
     link_description: Optional[str] = None
+    upload_status: Optional[str] = None
 
 
 class LessonContentResponse(LessonContentCreate):
@@ -22,6 +23,7 @@ class LessonContentResponse(LessonContentCreate):
     lesson_id: int
     created_at: datetime
     updated_at: Optional[datetime] = None
+    upload_status: Optional[str] = None
 
     model_config = {
         "from_attributes": True

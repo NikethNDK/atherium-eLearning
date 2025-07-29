@@ -63,6 +63,7 @@ def upload_file_task(self, lesson_id: int, file_content: bytes, file_type: str, 
             raise ValueError("Invalid Cloudinary response - missing required fields")
         
         logger.info(f"Cloudinary upload successful for lesson {lesson_id}")
+        logger.info(f"Cloudinary upload result: {upload_result}")
         
         # Update task state
         self.update_state(
@@ -81,6 +82,7 @@ def upload_file_task(self, lesson_id: int, file_content: bytes, file_type: str, 
             
             # Update basic fields
             content.file_url = upload_result['secure_url']
+            logger.info(f"Saving file_url {upload_result.get('secure_url')} to lesson_content for lesson_id {lesson_id}")
             content.file_public_id = upload_result['public_id']
             content.file_type = file_type
             content.file_size = upload_result.get('bytes', len(file_content))

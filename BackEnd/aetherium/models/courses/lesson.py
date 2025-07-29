@@ -76,7 +76,8 @@ class LessonContent(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     lesson = relationship("Lesson", back_populates="lesson_content")
-
+    upload_status = Column(String(50), nullable=True)
+    
 class Assessment(Base):
     __tablename__ = "assessments"
     

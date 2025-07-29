@@ -1,5 +1,5 @@
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_, func
 from typing import List, Optional, Dict, Any,Union
 from fastapi import HTTPException, UploadFile
@@ -137,6 +137,7 @@ class LessonService:
                 file_type=file_type,
                 filename=filename
             )
+ 
 
             # Update database
             return await self._update_lesson_content(lesson_id, upload_result, file_type)
@@ -151,6 +152,7 @@ class LessonService:
     async def _update_lesson_content(self, lesson_id: int, upload_result: Dict[str, Any], file_type: str) -> Dict[str, Any]:
         """Robust database update with proper error handling"""
         db = self.db
+        logger.info(f"Updating lesson content for lesson_id {lesson_id} with upload_result {upload_result}")
         try:
             content = db.query(LessonContent).filter(
                 LessonContent.lesson_id == lesson_id
@@ -161,7 +163,7 @@ class LessonService:
                 db.add(content)
             
             # Required fields
-            content.file_url = upload_result.get('secure_url','')
+            content.file_url = upload_result.get('url','')
             content.file_public_id = upload_result['public_id']
             content.file_type = file_type
             content.file_size = upload_result.get('bytes', 0)
@@ -292,7 +294,9 @@ class LessonService:
     
     
     def get_lesson(self,lesson_id:int) -> Optional[LessonResponse]:
-        lesson=self.db.query(Lesson).filter(Lesson.id==lesson_id).first()
+        lesson=self.db.query(Lesson).options(
+            joinedload(Lesson.lesson_content)
+        ).filter(Lesson.id==lesson_id).first()
         if not lesson:
             raise HTTPException(status_code=404,details="Lesson not found")
         else:
@@ -300,7 +304,9 @@ class LessonService:
             return LessonResponse.model_validate(lesson)
     
     def get_lessons_by_section(self, section_id: int):
-        lessons = self.db.query(Lesson).filter(Lesson.section_id == section_id).order_by(Lesson.order_index).all()
+        lessons = self.db.query(Lesson).options(
+            joinedload(Lesson.lesson_content)
+        ).filter(Lesson.section_id == section_id).order_by(Lesson.order_index).all()
         
         # return [LessonResponse.model_validate(lesson) for lesson in lessons]
         return lessons

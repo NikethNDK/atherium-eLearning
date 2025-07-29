@@ -12,6 +12,8 @@ from aetherium.schemas.topic import TopicCreate
 from fastapi import HTTPException
 from typing import List,Optional
 from aetherium.core.logger import logger
+from sqlalchemy.orm import selectinload, with_loader_criteria
+from sqlalchemy import asc
 
 class CourseService:
     @staticmethod
@@ -425,14 +427,16 @@ class CourseService:
         courses = query.order_by(Course.created_at.desc()).offset(offset).limit(limit).all()
         return courses
 
+
     @staticmethod
     def get_instructor_course_detail(db: Session, course_id: int, instructor_id: int):
         """Get detailed information about a specific course owned by the instructor"""
+        from aetherium.models.courses.lesson import Lesson
         course = db.query(Course).options(
             joinedload(Course.learning_objectives),
             joinedload(Course.target_audiences),
             joinedload(Course.requirements),
-            joinedload(Course.sections).joinedload(Section.lessons),
+            joinedload(Course.sections).joinedload(Section.lessons).joinedload(Lesson.lesson_content),
             joinedload(Course.category),
             joinedload(Course.topic),
             joinedload(Course.instructor)

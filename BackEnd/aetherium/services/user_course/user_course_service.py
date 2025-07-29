@@ -11,6 +11,7 @@ from fastapi import HTTPException
 from typing import Optional,Dict
 import uuid
 from datetime import datetime,timezone
+from aetherium.models.courses.lesson import Lesson
 
 class UserCourseService:
     @staticmethod
@@ -127,7 +128,7 @@ class UserCourseService:
         # Only include sections and lessons if purchased
         if is_purchased:
             course.sections = db.query(Section).options(
-                joinedload(Section.lessons)
+                joinedload(Section.lessons).joinedload(Lesson.lesson_content)
             ).filter(Section.course_id == course_id).all()
         else:
             course.sections = []
