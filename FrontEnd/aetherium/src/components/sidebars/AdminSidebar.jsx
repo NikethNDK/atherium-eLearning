@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { FileBarChart } from 'lucide-react';
 
 const AdminSidebar = () => {
   const { logout } = useAuth();
@@ -86,7 +87,7 @@ const AdminSidebar = () => {
             </svg>
             <span>Courses to Verify</span>
           </NavLink>
-          <div className="text-sm text-gray-400 pl-3">Categories & Topics</div>
+          <div className="text-sm text-gray-400 pl-3">Categories & Reports</div>
           <NavLink
             to="/admin/categories"
             className={({ isActive }) =>
@@ -103,7 +104,7 @@ const AdminSidebar = () => {
             </svg>
             <span>Categories</span>
           </NavLink>
-          <NavLink
+          {/* <NavLink
             to="/admin/topics"
             className={({ isActive }) =>
               `flex items-center space-x-3 p-3 rounded-lg ${isActive ? "bg-purple-600" : "hover:bg-gray-700"}`
@@ -118,7 +119,14 @@ const AdminSidebar = () => {
               <path d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 2h12v8H4V6zM8 9a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
             </svg>
             <span>Topics</span>
-          </NavLink>
+          </NavLink> */}
+          <NavLink
+      to="/admin/reports"
+      className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-700 text-left"
+    >
+      <FileBarChart className="h-5 w-5 text-white" />
+      <span>Reports</span>
+    </NavLink>
         </nav>
 
         <div className="mt-auto pt-6">
@@ -141,6 +149,8 @@ const AdminSidebar = () => {
             <span>Sign-out</span>
           </button>
         </div>
+        
+
       </div>
     </div>
   );

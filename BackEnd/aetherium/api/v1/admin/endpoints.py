@@ -190,3 +190,89 @@ async def review_course(course_id: int,review_data: CourseReviewRequest,db: Sess
         raise HTTPException(status_code=403, detail="Not authorized")
     return CourseService.review_course(db, course_id, review_data.status, review_data.admin_response)
 
+from datetime import date
+from typing import Optional
+from aetherium.services.admin_service import AdminReportService 
+
+@router.get("/course-report")
+def get_course_report(
+    course_id: Optional[int] = Query(None),
+    instructor_id: Optional[int] = Query(None),
+    period: str = Query("all", enum=["all", "day", "month", "year"]),
+    start_date: Optional[date] = Query(None),
+    end_date: Optional[date] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """
+    Returns course report filtered by course, instructor, and period.
+    """
+    report = AdminReportService.get_course_report(
+        db,
+        course_id=course_id,
+        instructor_id=instructor_id,
+        period=period,
+        start_date=start_date,
+        end_date=end_date
+    )
+    return [
+        {
+            "course_id": r.course_id,
+            "course_title": r.course_title,
+            "instructor_id": r.instructor_id,
+            "instructor_name": f"{r.instructor_firstname} {r.instructor_lastname}",
+            "num_students": r.num_students,
+            "revenue": float(r.revenue),
+            "period": r.period.isoformat() if r.period else None
+        }
+        for r in report
+    ]
+
+
+@router.get("/instructors", response_model=List[UserResponse])
+def get_all_instructors(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role.name != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized")
+    return AdminReportService.get_all_instructors(db)
+
+import csv
+from fastapi.responses import StreamingResponse
+from io import StringIO
+
+@router.get("/course-report/download")
+def download_course_report(
+    course_id: Optional[int] = Query(None),
+    instructor_id: Optional[int] = Query(None),
+    period: str = Query("all", enum=["all", "day", "month", "year"]),
+    start_date: Optional[date] = Query(None),
+    end_date: Optional[date] = Query(None),
+    db: Session = Depends(get_db)
+):
+    report = AdminReportService.get_course_report(
+        db,
+        course_id=course_id,
+        instructor_id=instructor_id,
+        period=period,
+        start_date=start_date,
+        end_date=end_date
+    )
+    output = StringIO()
+    writer = csv.writer(output)
+    # Header
+    writer.writerow(["Aetherium"])
+    writer.writerow([f"Period: {period}"])
+    writer.writerow([f"Report generated: {date.today().isoformat()}"])
+    writer.writerow([])
+    writer.writerow(["Course", "Instructor", "Period", "Students", "Revenue"])
+    for r in report:
+        writer.writerow([
+            r.course_title,
+            f"{r.instructor_firstname} {r.instructor_lastname}",
+            r.period.isoformat() if r.period else "",
+            r.num_students,
+            float(r.revenue)
+        ])
+    output.seek(0)
+    return StreamingResponse(output, media_type="text/csv", headers={"Content-Disposition": "attachment; filename=course_report.csv"})

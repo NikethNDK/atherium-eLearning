@@ -302,6 +302,23 @@ export const adminAPI = {
     const response = await api.get(`/admin/dashboard/best-selling-courses?limit=${limit}`)
     return response.data
   },
+  getCourseReport: async (params) => {
+    const response = await api.get("/admin/course-report", { params });
+    return response.data;
+  },
+
+  downloadCourseReportCSV: async (params) => {
+    // This returns a blob for CSV download
+    const response = await api.get("/admin/course-report/download", {
+      params,
+      responseType: "blob",
+    });
+    return response;
+  },
+  getAllInstructors: async () => {
+    const response = await api.get("/admin/instructors");
+    return response.data;
+  },
 }
 
 api.interceptors.response.use(

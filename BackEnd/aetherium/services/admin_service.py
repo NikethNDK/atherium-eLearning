@@ -261,3 +261,52 @@ class AdminService:
             "best_selling_courses": best_sellers,
             "top_instructors": top_instructors
         }
+
+class AdminReportService:
+    @staticmethod
+    def get_course_report(
+        db: Session,
+        course_id: int = None,
+        instructor_id: int = None,
+        period: str = "all",  # "day", "month", "year", "all"
+        start_date: str = None,
+        end_date: str = None
+    ):
+        query = db.query(
+            Course.id.label("course_id"),
+            Course.title.label("course_title"),
+            User.id.label("instructor_id"),
+            User.firstname.label("instructor_firstname"),
+            User.lastname.label("instructor_lastname"),
+            func.count(Purchase.id).label("num_students"),
+            func.coalesce(func.sum(Purchase.total_amount), 0).label("revenue"),
+            func.date_trunc(period if period != "all" else "day", Purchase.purchased_at).label("period")
+        ).join(User, Course.instructor_id == User.id
+        ).join(Purchase, and_(
+            Purchase.course_id == Course.id,
+            Purchase.status == PurchaseStatus.COMPLETED
+        ))
+
+        if course_id:
+            query = query.filter(Course.id == course_id)
+        if instructor_id:
+            query = query.filter(User.id == instructor_id)
+        if start_date:
+            
+            query = query.filter(Purchase.purchased_at >= start_date)
+        if end_date:
+            query = query.filter(Purchase.purchased_at <= end_date)
+
+        group_by_fields = [
+            Course.id, Course.title, User.id, User.firstname, User.lastname
+        ]
+        if period != "all":
+            group_by_fields.append(func.date_trunc(period, Purchase.purchased_at))
+
+        query = query.group_by(*group_by_fields).order_by(func.date_trunc(period if period != "all" else "day", Purchase.purchased_at).desc())
+
+        return query.all()
+    
+    @staticmethod
+    def get_all_instructors(db: Session) -> List[User]:
+        return db.query(User).join(Role).filter(Role.name == "instructor").all()

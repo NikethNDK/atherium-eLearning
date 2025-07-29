@@ -10,6 +10,8 @@ import CourseReview from "../pages/admin/CourseReview";
 import Categories from "../pages/admin/Categories";
 import Topics from "../pages/admin/Topics"; // or shared path
 import DetailedView from "../pages/admin/DetailedView";
+import AdminReport from "../pages/admin/AdminReport";
+
 
 export default function AdminRoutes() {
   return (
@@ -19,6 +21,7 @@ export default function AdminRoutes() {
       <Route path="users" element={<AdminUsers />} />
       <Route path="all-courses" element={<AllCourses />} />
       <Route path="courses-to-verify" element={<CoursesToVerify />} />
+      <Route path="reports" element={<AdminReport />} />
       <Route path="courses/:courseId/review" element={<CourseReview />} />
       <Route path="courses/:courseId/review/detailed-view" element={<DetailedView />} />
       <Route path="profile" element={<div className="p-8"><h1 className="text-3xl font-bold">Admin Profile</h1></div>} />
