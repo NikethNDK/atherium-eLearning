@@ -313,7 +313,7 @@ async def create_razorpay_order(
 ):
     try:
         # Call the service function that handles all the logic
-        order_response = await PurchaseService.create_course_order_with_notification(
+        order_response = await PurchaseService.create_course_order(
             db=db,
             user_id=current_user.id,
             course_id=order_data.course_id,
@@ -334,84 +334,115 @@ async def create_razorpay_order(
             detail="Failed to create order. Please try again."
         )
 
-@router.post("/payment/verify-razorpay", response_model=PaymentSuccessResponse)
-async def verify_razorpay_payment(payment_data: RazorpayPaymentVerify, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    is_valid = razorpay_service.verify_payment_signature(
-        order_id=payment_data.razorpay_order_id,
-        payment_id=payment_data.razorpay_payment_id,
-        signature=payment_data.razorpay_signature
-    )
+# @router.post("/payment/verify-razorpay", response_model=PaymentSuccessResponse)
+# async def verify_razorpay_payment(payment_data: RazorpayPaymentVerify, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+#     is_valid = razorpay_service.verify_payment_signature(
+#         order_id=payment_data.razorpay_order_id,
+#         payment_id=payment_data.razorpay_payment_id,
+#         signature=payment_data.razorpay_signature
+#     )
     
-    if not is_valid:
-        try:
-            razorpay_service.update_purchase_status(
-                db=db,
-                order_id=payment_data.razorpay_order_id,
-                payment_id=payment_data.razorpay_payment_id,
-                status=PurchaseStatus.FAILED
-            )
-        except Exception as e:
-            logger.error(f"Failed to update purchase status to FAILED: {e}")
+#     if not is_valid:
+#         try:
+#             razorpay_service.update_purchase_status(
+#                 db=db,
+#                 order_id=payment_data.razorpay_order_id,
+#                 payment_id=payment_data.razorpay_payment_id,
+#                 status=PurchaseStatus.FAILED
+#             )
+#         except Exception as e:
+#             logger.error(f"Failed to update purchase status to FAILED: {e}")
     
-        raise HTTPException(status_code=400, detail="Payment verification failed")
+#         raise HTTPException(status_code=400, detail="Payment verification failed")
     
-    purchase = razorpay_service.update_purchase_status(
-        db=db,
-        order_id=payment_data.razorpay_order_id,
-        payment_id=payment_data.razorpay_payment_id,
-        status=PurchaseStatus.COMPLETED
-    )
+#     purchase = razorpay_service.update_purchase_status(
+#         db=db,
+#         order_id=payment_data.razorpay_order_id,
+#         payment_id=payment_data.razorpay_payment_id,
+#         status=PurchaseStatus.COMPLETED
+#     )
 
-    # Get course details to find instructor for wallet distribution
-    course = db.query(Course).filter(Course.id == purchase.course_id).first()
-    if course:
-        # Calculate wallet distribution amounts (excluding tax)
-        subtotal = purchase.subtotal  # Amount without tax
-        admin_commission = subtotal * 0.10  # 10% to admin
-        instructor_amount = subtotal * 0.90  # 90% to instructor
+#     # Get course details to find instructor for wallet distribution
+#     course = db.query(Course).filter(Course.id == purchase.course_id).first()
+#     if course:
+#         # Calculate wallet distribution amounts (excluding tax)
+#         subtotal = purchase.subtotal  # Amount without tax
+#         admin_commission = subtotal * 0.10  # 10% to admin
+#         instructor_amount = subtotal * 0.90  # 90% to instructor
         
-        # Distribute funds to wallets
-        try:
-            # Add to instructor wallet
-            wallet_service.add_funds(
-                db=db,
-                user_id=course.instructor_id,
-                amount=instructor_amount,
-                description=f"Course sale commission: {course.title}",
-                reference_id=purchase.transaction_id
-            )
+#         # Distribute funds to wallets
+#         try:
+#             # Add to instructor wallet
+#             wallet_service.add_funds(
+#                 db=db,
+#                 user_id=course.instructor_id,
+#                 amount=instructor_amount,
+#                 description=f"Course sale commission: {course.title}",
+#                 reference_id=purchase.transaction_id
+#             )
             
-            # Add to admin wallet
-            admin_user_id = wallet_service.get_admin_user_id(db)
-            wallet_service.add_funds(
-                db=db,
-                user_id=admin_user_id,
-                amount=admin_commission,
-                description=f"Platform commission: {course.title}",
-                reference_id=purchase.transaction_id
-            )
+#             # Add to admin wallet
+#             admin_user_id = wallet_service.get_admin_user_id(db)
+#             wallet_service.add_funds(
+#                 db=db,
+#                 user_id=admin_user_id,
+#                 amount=admin_commission,
+#                 description=f"Platform commission: {course.title}",
+#                 reference_id=purchase.transaction_id
+#             )
             
-            logger.info(f"Wallet distribution completed for order {purchase.transaction_id}")
+#             logger.info(f"Wallet distribution completed for order {purchase.transaction_id}")
             
-        except Exception as wallet_error:
-            logger.error(f"Error in wallet distribution: {wallet_error}")
-            # Don't fail the payment verification, but log the error
-            # You might want to have a retry mechanism or manual processing
+#         except Exception as wallet_error:
+#             logger.error(f"Error in wallet distribution: {wallet_error}")
+#             # Don't fail the payment verification, but log the error
+#             # You might want to have a retry mechanism or manual processing
 
-    # Remove item from cart
-    cart_item = db.query(Cart).filter(Cart.user_id == current_user.id, Cart.course_id == payment_data.course_id).first()
+#     # Remove item from cart
+#     cart_item = db.query(Cart).filter(Cart.user_id == current_user.id, Cart.course_id == payment_data.course_id).first()
     
-    if cart_item:
-        db.delete(cart_item)
-        db.commit()
+#     if cart_item:
+#         db.delete(cart_item)
+#         db.commit()
     
-    return PaymentSuccessResponse(
-        success=True,
-        message="Payment successful! Course purchased successfully.",
-        purchase_id=purchase.id,
-        course_id=payment_data.course_id,
-        transaction_id=payment_data.razorpay_payment_id
-    )
+#     return PaymentSuccessResponse(
+#         success=True,
+#         message="Payment successful! Course purchased successfully.",
+#         purchase_id=purchase.id,
+#         course_id=payment_data.course_id,
+#         transaction_id=payment_data.razorpay_payment_id
+#     )
+
+@router.post("/payment/verify-razorpay", response_model=PaymentSuccessResponse)
+async def verify_razorpay_payment(
+    payment_data: RazorpayPaymentVerify, 
+    current_user: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    try:
+        # Call the service function that handles all verification logic
+        result = await PurchaseService.verify_payment_and_complete_purchase(
+            db=db,
+            payment_data=payment_data,
+            user_id=current_user.id
+        )
+        
+        return PaymentSuccessResponse(
+            success=True,
+            message="Payment successful! Course purchased successfully.",
+            purchase_id=result["purchase"].id,
+            course_id=result["course_id"],
+            transaction_id=result["transaction_id"]
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in verify_razorpay_payment: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Payment verification failed. Please try again."
+        )
 
 
 
