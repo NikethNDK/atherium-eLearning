@@ -1,8 +1,47 @@
 
+// import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+// import { AuthProvider } from "./context/AuthContext";
+// import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+// import { useAuth } from "./context/AuthContext";
+
+// import PublicRoutes from "./routes/PublicRoutes";
+// import UserRoutes from "./routes/UserRoutes";
+// import InstructorRoutes from "./routes/InstructorRoutes";
+// import AdminRoutes from "./routes/AdminRoutes";
+
+// import NotFound from "./pages/common/NotFound";
+
+// import { Toaster } from 'react-hot-toast';
+// import { NotificationProvider } from "./context/NotificationContext";
+
+// const queryClient = new QueryClient();
+
+// function App() { 
+//   const { user } = useAuth();
+//   return (
+//     <QueryClientProvider client={queryClient}>
+//       <Router>
+     
+//           <NotificationProvider userId={user?.id}>
+//           <Toaster position="top-right" reverseOrder={false} />
+//             <Routes>
+//             {PublicRoutes()}
+//             {UserRoutes()}
+//             {InstructorRoutes()}
+//             {AdminRoutes()}
+//             <Route path="*" element={<NotFound />} />
+//           </Routes>
+//           </NotificationProvider>
+       
+//       </Router>
+//     </QueryClientProvider>
+//   );
+// }
+
+// export default App;
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider,useAuth } from "./context/AuthContext";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { useAuth } from "./context/AuthContext";
 
 import PublicRoutes from "./routes/PublicRoutes";
 import UserRoutes from "./routes/UserRoutes";
@@ -16,25 +55,32 @@ import { NotificationProvider } from "./context/NotificationContext";
 
 const queryClient = new QueryClient();
 
-function App() { 
+function AppContent() {
   const { user } = useAuth();
+  
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
-     
-          <NotificationProvider userId={user?.id}>
+        <NotificationProvider userId={user?.id}>
           <Toaster position="top-right" reverseOrder={false} />
-            <Routes>
+          <Routes>
             {PublicRoutes()}
             {UserRoutes()}
             {InstructorRoutes()}
             {AdminRoutes()}
             <Route path="*" element={<NotFound />} />
           </Routes>
-          </NotificationProvider>
-       
+        </NotificationProvider>
       </Router>
     </QueryClientProvider>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

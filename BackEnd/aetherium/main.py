@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
-from aetherium.api.v1 import auth_router, admin_router, instructor_router,user_router
+from aetherium.api.v1 import auth_router, admin_router, instructor_router, user_router,chat_router
 from aetherium.database.db import engine, Base
 from aetherium.middleware.auth_middleware import add_session_middleware, startup_redis, shutdown_redis
 from aetherium.sockets.websocket import router as websocket_router
@@ -52,6 +52,7 @@ app.include_router(auth_router)
 app.include_router(admin_router)
 app.include_router(instructor_router)
 app.include_router(user_router)
+app.include_router(chat_router)
 app.include_router(websocket_router)
 
 # DB & Static Files

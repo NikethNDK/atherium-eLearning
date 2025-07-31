@@ -44,6 +44,11 @@ class User(Base):
     lesson_progress=relationship("LessonProgress",back_populates="user",cascade="all, delete-orphan")
     section_progress=relationship("SectionProgress",back_populates="user",cascade="all, delete-orphan")
     wallet = relationship("Wallet", back_populates="user", uselist=False)
+    
+    # Chat relationships
+    user_conversations = relationship("Conversation", foreign_keys="[Conversation.user_id]", back_populates="user")
+    instructor_conversations = relationship("Conversation", foreign_keys="[Conversation.instructor_id]", back_populates="instructor")
+    sent_messages = relationship("Message", back_populates="sender")
 
 class Wallet(Base):
     __tablename__ = "wallets"

@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }) => {
 useEffect(() => {
   const fetchUser = async () => {
     try {
-      const userData = await getCurrentUser();
+      const userData = await authAPI.getCurrentUser();
       console.log("This is userData in the authContext",userData)
       setUser(userData);
       setIsAuthenticated(true);

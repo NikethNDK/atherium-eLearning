@@ -55,6 +55,7 @@ const CourseDetail = () => {
   const checkPurchaseStatus = async () => {
     try {
       const status = await userAPI.checkCoursePurchase(courseId);
+      console.log("Purchase status:", status); // Debug log
       setIsPurchased(status.is_purchased);
     } catch (error) {
       console.error("Error checking purchase status:", error);

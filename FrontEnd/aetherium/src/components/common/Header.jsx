@@ -166,8 +166,8 @@ const Header = () => {
               </>
             )}
 
-            {/* Auth buttons */}
-            {isAuthenticated ? (
+            {/* Auth buttons - Fixed Logic */}
+            {isAuthenticated && user ? (
               <div className="relative">
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}

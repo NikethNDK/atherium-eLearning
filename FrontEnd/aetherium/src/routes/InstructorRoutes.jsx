@@ -11,6 +11,7 @@ import MyCourses from "../pages/instructor/MyCourses";
 import InstrtructorCourseView from "../pages/instructor/InstructorCourseView";
 import Topics from "../pages/admin/Topics"; // assumed shared
 import DetailedView from "../pages/admin/DetailedView";
+import InstructorChat from "../pages/instructor/InstructorChat";
 
 export default function InstructorRoutes() {
   return (
@@ -26,7 +27,7 @@ export default function InstructorRoutes() {
       <Route path="courses/${courseId}/InstrtructorCourseView" element={<InstrtructorCourseView />} />
       <Route path="courses/${course.id}/preview" element={<DetailedView />}/>
       <Route path="earnings" element={<div className="p-8"><h1 className="text-3xl font-bold">Earnings</h1></div>} />
-      <Route path="messages" element={<div className="p-8"><h1 className="text-3xl font-bold">Messages</h1></div>} />
+      <Route path="messages" element={<InstructorChat />} />
       <Route path="topics" element={<Topics />} />
 
       {/* /instructor/courses/${courseId}/review/detailed-view */}

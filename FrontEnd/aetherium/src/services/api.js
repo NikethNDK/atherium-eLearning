@@ -321,6 +321,144 @@ export const adminAPI = {
   },
 }
 
+export const chatAPI = {
+  // Get all conversations
+  getConversations: async (page = 1, limit = 20) => {
+    const response = await api.get("/chat/conversations", {
+      params: { page, limit }
+    });
+    return response.data;
+  },
+
+  // Get messages for a conversation
+  getConversationMessages: async (conversationId, page = 1, limit = 50) => {
+    const response = await api.get(`/chat/conversations/${conversationId}/messages`, {
+      params: { page, limit }
+    });
+    return response.data;
+  },
+
+  // Create a new conversation
+  createConversation: async (courseId, instructorId) => {
+    const response = await api.post("/chat/conversations", {
+      course_id: courseId,
+      instructor_id: instructorId
+    });
+    return response.data;
+  },
+
+  // Send a text message
+  sendMessage: async (conversationId, content, messageType = "text") => {
+    const response = await api.post("/chat/messages", {
+      conversation_id: conversationId,
+      content,
+      message_type: messageType
+    });
+    return response.data;
+  },
+
+  // Send an image message
+  sendImageMessage: async (conversationId, file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    
+    const response = await api.post(`/chat/messages/image?conversation_id=${conversationId}`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  },
+
+  // Get or create conversation for a course
+  getCourseConversation: async (courseId) => {
+    const response = await api.get(`/chat/courses/${courseId}/conversation`);
+    return response.data;
+  },
+
+  // Get all messages from all conversations with an instructor (for grouped conversations)
+  getInstructorMessages: async (instructorId, page = 1, limit = 50) => {
+    const response = await api.get(`/chat/instructors/${instructorId}/messages`, {
+      params: { page, limit }
+    });
+    return response.data;
+  },
+
+  // Send a message to an instructor (for grouped conversations)
+  sendMessageToInstructor: async (instructorId, content, messageType = "text") => {
+    const response = await api.post("/chat/instructors/messages", {
+      instructor_id: instructorId,
+      content,
+      message_type: messageType
+    });
+    return response.data;
+  },
+
+  // Send an image message to an instructor (for grouped conversations)
+  sendImageMessageToInstructor: async (instructorId, file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("instructor_id", instructorId);
+    
+    const response = await api.post("/chat/instructors/messages/image", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  },
+
+  // Get all messages from all conversations with a user (for instructors)
+  getUserMessages: async (userId, page = 1, limit = 50) => {
+    const response = await api.get(`/chat/users/${userId}/messages`, {
+      params: { page, limit }
+    });
+    return response.data;
+  },
+
+  // Send a message to a user (for instructors)
+  sendMessageToUser: async (userId, content, messageType = "text") => {
+    const response = await api.post("/chat/users/messages", {
+      user_id: userId,
+      content,
+      message_type: messageType
+    });
+    return response.data;
+  },
+
+  // Send an image message to a user (for instructors)
+  sendImageMessageToUser: async (userId, file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("user_id", userId);
+    
+    const response = await api.post("/chat/users/messages/image", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  },
+
+  // Mark messages as read for regular conversations
+  markMessagesAsRead: async (conversationId) => {
+    const response = await api.post(`/chat/conversations/${conversationId}/mark-read`);
+    return response.data;
+  },
+
+  // Mark instructor messages as read (for users)
+  markInstructorMessagesAsRead: async (instructorId) => {
+    const response = await api.post(`/chat/instructors/${instructorId}/mark-read`);
+    return response.data;
+  },
+
+  // Mark user messages as read (for instructors)
+  markUserMessagesAsRead: async (userId) => {
+    const response = await api.post(`/chat/users/${userId}/mark-read`);
+    return response.data;
+  }
+};
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -329,9 +467,9 @@ api.interceptors.response.use(
       data: error.response?.data,
       message: error.message,
     })
-    if (error.response?.status === 401 && window.location.pathname !== "/login") {
-      window.location.href = "/login"
-    }
+    // if (error.response?.status === 401 && window.location.pathname !== "/login") {
+    //   window.location.href = "/login"
+    // }
     return Promise.reject(error)
   },
 )

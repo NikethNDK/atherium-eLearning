@@ -3,10 +3,11 @@
 import { useState, useEffect, useCallback } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { userAPI } from "../../services/userApi"
+import { chatAPI } from "../../services/api"
 import LoadingSpinner from "../../components/common/LoadingSpinner"
 import LessonContentDisplay from "../../components/course/user/learning/LessonContentDisplay"
 import CertificateDisplay from "../../components/course/user/learning/CertificateDisplay"
-import { ChevronLeft, ChevronRight, CheckCircle, Lock, ArrowLeft } from "lucide-react"
+import { ChevronLeft, ChevronRight, CheckCircle, Lock, ArrowLeft, MessageCircle } from "lucide-react"
 import Header from "../../components/common/Header"
 import Footer from "../../components/common/Footer"
 
@@ -22,6 +23,7 @@ const MyLearningCoursePage = () => {
   const [lessonProgressMap, setLessonProgressMap] = useState({}) 
   const [notification, setNotification] = useState({ message: '', type: '' })
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [isOpeningChat, setIsOpeningChat] = useState(false)
 
   const allLessons = course?.sections?.flatMap((section) => section.lessons) || []
 
@@ -30,6 +32,20 @@ const MyLearningCoursePage = () => {
     setNotification({ message, type })
     setTimeout(() => setNotification({ message: '', type: '' }), 3000)
   }
+
+  // Handle opening chat
+  const handleOpenChat = async () => {
+    try {
+      setIsOpeningChat(true);
+      const conversation = await chatAPI.getCourseConversation(courseId);
+      navigate(`/chat?conversation=${conversation.id}`);
+    } catch (error) {
+      console.error("Error opening chat:", error);
+      showNotification("Failed to open chat. Please try again.", "error");
+    } finally {
+      setIsOpeningChat(false);
+    }
+  };
 
   // Fetch progress data with better error handling
   const fetchProgressData = useCallback(async (courseData) => {
@@ -436,6 +452,16 @@ const MyLearningCoursePage = () => {
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Course Overview
+        </button>
+
+        {/* Chat Button */}
+        <button
+          onClick={handleOpenChat}
+          disabled={isOpeningChat}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium text-sm disabled:opacity-50 flex items-center justify-center transition-colors mb-4"
+        >
+          <MessageCircle className="w-4 h-4 mr-2" />
+          {isOpeningChat ? "Opening..." : "Chat with Instructor"}
         </button>
 
         <h2 className="text-xl font-bold text-white mb-4">Course Curriculum</h2>

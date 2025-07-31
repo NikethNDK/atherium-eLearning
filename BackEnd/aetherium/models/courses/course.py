@@ -49,6 +49,7 @@ class Course(Base):
     wishlist_items = relationship("Wishlist", back_populates="course")
     course_progress = relationship("CourseProgress", back_populates="course")
     course_reviews = relationship("CourseReview", back_populates="course")
+    conversations = relationship("Conversation", back_populates="course")
 
     
 

@@ -168,6 +168,9 @@ import { userAPI } from "../../services/userApi";
 
 const CoursePurchaseCard = ({ course, isPurchased }) => {
   const navigate = useNavigate();
+  
+  // Debug logging
+  console.log("CoursePurchaseCard props:", { courseId: course?.id, isPurchased });
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
@@ -200,6 +203,8 @@ const CoursePurchaseCard = ({ course, isPurchased }) => {
       setIsAddingToCart(false);
     }
   };
+
+
 
   const getImageUrl = (imagePath) => {
     if (!imagePath) return null;
@@ -255,7 +260,7 @@ const CoursePurchaseCard = ({ course, isPurchased }) => {
           {isPurchased ? (
             <button
               onClick={() => navigate(`/my-learning/${course.id}`)}
-              className="w-full bg-green-600 hover:bg-green-700 text-white py-2 sm:py-3 px-4 rounded-lg font-medium text-sm sm:text-base mb-3 transition-colors"
+              className="w-full bg-green-600 hover:bg-green-700 text-white py-2 sm:py-3 px-4 rounded-lg font-medium text-sm sm:text-base transition-colors"
             >
               Continue Learning
             </button>
