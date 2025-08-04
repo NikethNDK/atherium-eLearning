@@ -80,7 +80,7 @@ export const ChatProvider = ({ children, userId }) => {
       
       // Update messages if viewing the relevant conversation
       setMessages(prevMessages => {
-        // Don't add if already exists
+        
         if (prevMessages.some(m => m.id === message.id)) return prevMessages;
         
         // For instructor grouped view

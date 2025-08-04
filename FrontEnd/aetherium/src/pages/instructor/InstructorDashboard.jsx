@@ -434,7 +434,7 @@ const InstructorDashboard = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+          {/* <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <svg
@@ -458,7 +458,7 @@ const InstructorDashboard = () => {
                 </dl>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Tabs */}

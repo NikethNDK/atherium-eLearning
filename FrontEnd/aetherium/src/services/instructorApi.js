@@ -242,13 +242,22 @@ getLessonAssessment: async (lessonId) => {
   },
   
 
-
-
-
-
-
-
 }
 
 
-
+export const CourseAnalyticsService = {
+  getCourseAnalytics: async (courseId) => {
+    const response = await api.get(`/instructor/courses/${courseId}/analytics`);
+    return response.data;
+  },
+  
+  getPurchaseStats: async (courseId, period = 'monthly') => {
+    const response = await api.get(`/instructor/courses/${courseId}/purchase-stats?period=${period}`);
+    return response.data;
+  },
+  
+  getStudentProgress: async (courseId) => {
+    const response = await api.get(`/instructor/courses/${courseId}/student-progress`);
+    return response.data;
+  }
+};

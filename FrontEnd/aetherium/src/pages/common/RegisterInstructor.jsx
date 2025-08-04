@@ -116,14 +116,14 @@ const RegisterInstructor = () => {
                 <span className="ml-2 font-medium">Basic Information</span>
               </div>
               <div className="w-16 h-1 bg-gray-300"></div>
-              <div className={`flex items-center ${currentStep >= 2 ? "text-green-600" : "text-gray-400"}`}>
+              {/* <div className={`flex items-center ${currentStep >= 2 ? "text-green-600" : "text-gray-400"}`}>
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 2 ? "bg-green-600 text-white" : "bg-gray-300"}`}
                 >
                   2
                 </div>
                 <span className="ml-2 font-medium">Social Profile</span>
-              </div>
+              </div> */}
             </div>
           </div>
 

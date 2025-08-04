@@ -118,7 +118,7 @@ const AdminSidebar = () => {
             >
               <path d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 2h12v8H4V6zM8 9a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
             </svg>
-            <span>Topics</span>
+            <span>Topics</span> 
           </NavLink> */}
           <NavLink
       to="/admin/reports"

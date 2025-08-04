@@ -69,34 +69,34 @@ const Header = () => {
   // Navigation items based on user role
   const getNavigationItems = () => {
     const baseItems = [
-      { to: "/", label: "Home" },
-      { to: "/contact", label: "Contact" }
+      {  id: 'home',to: "/", label: "Home" },
+      { id:'contact',to: "/contact", label: "Contact" }
     ]
 
     if (user?.role?.name === "user") {
       return [
-        { to: getHomeLink(), label: "Home" },
-        { to: "/courses", label: "Courses" },
-        { to: "/my-learning", label: "My Learning" },
-        { to: "/contact", label: "Contact" }
+        { id:'home',to: getHomeLink(), label: "Home" },
+        { id:'courses',to: "/courses", label: "Courses" },
+        { id:'learming',to: "/my-learning", label: "My Learning" },
+        { id:'contact', to: "/contact", label: "Contact" }
       ]
     }
 
     // For admin and instructor, show dashboard
     if (user?.role?.name === "admin" || user?.role?.name === "instructor") {
       return [
-        { to: getHomeLink(), label: "Home" },
-        { to: getDashboardLink(), label: "Dashboard" },
-        { to: "/contact", label: "Contact" }
+        { id: 'home',to: getHomeLink(), label: "Home" },
+        { id: 'dashboard',to: getDashboardLink(), label: "Dashboard" },
+        { id: 'contact',to: "/contact", label: "Contact" }
       ]
     }
 
     // For unauthenticated users
     return [
-      { to: "/", label: "Home" },
+      { id:'home',to: "/", label: "Home" },
       // { to: "/courses", label: "Courses" },
-      { to: "/about", label: "About" },
-      { to: "/contact", label: "Contact" }
+      { id:'about',to: "/about", label: "About" },
+      { id:'contact',to: "/contact", label: "Contact" }
     ]
   }
 
@@ -116,7 +116,7 @@ const Header = () => {
           <div className="hidden md:flex items-center space-x-8">
             {getNavigationItems().map((item) => (
               <Link
-                key={item.to}
+                key={item.id}
                 to={item.to}
                 className="hover:text-cyan-400 transition-colors"
               >
