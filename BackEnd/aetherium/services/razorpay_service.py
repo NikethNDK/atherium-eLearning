@@ -1,5 +1,5 @@
 import razorpay,os,hmac,hashlib
-from typing import Dict,Any
+from typing import Dict,Any,List
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
@@ -227,6 +227,124 @@ class RazorpayService:
                 status_code=500,
                 detail="Failed to create purchase record"
             )
+    
+    def handle_existing_purchases_bulk(self, db: Session, user_id: int, course_ids: List[int]) -> dict:
+        """Handle existing purchase records for multiple courses"""
+        try:
+            # Check for completed purchases
+            completed_purchases = db.query(Purchase).filter(
+                and_(
+                    Purchase.user_id == user_id,
+                    Purchase.course_id.in_(course_ids),
+                    Purchase.status == PurchaseStatus.COMPLETED
+                )
+            ).all()
+
+            if completed_purchases:
+                completed_course_ids = [p.course_id for p in completed_purchases]
+                return {
+                    "status": "already_purchased",
+                    "message": "Some courses already purchased",
+                    "completed_course_ids": completed_course_ids
+                }
+
+            # Check for pending purchases and cancel them
+            pending_purchases = db.query(Purchase).filter(
+                and_(
+                    Purchase.user_id == user_id,
+                    Purchase.course_id.in_(course_ids),
+                    Purchase.status == PurchaseStatus.PENDING
+                )
+            ).all()
+
+            if pending_purchases:
+                for pending_purchase in pending_purchases:
+                    logger.info(f"Canceling pending purchase {pending_purchase.id}")
+                    pending_purchase.status = PurchaseStatus.FAILED
+
+                db.commit()
+                logger.info(f"Canceled {len(pending_purchases)} pending purchases")
+
+            # Clean up failed purchases
+            failed_purchases = db.query(Purchase).filter(
+                and_(
+                    Purchase.user_id == user_id,
+                    Purchase.course_id.in_(course_ids),
+                    Purchase.status == PurchaseStatus.FAILED
+                )
+            ).all()
+
+            if failed_purchases:
+                for failed_purchase in failed_purchases:
+                    db.delete(failed_purchase)
+                db.commit()
+                logger.info(f"Cleaned up {len(failed_purchases)} failed purchases")
+
+            return {"status": "proceed", "message": "Can create new orders"}
+
+        except Exception as e:
+            logger.error(f"Error handling existing purchases: {e}")
+            db.rollback()
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to process existing purchase records"
+            )
+
+    def create_purchase_record_safe_bulk(
+        self, 
+        db: Session, 
+        user_id: int, 
+        course_data: List[dict],  # [{"course_id": 1, "subtotal": 100, "tax_amount": 18, "total_amount": 118}, ...]
+        order_id: str, 
+        status: PurchaseStatus = PurchaseStatus.PENDING
+    ) -> List[Purchase]:
+        """Safely create multiple purchase records"""
+        try:
+            course_ids = [data["course_id"] for data in course_data]
+
+            # Handle existing purchases
+            result = self.handle_existing_purchases_bulk(db, user_id, course_ids)
+
+            if result["status"] == "already_purchased":
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Some courses already purchased: {result['completed_course_ids']}"
+                )
+
+            # Create purchase records
+            purchases = []
+            for data in course_data:
+                purchase = Purchase(
+                    user_id=user_id,
+                    course_id=data["course_id"],
+                    amount=0,  # Keep for backward compatibility
+                    subtotal=data["subtotal"],
+                    tax_amount=data["tax_amount"],
+                    total_amount=data["total_amount"],
+                    payment_method=PaymentMethod.CARD,
+                    status=status,
+                    transaction_id=order_id
+                )
+                db.add(purchase)
+                purchases.append(purchase)
+
+            db.commit()
+
+            for purchase in purchases:
+                db.refresh(purchase)
+
+            logger.info(f"Created {len(purchases)} purchase records for order {order_id}")
+            return purchases
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error creating bulk purchase records: {e}")
+            db.rollback()
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to create purchase records"
+            )
 
 razorpay_service=RazorpayService()      
-  
+    

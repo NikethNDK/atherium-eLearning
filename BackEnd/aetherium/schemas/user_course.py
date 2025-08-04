@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict,field_validator,ValidationInfo
 from typing import Optional, List
 from datetime import datetime
 from enum import Enum
@@ -239,35 +239,74 @@ class WishlistItemResponse(BaseModel):
     added_at: datetime
     
     model_config=ConfigDict(from_attributes=True)
-
+#change started
 class RazorpayOrderCreate(BaseModel):
-    course_id:int
+    course_id:Optional[int] = None
     payment_method:PaymentMethod=PaymentMethod.CARD
+
+    purchase_type: str = "single"
+
+    @field_validator('purchase_type')
+    @classmethod
+    def validate_purchase_type(cls, v: str) -> str:
+        if v not in {"single", "cart"}:
+            raise ValueError('purchase_type must be either "single" or "cart"')
+        return v
+
+    @field_validator('course_id')
+    @classmethod
+    def validate_course_id_for_single(cls, v: Optional[int], info: ValidationInfo) -> Optional[int]:
+        if info.data.get('purchase_type') == 'single' and v is None:
+            raise ValueError('course_id is required for single course purchase')
+        return v
+    
+class CourseOrderItem(BaseModel):
+    course_id: int
+    course_title: str
+    subtotal: float
+    tax_amount: float
+    total_amount: float
 
 class RazorpayOrderResponse(BaseModel):
     order_id:str
     amount:int
     currency:Optional[str]
     key_id:str
-    course_id:int
-    course_title:str
+    # course_id:int
+    # course_title:str
     user_email:str
     user_name:Optional[str]
     subtotal: float  
     tax_amount: float  
     total_amount: float
 
+    purchase_type: str  # "single" or "cart"
+    courses: List[CourseOrderItem]
+
 class RazorpayPaymentVerify(BaseModel):
     razorpay_order_id:str
     razorpay_payment_id:str
     razorpay_signature:str
-    course_id: int
+    # course_id: int
+    purchase_type: str = "single"
+    course_id: Optional[int] = None 
+    course_ids: Optional[List[int]] = None
 
 class PaymentSuccessResponse(BaseModel):
     success:bool
     message:str
-    purchase_id:int
-    course_id:int
+    # purchase_id:int
+    purchase_ids: List[int]
+    # course_id:int
+    course_ids: List[int] 
     transaction_id:str
+    purchase_id: Optional[int] = None
+    course_id: Optional[int] = None
 
-
+    def __init__(self, **data):
+        super().__init__(**data)
+        # Set single values for backward compatibility
+        if self.purchase_ids:
+            self.purchase_id = self.purchase_ids[0]
+        if self.course_ids:
+            self.course_id = self.course_ids[0]

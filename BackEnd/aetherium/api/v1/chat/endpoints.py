@@ -10,7 +10,7 @@ from aetherium.schemas.chat import (
     ChatMessageResponse, GroupedChatMessageResponse
 )
 from typing import List, Optional
-
+from aetherium.sockets.websocket import manager
 router = APIRouter(prefix="/chat", tags=["chat"])
 
 @router.get("/conversations")

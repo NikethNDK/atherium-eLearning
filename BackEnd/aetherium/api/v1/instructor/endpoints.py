@@ -15,7 +15,8 @@ from aetherium.services.lesson_service import LessonService
 from aetherium.schemas.lesson import LessonCreate, LessonUpdate, LessonResponse,LessonContentCreate, AssessmentCreate
 from aetherium.core.logger import logger
 from celery.result import AsyncResult
-
+from aetherium.services.instructoranalytics_service import CourseAnalyticsService
+from aetherium.schemas.instructor_analytics import *
 
 router = APIRouter(prefix="/instructor", tags=["instructor"])
 
@@ -639,3 +640,39 @@ async def get_lesson_progress(
     return progress
 
 
+
+@router.get("/courses/{course_id}/analytics", response_model=CourseAnalyticsResponse)
+async def get_course_analytics(
+    course_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role.name != "instructor":
+        raise HTTPException(status_code=403, detail="Instructor access required")
+    
+    return CourseAnalyticsService.get_course_analytics(db, course_id, current_user.id)
+
+
+@router.get("/courses/{course_id}/purchase-stats", response_model=PurchaseStatsResponse)
+async def get_purchase_stats(
+    course_id: int,
+    period: str = "monthly",  # can be 'daily', 'weekly', 'monthly', 'yearly'
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role.name != "instructor":
+        raise HTTPException(status_code=403, detail="Instructor access required")
+    
+    return CourseAnalyticsService.get_purchase_stats(db, course_id, current_user.id, period)
+
+
+@router.get("/courses/{course_id}/student-progress", response_model=List[StudentProgressResponse])
+async def get_student_progress(
+    course_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role.name != "instructor":
+        raise HTTPException(status_code=403, detail="Instructor access required")
+    
+    return CourseAnalyticsService.get_student_progress(db, course_id, current_user.id)

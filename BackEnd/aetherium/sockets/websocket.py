@@ -57,13 +57,12 @@ async def websocket_endpoint(websocket: WebSocket, user_id: int):
     try:
         while True:
             data = await websocket.receive_text()
-            # Keep connection alive and handle any incoming messages
             try:
                 message = json.loads(data)
                 if message.get("type") == "ping":
                     await websocket.send_text(json.dumps({"type": "pong"}))
             except json.JSONDecodeError:
-                pass  # Ignore non-JSON messages
+                pass 
     except Exception as e:
         logger.error(f"WebSocket error for user {user_id}: {e}")
     finally:
