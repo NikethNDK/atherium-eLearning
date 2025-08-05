@@ -65,39 +65,65 @@ const Header = () => {
         return "/login"
     }
   }
-
-  // Navigation items based on user role
   const getNavigationItems = () => {
-    const baseItems = [
-      { to: "/", label: "Home" },
-      { to: "/contact", label: "Contact" }
-    ]
-
-    if (user?.role?.name === "user") {
-      return [
-        { to: getHomeLink(), label: "Home" },
-        { to: "/courses", label: "Courses" },
-        { to: "/my-learning", label: "My Learning" },
-        { to: "/contact", label: "Contact" }
-      ]
-    }
-
-    // For admin and instructor, show dashboard
-    if (user?.role?.name === "admin" || user?.role?.name === "instructor") {
-      return [
-        { to: getHomeLink(), label: "Home" },
-        { to: getDashboardLink(), label: "Dashboard" },
-        { to: "/contact", label: "Contact" }
-      ]
-    }
-
-    // For unauthenticated users
+  if (user?.role?.name === "user") {
     return [
-      { to: "/", label: "Home" },
-      // { to: "/courses", label: "Courses" },
-      { to: "/about", label: "About" },
+      { to: "/", label: "Home" }, // Changed from getHomeLink() to avoid duplication
+      { to: "/courses", label: "Courses" },
+      { to: "/my-learning", label: "My Learning" },
       { to: "/contact", label: "Contact" }
     ]
+  }
+
+  // For admin and instructor, show both Home and Dashboard with different routes
+  if (user?.role?.name === "admin" || user?.role?.name === "instructor") {
+    return [
+      { to: "/", label: "Home" }, // Regular home page
+      { to: getDashboardLink(), label: "Dashboard" }, // Role-specific dashboard
+      { to: "/contact", label: "Contact" }
+    ]
+  }
+
+  // For unauthenticated users
+  return [
+    { to: "/", label: "Home" },
+    { to: "/about", label: "About" },
+    { to: "/contact", label: "Contact" }
+  ]
+
+
+  // // Navigation items based on user role
+  // const getNavigationItems = () => {
+  //   const baseItems = [
+  //     { to: "/", label: "Home" },
+  //     { to: "/contact", label: "Contact" }
+  //   ]
+
+  //   if (user?.role?.name === "user") {
+  //     return [
+  //       { to: getHomeLink(), label: "Home" },
+  //       { to: "/courses", label: "Courses" },
+  //       { to: "/my-learning", label: "My Learning" },
+  //       { to: "/contact", label: "Contact" }
+  //     ]
+  //   }
+
+  //   // For admin and instructor, show dashboard
+  //   if (user?.role?.name === "admin" || user?.role?.name === "instructor") {
+  //     return [
+  //       { to: getHomeLink(), label: "Home" },
+  //       { to: getDashboardLink(), label: "Dashboard" },
+  //       { to: "/contact", label: "Contact" }
+  //     ]
+  //   }
+
+  //   // For unauthenticated users
+  //   return [
+  //     { to: "/", label: "Home" },
+  //     // { to: "/courses", label: "Courses" },
+  //     { to: "/about", label: "About" },
+  //     { to: "/contact", label: "Contact" }
+  //   ]
   }
 
   return (

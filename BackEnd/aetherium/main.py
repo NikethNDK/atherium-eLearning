@@ -6,6 +6,7 @@ import os
 from aetherium.api.v1 import auth_router, admin_router, instructor_router, user_router,chat_router
 from aetherium.database.db import engine, Base
 from aetherium.middleware.auth_middleware import add_session_middleware, startup_redis, shutdown_redis
+from aetherium.sockets.websocket import get_notification_manager
 from aetherium.sockets.websocket import router as websocket_router
 import logging
 
@@ -46,6 +47,7 @@ if not os.path.exists(uploads_dir):
 
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
+app.state.notification_manager = get_notification_manager()
 # Middleware and Routers
 add_session_middleware(app)
 app.include_router(auth_router)

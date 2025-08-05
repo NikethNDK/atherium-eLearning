@@ -81,7 +81,7 @@ def store_reset_token(email: str, token: str, user_id: int):
 def verify_reset_token(token: str) -> dict:
     """Verify password reset token and return user data"""
     stored_data = redis_client.get(f"reset_token:{token}")
-    print(stored_data,'jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj')
+    print(stored_data)
     if stored_data:
         return json.loads(stored_data)
     return None

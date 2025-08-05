@@ -1,4 +1,4 @@
-from fastapi import WebSocket, APIRouter
+from fastapi import WebSocket, APIRouter,Depends
 import json
 import asyncio
 from aetherium.core.logger import logger
@@ -47,23 +47,24 @@ class NotificationManager:
         else:
             logger.warning(f"User {user_id} is not connected. Chat message skipped.")
 
-manager = NotificationManager()
+def get_notification_manager()->NotificationManager:
+    """Dependency that provides the NotificationManager instance"""
+    return NotificationManager()
 
 router = APIRouter()
 
 @router.websocket("/ws/{user_id}")
-async def websocket_endpoint(websocket: WebSocket, user_id: int):
+async def websocket_endpoint(websocket: WebSocket, user_id: int,manager:NotificationManager=Depends(get_notification_manager)):
     await manager.connect(websocket, user_id)
     try:
         while True:
             data = await websocket.receive_text()
-            # Keep connection alive and handle any incoming messages
             try:
                 message = json.loads(data)
                 if message.get("type") == "ping":
                     await websocket.send_text(json.dumps({"type": "pong"}))
             except json.JSONDecodeError:
-                pass  # Ignore non-JSON messages
+                pass 
     except Exception as e:
         logger.error(f"WebSocket error for user {user_id}: {e}")
     finally:

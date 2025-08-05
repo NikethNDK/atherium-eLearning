@@ -9,7 +9,9 @@ export const ChatProvider = ({ children, userId }) => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
   const wsRef = useRef(null);
+  const MAX_RECONNECT_ATTEMPTS = 5;
   const baseWsUrl = import.meta.env.VITE_WS_URL || "ws://localhost:8000";
 
   // WebSocket connection
@@ -21,55 +23,9 @@ export const ChatProvider = ({ children, userId }) => {
       
       ws.onopen = () => {
         console.log('Chat WebSocket connected');
+        setIsConnected(true);
+      reconnectAttemptsRef.current = 0;
       };
-
-      // ws.onmessage = (event) => {
-      //   try {
-      //     const data = JSON.parse(event.data);
-      //     console.log('WebSocket message received:', data);
-          
-      //     if (data.type === 'chat_message') {
-      //       console.log('Processing chat message:', data);
-      //       console.log('Current conversation:', currentConversation);
-            
-      //       // Add new message to current messages if we're in the right conversation
-      //       setMessages(prevMessages => {
-      //         // Check if this message belongs to the current conversation
-      //         if (currentConversation) {
-      //           if (currentConversation.id.startsWith('instructor_')) {
-      //             const instructorId = currentConversation.id.replace('instructor_', '');
-      //             console.log('User viewing instructor conversation, instructorId:', instructorId, 'message sender_id:', data.sender_id);
-      //             // For user viewing instructor conversation, check if message is from this instructor
-      //             if (data.sender_id === parseInt(instructorId)) {
-      //               console.log('Adding instructor message to user chat');
-      //               return [...prevMessages, data];
-      //             }
-      //           } else if (currentConversation.id.startsWith('user_')) {
-      //             const userId = currentConversation.id.replace('user_', '');
-      //             console.log('Instructor viewing user conversation, userId:', userId, 'message sender_id:', data.sender_id);
-      //             // For instructor viewing user conversation, check if message is from this user
-      //             if (data.sender_id === parseInt(userId)) {
-      //               console.log('Adding user message to instructor chat');
-      //               return [...prevMessages, data];
-      //             }
-      //           } else {
-      //             // Regular conversation
-      //             console.log('Regular conversation, conversation_id:', currentConversation.id, 'message conversation_id:', data.conversation_id);
-      //             if (data.conversation_id === parseInt(currentConversation.id)) {
-      //               console.log('Adding message to regular conversation');
-      //               return [...prevMessages, data];
-      //             }
-      //           }
-      //         } else {
-      //           console.log('No current conversation, cannot add message');
-      //         }
-      //         return prevMessages;
-      //       });
-      //     }
-      //   } catch (error) {
-      //     console.error('Error parsing WebSocket message:', error);
-      //   }
-      // };
 
       ws.onmessage = (event) => {
   try {

@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_, func, desc
 from typing import List, Optional
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status,Depends
 from datetime import datetime
 from aetherium.models.chat import Conversation, Message
 from aetherium.models.user import User
@@ -10,17 +10,19 @@ from aetherium.models.user_course import Purchase
 from aetherium.models.enum import PurchaseStatus
 from aetherium.schemas.chat import MessageCreate, ConversationCreate
 from aetherium.services.cloudinary_service import cloudinary_service
-from aetherium.sockets.websocket import manager
 import os
 import uuid
 from aetherium.models.chat import Conversation,Message
 from aetherium.models.user import User
 from aetherium.services.cloudinary_service import cloudinary_service
 from datetime import datetime
+from aetherium.core.dependency import get_manager
+from aetherium.sockets.websocket import NotificationManager
+from aetherium.core.logger import logger
 
 class ChatService:
     def __init__(self, db: Session):
-        self.db = db
+        self.db = db 
 
     def get_or_create_conversation(self, user_id: int, course_id: int) -> Conversation:
         """Get existing conversation or create new one if user has purchased the course"""
@@ -480,7 +482,6 @@ class ChatService:
 
     async def send_message_to_instructor(self, user_id: int, instructor_id: int, content: str, message_type: str = "text") -> dict:
         """Send a message to an instructor (for grouped conversations)"""
-        from aetherium.sockets.websocket import manager
         from aetherium.models.user import User
         # from aetherium.models.courses.conversation import Conversation
         # from aetherium.models.courses.message import Message
@@ -553,10 +554,9 @@ class ChatService:
         return ws_message
 
     async def send_image_message_to_instructor(self, user_id: int, instructor_id: int, file) -> dict:
-        from aetherium.sockets.websocket import manager
         from aetherium.models.user import User
-        from aetherium.models.courses.conversation import Conversation
-        from aetherium.models.courses.message import Message
+        from aetherium.models.chat import Conversation
+        from aetherium.models.chat import Message
         from datetime import datetime
         from aetherium.services.cloudinary_service import cloudinary_service
 
@@ -898,9 +898,76 @@ class ChatService:
         self.db.commit()
         return {"message": "Messages marked as read"}
 
-    def send_message(self, message_data: MessageCreate, sender_id: int) -> dict:
-        """Send a new message"""
+    # async def send_message(self, message_data: MessageCreate, sender_id: int,manager:NotificationManager) -> dict:
+    #     """Send a new message"""
+    #     # Verify sender has access to this conversation
+    #     conversation = self.db.query(Conversation).filter(
+    #         and_(
+    #             Conversation.id == message_data.conversation_id,
+    #             (Conversation.user_id == sender_id) | (Conversation.instructor_id == sender_id)
+    #         )
+    #     ).first()
         
+    #     if not conversation:
+    #         raise HTTPException(
+    #             status_code=status.HTTP_404_NOT_FOUND,
+    #             detail="Conversation not found"
+    #         )
+        
+    #     # Create new message
+    #     message = Message(
+    #         conversation_id=message_data.conversation_id,
+    #         sender_id=sender_id,
+    #         message_type=message_data.message_type,
+    #         content=message_data.content
+    #     )
+        
+    #     self.db.add(message)
+        
+    #     # Update conversation timestamp
+    #     conversation.updated_at = func.now()
+        
+    #     self.db.commit()
+    #     self.db.refresh(message)
+        
+    #     # Get sender info
+    #     sender = self.db.query(User).filter(User.id == sender_id).first()
+        
+    #     message_response = {
+    #         "id": message.id,
+    #         "conversation_id": message.conversation_id,
+    #         "sender_id": message.sender_id,
+    #                         "sender_name": f"{sender.firstname} {sender.lastname}",
+    #             "sender_profile_picture": sender.profile_picture,
+    #             "message_type": message.message_type,
+    #             "content": message.content,
+    #             "is_read": message.is_read,
+    #             "created_at": message.created_at
+    #         }
+            
+    #         # Send WebSocket notification to the other participant
+    #     recipient_id = conversation.user_id if sender_id == conversation.instructor_id else conversation.instructor_id
+        
+    #     # Import asyncio to run the async function
+    #     import asyncio
+    #     try:
+    #         loop = asyncio.get_event_loop()
+    #     except RuntimeError:
+    #         loop = asyncio.new_event_loop()
+    #         asyncio.set_event_loop(loop)
+        
+    #     # Send WebSocket message
+    #     loop.create_task(manager.send_chat_message(recipient_id, message_response))
+        
+    #     return message_response
+
+    async def send_message(
+    self, 
+    message_data: MessageCreate, 
+    sender_id: int,
+    manager: NotificationManager  # Now properly passed from endpoint
+) -> dict:
+        """Send a new message"""
         # Verify sender has access to this conversation
         conversation = self.db.query(Conversation).filter(
             and_(
@@ -908,13 +975,13 @@ class ChatService:
                 (Conversation.user_id == sender_id) | (Conversation.instructor_id == sender_id)
             )
         ).first()
-        
+
         if not conversation:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Conversation not found"
             )
-        
+
         # Create new message
         message = Message(
             conversation_id=message_data.conversation_id,
@@ -922,44 +989,40 @@ class ChatService:
             message_type=message_data.message_type,
             content=message_data.content
         )
-        
+
         self.db.add(message)
-        
+
         # Update conversation timestamp
         conversation.updated_at = func.now()
-        
+
         self.db.commit()
         self.db.refresh(message)
-        
+
         # Get sender info
         sender = self.db.query(User).filter(User.id == sender_id).first()
-        
+
         message_response = {
             "id": message.id,
             "conversation_id": message.conversation_id,
             "sender_id": message.sender_id,
-                            "sender_name": f"{sender.firstname} {sender.lastname}",
-                "sender_profile_picture": sender.profile_picture,
-                "message_type": message.message_type,
-                "content": message.content,
-                "is_read": message.is_read,
-                "created_at": message.created_at
-            }
-            
-            # Send WebSocket notification to the other participant
+            "sender_name": f"{sender.firstname} {sender.lastname}",
+            "sender_profile_picture": sender.profile_picture,
+            "message_type": message.message_type,
+            "content": message.content,
+            "is_read": message.is_read,
+            "created_at": message.created_at
+        }
+
+        # Send WebSocket notification to the other participant
         recipient_id = conversation.user_id if sender_id == conversation.instructor_id else conversation.instructor_id
-        
-        # Import asyncio to run the async function
-        import asyncio
+
         try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        
-        # Send WebSocket message
-        loop.create_task(manager.send_chat_message(recipient_id, message_response))
-        
+            # Directly await the async call - no need for event loop management
+            await manager.send_chat_message(recipient_id, message_response)
+        except Exception as e:
+            logger.error(f"Failed to send WebSocket notification: {e}")
+            # Continue anyway - the message was saved to DB
+
         return message_response
 
     def upload_image(self, file, conversation_id: int, sender_id: int) -> dict:

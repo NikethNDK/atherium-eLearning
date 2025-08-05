@@ -10,6 +10,8 @@ from aetherium.schemas.chat import (
     ChatMessageResponse, GroupedChatMessageResponse
 )
 from typing import List, Optional
+from aetherium.core.dependency import get_manager
+from aetherium.sockets.websocket import NotificationManager
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -65,14 +67,15 @@ def create_conversation(
     return ConversationResponse(**conv_details)
 
 @router.post("/messages", response_model=dict)
-def send_message(
+async  def send_message(
     message_data: MessageCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    manager: NotificationManager = Depends(get_manager)
 ):
     """Send a text message"""
     chat_service = ChatService(db)
-    return chat_service.send_message(message_data, current_user.id)
+    return await chat_service.send_message(message_data=message_data, sender_id=current_user.id,manager=manager)
 
 @router.post("/messages/image")
 def send_image_message(
