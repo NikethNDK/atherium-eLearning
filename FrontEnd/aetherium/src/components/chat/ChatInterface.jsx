@@ -12,7 +12,8 @@ const ChatInterface = () => {
     loading, 
     loadConversations,
     loadMessages,
-    setCurrentConversation 
+    setCurrentConversation,
+    isWebSocketConnected 
   } = useChat();
   const [showConversationList, setShowConversationList] = useState(true);
 
@@ -78,6 +79,13 @@ const ChatInterface = () => {
               <p className="text-gray-500">
                 Choose a conversation from the list to start chatting
               </p>
+              {/* Connection Status */}
+              <div className="mt-4 flex items-center justify-center">
+                <div className={`w-3 h-3 rounded-full mr-2 ${isWebSocketConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                <span className="text-sm text-gray-600">
+                  {isWebSocketConnected ? 'Connected' : 'Disconnected'}
+                </span>
+              </div>
             </div>
           </div>
         )}

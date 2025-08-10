@@ -32,8 +32,10 @@ class NotificationManager:
     
     async def send_chat_message(self, user_id: int, message: dict):
         """Send chat message to specific user"""
+        user_id= int(user_id)
         if user_id in self.active_connections:
             try:
+                logger.info(f"user sending message {user_id}")
                 websocket = self.active_connections[user_id]
                 chat_data = {
                     "type": "chat_message",

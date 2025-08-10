@@ -1,13 +1,91 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useChat } from '../../context/ChatContext';
+import { useAuth } from '../../context/AuthContext';
 
 const MessageInput = ({ onSendMessage, onSendImage, disabled }) => {
   const [message, setMessage] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const fileInputRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
+  const { currentConversation, startTyping, stopTyping } = useChat();
+  const { user } = useAuth();
+
+  // Get recipient ID based on current conversation
+  const getRecipientId = () => {
+    if (!currentConversation) return null;
+    
+    if (user?.role?.name === 'instructor') {
+      // Instructor is sending to user
+      return currentConversation.user_id;
+    } else {
+      // User is sending to instructor
+      return currentConversation.instructor_id;
+    }
+  };
+
+  // Handle typing start
+  const handleTypingStart = () => {
+    if (!isTyping && currentConversation) {
+      setIsTyping(true);
+      const recipientId = getRecipientId();
+      console.log('Typing start - User:', user?.id, 'Recipient:', recipientId, 'Conversation:', currentConversation.id, 'Conversation type:', typeof currentConversation.id);
+      if (recipientId) {
+        startTyping(recipientId, currentConversation.id);
+      } else {
+        console.warn('No recipient ID found for typing indicator');
+      }
+    }
+  };
+
+  // Handle typing stop
+  const handleTypingStop = () => {
+    if (isTyping && currentConversation) {
+      setIsTyping(false);
+      const recipientId = getRecipientId();
+      console.log('Typing stop - User:', user?.id, 'Recipient:', recipientId, 'Conversation:', currentConversation.id);
+      if (recipientId) {
+        stopTyping(recipientId, currentConversation.id);
+      } else {
+        console.warn('No recipient ID found for typing stop indicator');
+      }
+    }
+  };
+
+  // Handle message input change
+  const handleMessageChange = (e) => {
+    const newMessage = e.target.value;
+    setMessage(newMessage);
+    
+    // Start typing indicator
+    handleTypingStart();
+    
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    
+    // Set timeout to stop typing indicator
+    typingTimeoutRef.current = setTimeout(() => {
+      handleTypingStop();
+    }, 2000); // Stop typing indicator after 2 seconds of no input
+  };
+
+  // Cleanup typing timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!message.trim() || disabled || isUploading) return;
+
+    // Stop typing indicator
+    handleTypingStop();
 
     const trimmedMessage = message.trim();
     setMessage('');
@@ -91,7 +169,7 @@ const MessageInput = ({ onSendMessage, onSendImage, disabled }) => {
       <div className="flex-1 relative">
         <textarea
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onChange={handleMessageChange}
           onKeyPress={handleKeyPress}
           placeholder="Type a message..."
           disabled={disabled || isUploading}

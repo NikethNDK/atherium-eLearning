@@ -7,7 +7,7 @@ import MessageInput from './MessageInput';
 
 const ChatWindow = ({ conversation, onBackToList }) => {
   const { user } = useAuth();
-  const { messages, loading, loadMessages, sendMessage, sendImageMessage } = useChat();
+  const { messages, loading, loadMessages, sendMessage, sendImageMessage, typingUsers } = useChat();
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
@@ -20,10 +20,18 @@ const ChatWindow = ({ conversation, onBackToList }) => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, typingUsers]);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Use setTimeout to ensure DOM has updated
+    setTimeout(() => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'end'
+        });
+      }
+    }, 100);
   };
 
   const handleSendMessage = async (content) => {
@@ -56,6 +64,29 @@ const ChatWindow = ({ conversation, onBackToList }) => {
     } else {
       return conversation.instructor_profile_picture;
     }
+  };
+
+  // Get typing indicator for current conversation
+  const getTypingIndicator = () => {
+    if (typingUsers.size === 0) return null;
+    
+    // Check if any user in the current conversation is typing
+    const currentUserId = user?.role?.name === 'instructor' ? conversation.user_id : conversation.instructor_id;
+    
+    if (typingUsers.has(currentUserId)) {
+      return (
+        <div className="flex items-center space-x-2 text-gray-500 text-sm italic">
+          <div className="flex space-x-1">
+            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+          </div>
+          <span>{getDisplayName()} is typing...</span>
+        </div>
+      );
+    }
+    
+    return null;
   };
 
   return (
@@ -147,6 +178,8 @@ const ChatWindow = ({ conversation, onBackToList }) => {
             );
           })
         )}
+        {/* Typing Indicator */}
+        {getTypingIndicator()}
         <div ref={messagesEndRef} />
       </div>
 

@@ -12,9 +12,7 @@ from aetherium.schemas.chat import MessageCreate, ConversationCreate
 from aetherium.services.cloudinary_service import cloudinary_service
 import os
 import uuid
-from aetherium.models.chat import Conversation,Message
-from aetherium.models.user import User
-from aetherium.services.cloudinary_service import cloudinary_service
+
 from datetime import datetime
 from aetherium.core.dependency import get_manager
 from aetherium.sockets.websocket import NotificationManager
@@ -546,10 +544,22 @@ class ChatService:
             "created_at": message.created_at.isoformat()
         }
         try:
-            await manager.send_chat_message(instructor_id, ws_message)
-            await manager.send_chat_message(user_id, ws_message)
+            # Determine the recipient based on who is sending the message
+            # For grouped conversations, we need to send to the other participant
+            if sender_id == user_id:
+                # User is sending to instructor
+                recipient_id = instructor_id
+            else:
+                # Instructor is sending to user
+                recipient_id = user_id
+            
+            # Send WebSocket message to the recipient only
+            await manager.send_chat_message(recipient_id, ws_message)
+            print(f"WebSocket message sent to user {recipient_id} from sender {sender_id}")
         except Exception as e:
             print(f"Error sending WebSocket notification: {e}")
+            import traceback
+            traceback.print_exc()
 
         return ws_message
 
@@ -633,8 +643,17 @@ class ChatService:
             "created_at": message.created_at.isoformat()
         }
         try:
-            await manager.send_chat_message(instructor_id, ws_message)
-            await manager.send_chat_message(user_id, ws_message)
+            # Determine the recipient based on who is sending the message
+            if sender_id == user_id:
+                # User is sending to instructor
+                recipient_id = instructor_id
+            else:
+                # Instructor is sending to user
+                recipient_id = user_id
+            
+            # Send WebSocket message to the recipient only
+            await manager.send_chat_message(recipient_id, ws_message)
+            print(f"WebSocket image message sent to user {recipient_id} from sender {sender_id}")
         except Exception as e:
             print(f"Error sending WebSocket notification: {e}")
 

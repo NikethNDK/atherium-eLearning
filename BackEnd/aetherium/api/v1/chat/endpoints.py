@@ -302,4 +302,70 @@ def mark_user_messages_as_read(
             detail="Only instructors can access this endpoint"
         )
     chat_service = ChatService(db)
-    return chat_service.mark_user_messages_as_read(user_id, current_user.id) 
+    return chat_service.mark_user_messages_as_read(user_id, current_user.id)
+
+@router.post("/typing/start")
+async def start_typing(
+    typing_data: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Send typing start indicator"""
+    from aetherium.sockets.websocket import manager
+    
+    recipient_id = typing_data.get("recipient_id")
+    if not recipient_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="recipient_id is required"
+        )
+    
+    try:
+        # Send typing indicator to recipient
+        await manager.send_typing_indicator(recipient_id, {
+            "action": "typing_start",
+            "sender_id": current_user.id,
+            "sender_name": f"{current_user.firstname} {current_user.lastname}",
+            "conversation_id": typing_data.get("conversation_id")
+        })
+        
+        return {"message": "Typing indicator sent"}
+    except Exception as e:
+        print(f"Error sending typing start indicator: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to send typing indicator: {str(e)}"
+        )
+
+@router.post("/typing/stop")
+async def stop_typing(
+    typing_data: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Send typing stop indicator"""
+    from aetherium.sockets.websocket import manager
+    
+    recipient_id = typing_data.get("recipient_id")
+    if not recipient_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="recipient_id is required"
+        )
+    
+    try:
+        # Send typing stop indicator to recipient
+        await manager.send_typing_indicator(recipient_id, {
+            "action": "typing_stop",
+            "sender_id": current_user.id,
+            "sender_name": f"{current_user.firstname} {current_user.lastname}",
+            "conversation_id": typing_data.get("conversation_id")
+        })
+        
+        return {"message": "Typing stop indicator sent"}
+    except Exception as e:
+        print(f"Error sending typing stop indicator: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to send typing indicator: {str(e)}"
+        ) 
