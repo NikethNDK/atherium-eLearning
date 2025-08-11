@@ -131,6 +131,7 @@ const ConversationList = ({ conversations, currentConversation, onSelectConversa
                         )}
                       </div>
                       {conversation.unread_count > 0 && (
+                      (console.log('count',conversation)),
                         <span className="bg-blue-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center ml-2">
                           {conversation.unread_count}
                         </span>

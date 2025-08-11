@@ -553,11 +553,43 @@ class ChatService:
                 # Instructor is sending to user
                 recipient_id = user_id
             
-            # Send WebSocket message to the recipient only
-            await manager.send_chat_message(recipient_id, ws_message)
-            print(f"WebSocket message sent to user {recipient_id} from sender {sender_id}")
+            # Simple WebSocket message sending - import at function level
+            try:
+                from aetherium.sockets.websocket import manager
+                # Use asyncio to send message without making function async
+                import asyncio
+                
+                # Try to get the current event loop
+                try:
+                    loop = asyncio.get_running_loop()
+                    print(f"✅ Using existing event loop for WebSocket message to user {recipient_id}")
+                except RuntimeError:
+                    # No running loop, create a new one
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    print(f"✅ Created new event loop for WebSocket message to user {recipient_id}")
+                
+                # Send the WebSocket message
+                task = loop.create_task(manager.send_chat_message(recipient_id, ws_message))
+                print(f"✅ WebSocket message task created for user {recipient_id}")
+                
+                # Wait for the task to complete (with timeout)
+                try:
+                    await asyncio.wait_for(task, timeout=5.0)
+                    print(f"✅ WebSocket message sent successfully to user {recipient_id}")
+                except asyncio.TimeoutError:
+                    print(f"⚠️ WebSocket message timeout for user {recipient_id}")
+                except Exception as task_error:
+                    print(f"❌ WebSocket message task error for user {recipient_id}: {task_error}")
+                    
+            except Exception as ws_error:
+                print(f"❌ WebSocket error (non-critical): {ws_error}")
+                import traceback
+                traceback.print_exc()
+                # Continue anyway - message was saved to DB
+                
         except Exception as e:
-            print(f"Error sending WebSocket notification: {e}")
+            print(f"❌ Error in message processing: {e}")
             import traceback
             traceback.print_exc()
 
@@ -651,11 +683,43 @@ class ChatService:
                 # Instructor is sending to user
                 recipient_id = user_id
             
-            # Send WebSocket message to the recipient only
-            await manager.send_chat_message(recipient_id, ws_message)
-            print(f"WebSocket image message sent to user {recipient_id} from sender {sender_id}")
+            # Simple WebSocket message sending - import at function level
+            try:
+                from aetherium.sockets.websocket import manager
+                # Use asyncio to send message without making function async
+                import asyncio
+                
+                # Try to get the current event loop
+                try:
+                    loop = asyncio.get_running_loop()
+                    print(f"✅ Using existing event loop for WebSocket image message to user {recipient_id}")
+                except RuntimeError:
+                    # No running loop, create a new one
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    print(f"✅ Created new event loop for WebSocket image message to user {recipient_id}")
+                
+                # Send the WebSocket message
+                task = loop.create_task(manager.send_chat_message(recipient_id, ws_message))
+                print(f"✅ WebSocket image message task created for user {recipient_id}")
+                
+                # Wait for the task to complete (with timeout)
+                try:
+                    await asyncio.wait_for(task, timeout=5.0)
+                    print(f"✅ WebSocket image message sent successfully to user {recipient_id}")
+                except asyncio.TimeoutError:
+                    print(f"⚠️ WebSocket image message timeout for user {recipient_id}")
+                except Exception as task_error:
+                    print(f"❌ WebSocket image message task error for user {recipient_id}: {task_error}")
+                    
+            except Exception as ws_error:
+                print(f"❌ WebSocket error (non-critical): {ws_error}")
+                import traceback
+                traceback.print_exc()
+                # Continue anyway - message was saved to DB
+                
         except Exception as e:
-            print(f"Error sending WebSocket notification: {e}")
+            print(f"Error in image message processing: {e}")
 
         return ws_message
 
@@ -1036,8 +1100,13 @@ class ChatService:
         recipient_id = conversation.user_id if sender_id == conversation.instructor_id else conversation.instructor_id
 
         try:
-            # Directly await the async call - no need for event loop management
-            await manager.send_chat_message(recipient_id, message_response)
+            # Simple WebSocket message sending - import at function level
+            try:
+                from aetherium.sockets.websocket import manager
+                await manager.send_chat_message(recipient_id, message_response)
+            except Exception as ws_error:
+                print(f"WebSocket error (non-critical): {ws_error}")
+                # Continue anyway - the message was saved to DB
         except Exception as e:
             logger.error(f"Failed to send WebSocket notification: {e}")
             # Continue anyway - the message was saved to DB
@@ -1106,7 +1175,7 @@ class ChatService:
             # Send WebSocket notification to the other participant
             recipient_id = conversation.user_id if sender_id == conversation.instructor_id else conversation.instructor_id
             
-            # Import asyncio to run the async function
+            # Use asyncio to send WebSocket message without making function async
             import asyncio
             try:
                 loop = asyncio.get_event_loop()
@@ -1114,8 +1183,14 @@ class ChatService:
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
             
-            # Send WebSocket message
-            loop.create_task(manager.send_chat_message(recipient_id, message_response))
+            # Import manager and send WebSocket message
+            from aetherium.sockets.websocket import manager
+            try:
+                # Send WebSocket message
+                loop.create_task(manager.send_chat_message(recipient_id, message_response))
+            except Exception as e:
+                print(f"Failed to send WebSocket notification: {e}")
+                # Continue anyway - the message was saved to DB
             
             return message_response
             

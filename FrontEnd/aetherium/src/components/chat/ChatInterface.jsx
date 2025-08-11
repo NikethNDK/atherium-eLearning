@@ -13,7 +13,8 @@ const ChatInterface = () => {
     loadConversations,
     loadMessages,
     setCurrentConversation,
-    isWebSocketConnected 
+    reopenConversation, // Use the new function
+    isConnected // Use the correct property name
   } = useChat();
   const [showConversationList, setShowConversationList] = useState(true);
 
@@ -23,11 +24,21 @@ const ChatInterface = () => {
     }
   }, [user?.id]);
 
-  const handleConversationSelect = (conversation) => {
+  const handleConversationSelect = async (conversation) => {
+    console.log('🔄 Selecting conversation:', conversation.id);
+    
+    // If selecting the same conversation, just show it
+    if (currentConversation?.id === conversation.id) {
+      setShowConversationList(false);
+      return;
+    }
+    
+    // If selecting a different conversation, reopen it properly
     setCurrentConversation(conversation);
     setShowConversationList(false);
-    // Load messages for the selected conversation
-    loadMessages(conversation.id);
+    
+    // Use reopenConversation to ensure proper message loading
+    await reopenConversation(conversation.id);
   };
 
   const handleBackToList = () => {
@@ -81,9 +92,9 @@ const ChatInterface = () => {
               </p>
               {/* Connection Status */}
               <div className="mt-4 flex items-center justify-center">
-                <div className={`w-3 h-3 rounded-full mr-2 ${isWebSocketConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                <div className={`w-3 h-3 rounded-full mr-2 ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
                 <span className="text-sm text-gray-600">
-                  {isWebSocketConnected ? 'Connected' : 'Disconnected'}
+                  {isConnected ? 'Connected' : 'Disconnected'}
                 </span>
               </div>
             </div>

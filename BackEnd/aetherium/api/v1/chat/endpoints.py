@@ -84,7 +84,7 @@ def send_image_message(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Send an image message"""
+    """Upload and send an image message"""
     # Validate file type
     if not file.content_type.startswith('image/'):
         raise HTTPException(
