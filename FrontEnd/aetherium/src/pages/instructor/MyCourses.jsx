@@ -99,7 +99,7 @@ const MyCourses = () => {
                   <div className="flex space-x-2">
                     <button
                       // onClick={() => navigate(`/courses/${course.id}`)} 
-                      onClick={() => navigate(`/instructor/courses/${course.id}/InstrtructorCourseView`)}
+                      onClick={() => navigate(`/instructor/courses/${course.id}/review/detailed-view`)}
                       className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 text-sm"
                     >
                       <Eye size={14} />

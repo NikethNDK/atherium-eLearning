@@ -197,17 +197,38 @@ export const userAPI = {
   },
 
   // Razorpay API calls (just the backend communication)
-  createRazorpayOrder: async (courseId) => {
-    const response = await api.post("/user/payment/create-razorpay-order", {
-      course_id: courseId,
-      payment_method: "CARD"
-    })
-    return response.data
+  // createRazorpayOrder: async (courseId) => {
+  //   const response = await api.post("/user/payment/create-razorpay-order", {
+  //     course_id: courseId,
+  //     payment_method: "CARD"
+  //   })
+  //   return response.data
+  // },
+
+  // verifyRazorpayPayment: async (paymentData) => {
+  //   const response = await api.post("/user/payment/verify-razorpay", paymentData)
+  //   return response.data
+  // },
+
+   createRazorpayOrder: async (courseId, purchaseType = "single") => {
+    const requestData = {
+      payment_method: "CARD",
+      purchase_type: purchaseType
+    };
+
+    // Only include course_id for single course purchases
+    if (purchaseType === "single" && courseId) {
+      requestData.course_id = courseId;
+    }
+
+    const response = await api.post("/user/payment/create-razorpay-order", requestData);
+    return response.data;
   },
 
+  // Updated verifyRazorpayPayment to handle multiple courses
   verifyRazorpayPayment: async (paymentData) => {
-    const response = await api.post("/user/payment/verify-razorpay", paymentData)
-    return response.data
+    const response = await api.post("/user/payment/verify-razorpay", paymentData);
+    return response.data;
   },
 
   // =================== ORDER HISTORY APIs ===================

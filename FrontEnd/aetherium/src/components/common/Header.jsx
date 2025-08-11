@@ -66,6 +66,19 @@ const Header = () => {
     }
   }
   const getNavigationItems = () => {
+    const baseItems = [
+      {  id: 'home',to: "/", label: "Home" },
+      { id:'contact',to: "/contact", label: "Contact" }
+    ]
+
+    if (user?.role?.name === "user") {
+      return [
+        { id:'home',to: getHomeLink(), label: "Home" },
+        { id:'courses',to: "/courses", label: "Courses" },
+        { id:'learming',to: "/my-learning", label: "My Learning" },
+        { id:'contact', to: "/contact", label: "Contact" }
+      ]
+    }
   if (user?.role?.name === "user") {
     return [
       { to: "/", label: "Home" }, // Changed from getHomeLink() to avoid duplication
@@ -75,6 +88,14 @@ const Header = () => {
     ]
   }
 
+    // For admin and instructor, show dashboard
+    if (user?.role?.name === "admin" || user?.role?.name === "instructor") {
+      return [
+        { id: 'home',to: getHomeLink(), label: "Home" },
+        { id: 'dashboard',to: getDashboardLink(), label: "Dashboard" },
+        { id: 'contact',to: "/contact", label: "Contact" }
+      ]
+    }
   // For admin and instructor, show both Home and Dashboard with different routes
   if (user?.role?.name === "admin" || user?.role?.name === "instructor") {
     return [
@@ -84,6 +105,13 @@ const Header = () => {
     ]
   }
 
+    // For unauthenticated users
+    return [
+      { id:'home',to: "/", label: "Home" },
+      // { to: "/courses", label: "Courses" },
+      { id:'about',to: "/about", label: "About" },
+      { id:'contact',to: "/contact", label: "Contact" }
+    ]
   // For unauthenticated users
   return [
     { to: "/", label: "Home" },
@@ -142,7 +170,7 @@ const Header = () => {
           <div className="hidden md:flex items-center space-x-8">
             {getNavigationItems().map((item) => (
               <Link
-                key={item.to}
+                key={item.id}
                 to={item.to}
                 className="hover:text-cyan-400 transition-colors"
               >

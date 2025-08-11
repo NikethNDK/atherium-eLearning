@@ -392,7 +392,7 @@ const CourseDetailsTab = ({ course, isPurchased, onPurchase }) => {
     { id: "overview", label: "Overview" },
     { id: "curriculum", label: "Curriculum" },
     { id: "instructor", label: "Instructor" },
-    { id: "reviews", label: "Reviews" },
+    // { id: "reviews", label: "Reviews" },
   ];
 
   return (
@@ -500,12 +500,12 @@ const CourseDetailsTab = ({ course, isPurchased, onPurchase }) => {
     <p>{course.instructor?.bio || "No bio available."}</p>
   </div>
 )}
-        {activeTab === "reviews" && (
+        {/* {activeTab === "reviews" && (
           <div>
             <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Reviews</h2>
             <p>Reviews section coming soon.</p>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );

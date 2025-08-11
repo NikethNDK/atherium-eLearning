@@ -604,11 +604,30 @@ const CreateCourse = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FileUpload
                   label="Course Thumbnail"
-                  description="Upload your course Thumbnail here. Important guidelines: 1200x800 pixels or 12:8 Ratio. Supported format: .jpg, .jpeg, or .png"
+                  description="Upload your course Thumbnail here. Supported format: .jpg, .jpeg, or .png"
                   accept="image/*"
                   onChange={handleFileChange("cover_image")}
                   selectedFile={courseData.cover_image}
                   existingFileUrl={courseData.cover_image_url}
+                        icon={
+        <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth="1.5"
+            stroke="currentColor"
+            className="w-4 h-4 text-gray-600"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M3 16l4.586-4.586a2 2 0 012.828 0L13 14l4.586-4.586a2 2 0 012.828 0L21 12v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-2z"
+            />
+            <circle cx="8.5" cy="8.5" r="1.5" />
+          </svg>
+        </div>
+      }
                 />
 
                 <FileUpload
