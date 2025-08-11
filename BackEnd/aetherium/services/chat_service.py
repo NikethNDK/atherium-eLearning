@@ -20,7 +20,7 @@ from aetherium.core.logger import logger
 
 class ChatService:
     def __init__(self, db: Session):
-        self.db = db 
+        self.db = db
 
     def get_or_create_conversation(self, user_id: int, course_id: int) -> Conversation:
         """Get existing conversation or create new one if user has purchased the course"""
@@ -263,7 +263,7 @@ class ChatService:
             joinedload(Message.sender)
         ).filter(
             Message.conversation_id.in_(conversation_ids)
-        ).order_by(Message.created_at.asc()).offset(offset).limit(limit).all()
+        ).order_by(Message.created_at.desc()).offset(offset).limit(limit).all()  # Changed to desc() to get newest first
         
         total = self.db.query(Message).filter(
             Message.conversation_id.in_(conversation_ids)
@@ -388,7 +388,7 @@ class ChatService:
             joinedload(Message.sender)
         ).filter(
             Message.conversation_id.in_(conversation_ids)
-        ).order_by(Message.created_at.asc()).offset(offset).limit(limit).all()
+        ).order_by(Message.created_at.desc()).offset(offset).limit(limit).all()  # Changed to desc() to get newest first
         
         total = self.db.query(Message).filter(
             Message.conversation_id.in_(conversation_ids)
@@ -868,7 +868,7 @@ class ChatService:
             joinedload(Message.sender)
         ).filter(
             Message.conversation_id == conversation_id
-        ).order_by(Message.created_at.asc()).offset(offset).limit(limit).all()
+        ).order_by(Message.created_at.desc()).offset(offset).limit(limit).all()  # Changed to desc() to get newest first
         
         total = self.db.query(Message).filter(
             Message.conversation_id == conversation_id
@@ -1058,13 +1058,13 @@ class ChatService:
                 (Conversation.user_id == sender_id) | (Conversation.instructor_id == sender_id)
             )
         ).first()
-
+        
         if not conversation:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Conversation not found"
             )
-
+        
         # Create new message
         message = Message(
             conversation_id=message_data.conversation_id,
@@ -1072,33 +1072,33 @@ class ChatService:
             message_type=message_data.message_type,
             content=message_data.content
         )
-
+        
         self.db.add(message)
-
+        
         # Update conversation timestamp
         conversation.updated_at = func.now()
-
+        
         self.db.commit()
         self.db.refresh(message)
-
+        
         # Get sender info
         sender = self.db.query(User).filter(User.id == sender_id).first()
-
+        
         message_response = {
             "id": message.id,
             "conversation_id": message.conversation_id,
             "sender_id": message.sender_id,
-            "sender_name": f"{sender.firstname} {sender.lastname}",
-            "sender_profile_picture": sender.profile_picture,
-            "message_type": message.message_type,
-            "content": message.content,
-            "is_read": message.is_read,
-            "created_at": message.created_at
-        }
-
-        # Send WebSocket notification to the other participant
+                            "sender_name": f"{sender.firstname} {sender.lastname}",
+                "sender_profile_picture": sender.profile_picture,
+                "message_type": message.message_type,
+                "content": message.content,
+                "is_read": message.is_read,
+                "created_at": message.created_at
+            }
+            
+            # Send WebSocket notification to the other participant
         recipient_id = conversation.user_id if sender_id == conversation.instructor_id else conversation.instructor_id
-
+        
         try:
             # Simple WebSocket message sending - import at function level
             try:
@@ -1110,7 +1110,7 @@ class ChatService:
         except Exception as e:
             logger.error(f"Failed to send WebSocket notification: {e}")
             # Continue anyway - the message was saved to DB
-
+        
         return message_response
 
     def upload_image(self, file, conversation_id: int, sender_id: int) -> dict:
@@ -1186,7 +1186,7 @@ class ChatService:
             # Import manager and send WebSocket message
             from aetherium.sockets.websocket import manager
             try:
-                # Send WebSocket message
+            # Send WebSocket message
                 loop.create_task(manager.send_chat_message(recipient_id, message_response))
             except Exception as e:
                 print(f"Failed to send WebSocket notification: {e}")

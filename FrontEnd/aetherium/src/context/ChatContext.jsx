@@ -32,16 +32,370 @@ export const ChatProvider = ({ children, userId }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [typingUsers, setTypingUsers] = useState(new Set());
+  const [isConnected, setIsConnected] = useState(false);
   const wsRef = useRef(null);
   const MAX_RECONNECT_ATTEMPTS = 5;
   const baseWsUrl = import.meta.env.VITE_WS_URL || "ws://localhost:8000";
   const currentConversationRef = useRef(null);
+  const syncInProgressRef = useRef(false);
 
   // Keep ref in sync with currentConversation state
   useEffect(() => {
     currentConversationRef.current = currentConversation;
     console.log('🔄 Current conversation ref updated:', currentConversation?.id);
-  }, [currentConversation]);
+  }, [currentConversation?.id]);
+
+  // Load all messages for a conversation (no pagination limit)
+  const loadAllMessages = async (conversationId) => {
+    try {
+      console.log('🔄 Loading all messages for conversation:', conversationId);
+      await loadMessages(conversationId, 1, 1000); // Load with large limit
+    } catch (error) {
+      console.error('❌ Error loading all messages:', error);
+    }
+  };
+
+  // Sync WebSocket messages with database to ensure persistence
+  const syncWebSocketMessages = async () => {
+    if (!currentConversation?.id) return;
+    
+    // Prevent multiple simultaneous syncs
+    if (syncInProgressRef.current) {
+      console.log('⏳ Skipping sync - sync already in progress');
+      return;
+    }
+    
+    if (loading) {
+      console.log('⏳ Skipping sync - already loading messages');
+      return;
+    }
+    
+    try {
+      syncInProgressRef.current = true;
+      console.log('🔄 Syncing WebSocket messages with database for conversation:', currentConversation.id);
+      
+      // Reload messages from database to ensure we have the latest
+      await loadAllMessages(currentConversation.id);
+      
+      console.log('✅ WebSocket messages synced with database');
+    } catch (error) {
+      console.error('❌ Error syncing WebSocket messages:', error);
+    } finally {
+      syncInProgressRef.current = false;
+    }
+  };
+
+  // Auto-sync WebSocket messages when conversation changes
+  useEffect(() => {
+    if (currentConversation?.id && !loading && !syncInProgressRef.current) {
+      console.log('🔄 Auto-sync triggered for conversation:', currentConversation.id);
+      
+      // Prevent multiple auto-syncs for the same conversation
+      const syncKey = `${currentConversation.id}_${Date.now()}`;
+      console.log('🔑 Sync key:', syncKey);
+      
+      // Small delay to ensure WebSocket is ready
+      const syncTimer = setTimeout(() => {
+        syncWebSocketMessages();
+      }, 1000);
+      
+      return () => clearTimeout(syncTimer);
+    }
+  }, [currentConversation?.id]); // Removed loading dependency to prevent infinite loops
+
+  // Load conversations list
+  const loadConversations = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await chatAPI.getConversations();
+      setConversations(response.conversations || []);
+    } catch (err) {
+      setError(err.message);
+      console.error('Error loading conversations:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load messages for a conversation
+  const loadMessages = async (conversationId, page = 1, limit = 20) => {
+    try {
+      console.log('🔄 Loading messages for conversation:', {
+        conversationId,
+        page,
+        type: conversationId?.startsWith('instructor_') ? 'instructor_grouped' : 
+              conversationId?.startsWith('user_') ? 'user_grouped' : 'regular'
+      });
+      
+      setLoading(true);
+      let response;
+      
+      if (conversationId.startsWith('instructor_')) {
+        // For user viewing instructor conversations
+        const instructorId = conversationId.replace('instructor_', '');
+        console.log('👨‍🏫 Loading instructor messages for instructor ID:', instructorId);
+        
+        try {
+          response = await chatAPI.getInstructorMessages(instructorId, page, limit);
+        } catch (error) {
+          console.error('❌ Error fetching instructor messages:', error);
+          if (error.response?.status === 422) {
+            console.error('❌ Validation error - instructor ID might be invalid:', instructorId);
+            setError('Invalid instructor ID. Please refresh and try again.');
+          } else {
+            setError('Failed to load messages. Please try again.');
+          }
+          return;
+        }
+        
+        // Merge with existing messages to prevent loss
+        setMessages(prevMessages => {
+          const newMessages = response.messages || [];
+          console.log(`📊 Loading instructor messages: existing=${prevMessages.length}, new=${newMessages.length}`);
+          
+          // If this is a fresh load (page 1), replace messages
+          if (page === 1) {
+            console.log('🔄 Fresh load: replacing messages');
+            // Reverse the messages since backend returns newest first, but we want oldest first for display
+            const reversedMessages = [...newMessages].reverse();
+            console.log(`📊 Reversed messages for display: ${newMessages.length} → ${reversedMessages.length}`);
+            return reversedMessages;
+          } else {
+            // If pagination, prepend older messages (since backend returns newest first)
+            console.log('🔄 Pagination: prepending older messages');
+            const combined = [...newMessages, ...prevMessages];
+            // Remove duplicates based on message ID
+            const uniqueMessages = combined.filter((message, index, self) => 
+              index === self.findIndex(m => m.id === message.id)
+            );
+            console.log(`📊 Combined messages: ${combined.length} → unique: ${uniqueMessages.length}`);
+            return uniqueMessages;
+          }
+        });
+        
+        console.log('✅ Instructor messages loaded:', {
+          messageCount: response.messages?.length || 0,
+          conversation: response.conversation
+        });
+      } else if (conversationId.startsWith('user_')) {
+        // For instructor viewing user conversations
+        const userId = conversationId.replace('user_', '');
+        console.log('👤 Loading user messages for user ID:', userId);
+        
+        try {
+          response = await chatAPI.getUserMessages(userId, page, limit);
+        } catch (error) {
+          console.error('❌ Error fetching user messages:', error);
+          if (error.response?.status === 422) {
+            console.error('❌ Validation error - user ID might be invalid:', userId);
+            setError('Invalid user ID. Please refresh and try again.');
+          } else {
+            setError('Failed to load messages. Please try again.');
+          }
+          return;
+        }
+        
+        // Merge with existing messages to prevent loss
+        setMessages(prevMessages => {
+          const newMessages = response.messages || [];
+          console.log(`📊 Loading user messages: existing=${prevMessages.length}, new=${newMessages.length}`);
+          
+          // If this is a fresh load (page 1), replace messages
+          if (page === 1) {
+            console.log('🔄 Fresh load: replacing messages');
+            // Reverse the messages since backend returns newest first, but we want oldest first for display
+            const reversedMessages = [...newMessages].reverse();
+            console.log(`📊 Reversed messages for display: ${newMessages.length} → ${reversedMessages.length}`);
+            return reversedMessages;
+          } else {
+            // If pagination, prepend older messages (since backend returns newest first)
+            console.log('🔄 Pagination: prepending older messages');
+            const combined = [...newMessages, ...prevMessages];
+            // Remove duplicates based on message ID
+            const uniqueMessages = combined.filter((message, index, self) => 
+              index === self.findIndex(m => m.id === message.id)
+            );
+            console.log(`📊 Combined messages: ${combined.length} → unique: ${uniqueMessages.length}`);
+            return uniqueMessages;
+          }
+        });
+        
+        console.log('✅ User messages loaded:', {
+          messageCount: response.messages?.length || 0,
+          conversation: response.conversation
+        });
+      } else {
+        // Regular conversation
+        console.log('💬 Loading regular conversation messages for ID:', conversationId);
+        
+        try {
+          response = await chatAPI.getConversationMessages(conversationId, page, limit);
+        } catch (error) {
+          console.error('❌ Error fetching conversation messages:', error);
+          if (error.response?.status === 422) {
+            console.error('❌ Validation error - conversation ID might be invalid:', conversationId);
+            setError('Invalid conversation ID. Please refresh and try again.');
+          } else {
+            setError('Failed to load messages. Please try again.');
+          }
+          return;
+        }
+        
+        // Merge with existing messages to prevent loss
+        setMessages(prevMessages => {
+          const newMessages = response.messages || [];
+          console.log(`📊 Loading regular messages: existing=${prevMessages.length}, new=${newMessages.length}`);
+          
+          // If this is a fresh load (page 1), replace messages
+          if (page === 1) {
+            console.log('🔄 Fresh load: replacing messages');
+            // Reverse the messages since backend returns newest first, but we want oldest first for display
+            const reversedMessages = [...newMessages].reverse();
+            console.log(`📊 Reversed messages for display: ${newMessages.length} → ${reversedMessages.length}`);
+            return reversedMessages;
+          } else {
+            // If pagination, prepend older messages (since backend returns newest first)
+            console.log('🔄 Pagination: prepending older messages');
+            const combined = [...newMessages, ...prevMessages];
+            // Remove duplicates based on message ID
+            const uniqueMessages = combined.filter((message, index, self) => 
+              index === self.findIndex(m => m.id === message.id)
+            );
+            console.log(`📊 Combined messages: ${combined.length} → unique: ${uniqueMessages.length}`);
+            return uniqueMessages;
+          }
+        });
+        
+        console.log('✅ Regular conversation messages loaded:', {
+          messageCount: response.messages?.length || 0,
+          conversation: response.conversation
+        });
+      }
+      
+      // Mark messages as read
+      await markMessagesAsRead(conversationId);
+      
+    } catch (error) {
+      console.error('❌ Error loading messages:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Enhanced WebSocket message handling with persistence
+  const handleWebSocketMessage = (message) => {
+    console.log('📨 Processing WebSocket message:', {
+      messageId: message.id,
+      senderId: message.sender_id,
+      conversationId: message.conversation_id,
+      content: message.content?.substring(0, 50) + '...',
+      currentConversationId: currentConversation?.id,
+      currentUserId: userId,
+      messageType: message.message_type
+    });
+      
+      // Always update the conversations list first
+      setConversations(prevConvs => {
+        return prevConvs.map(conv => {
+        let isRelevant = false;
+        
+        if (conv.id.startsWith('instructor_')) {
+          const instructorId = parseInt(conv.id.replace('instructor_', ''));
+          isRelevant = message.sender_id === instructorId;
+          console.log('👨‍🏫 Conversation relevance check:', {
+            convId: conv.id,
+            instructorId,
+            messageSenderId: message.sender_id,
+            isRelevant
+          });
+        } else if (conv.id.startsWith('user_')) {
+          const userIdFromConv = parseInt(conv.id.replace('user_', ''));
+          isRelevant = message.sender_id === userIdFromConv;
+          console.log('👤 Conversation relevance check:', {
+            convId: conv.id,
+            userIdFromConv,
+            messageSenderId: message.sender_id,
+            isRelevant
+          });
+        } else {
+          isRelevant = conv.id === message.conversation_id?.toString();
+          console.log('💬 Regular conversation relevance check:', {
+            convId: conv.id,
+            messageConversationId: message.conversation_id,
+            isRelevant
+          });
+        }
+          
+          if (isRelevant) {
+            console.log('✅ Updating conversation in list:', conv.id);
+            return {
+              ...conv,
+              last_message: message,
+              updated_at: new Date().toISOString(),
+              unread_count: conv.id === currentConversation?.id ? 
+                conv.unread_count : 
+                (conv.unread_count + 1)
+            };
+          }
+          return conv;
+        });
+      });
+
+    // Update messages if we're in the relevant conversation
+      setMessages(prevMessages => {
+      const currentConv = currentConversationRef.current;
+      let isCurrentConv = false;
+      
+      if (currentConv?.id?.startsWith('instructor_')) {
+        // For student viewing instructor conversations
+        const instructorId = parseInt(currentConv.id.replace('instructor_', ''));
+        // Student should receive messages from instructor OR messages they sent themselves
+        isCurrentConv = message.sender_id === instructorId || message.sender_id === userId;
+        console.log('👨‍🏫 Student conversation check:', {
+          instructorId,
+          messageSenderId: message.sender_id,
+          currentUserId: userId,
+          isCurrentConv
+        });
+      } else if (currentConv?.id?.startsWith('user_')) {
+        // For instructor viewing user conversations
+        const userIdFromConv = parseInt(currentConv.id.replace('user_', ''));
+        // Instructor should receive messages from user OR messages they sent themselves
+        isCurrentConv = message.sender_id === userIdFromConv || message.sender_id === userId;
+        console.log('👤 Instructor conversation check:', {
+          userIdFromConv,
+          messageSenderId: message.sender_id,
+          currentUserId: userId,
+          isCurrentConv
+        });
+      } else {
+        // Regular conversation
+        isCurrentConv = currentConv?.id === message.conversation_id?.toString();
+        console.log('💬 Regular conversation check:', {
+          conversationId: currentConv?.id,
+          messageConversationId: message.conversation_id,
+          isCurrentConv
+        });
+      }
+      
+      const messageExists = prevMessages.some(m => m.id === message.id);
+      
+      if (isCurrentConv && !messageExists) {
+        console.log('✅ Adding WebSocket message to current conversation');
+        return [...prevMessages, message];
+      }
+      
+      console.log('❌ Message not added to current conversation:', {
+        isCurrentConv,
+        messageExists,
+        messageId: message.id,
+        currentConversationId: currentConv?.id
+      });
+      
+        return prevMessages;
+      });
+  };
 
   // WebSocket connection
   useEffect(() => {
@@ -52,6 +406,7 @@ export const ChatProvider = ({ children, userId }) => {
       
       ws.onopen = () => {
         console.log('Chat WebSocket connected for user:', userId);
+        setIsConnected(true);
         // Send ping to verify connection
         ws.send(JSON.stringify({ type: 'ping' }));
       };
@@ -62,131 +417,8 @@ export const ChatProvider = ({ children, userId }) => {
           console.log('🔍 WebSocket message received:', data);
           
           if (data.type === 'chat_message') {
-            const message = data.data || data; // Handle both formats
-            console.log('📨 Processing chat message:', {
-              messageId: message.id,
-              senderId: message.sender_id,
-              conversationId: message.conversation_id,
-              content: message.content?.substring(0, 50) + '...',
-              currentConversationId: currentConversation?.id,
-              currentConversationType: currentConversation?.id?.startsWith('instructor_') ? 'instructor_grouped' : 
-                                     currentConversation?.id?.startsWith('user_') ? 'user_grouped' : 'regular'
-            });
-            
-            // Always update the conversations list first
-            setConversations(prevConvs => {
-              console.log('🔄 Updating conversations list, current conversations:', prevConvs.map(c => ({ id: c.id, type: c.id?.startsWith('instructor_') ? 'instructor_grouped' : c.id?.startsWith('user_') ? 'user_grouped' : 'regular' })));
-              
-              return prevConvs.map(conv => {
-                // Check if this message belongs to this conversation
-                let isRelevant = false;
-                let relevanceReason = '';
-                
-                if (conv.id.startsWith('instructor_')) {
-                  // For instructor grouped conversations, check if message is from this instructor
-                  const instructorId = parseInt(conv.id.replace('instructor_', ''));
-                  isRelevant = message.sender_id === instructorId;
-                  relevanceReason = `instructor_grouped: message.sender_id(${message.sender_id}) === instructorId(${instructorId})`;
-                } else if (conv.id.startsWith('user_')) {
-                  // For user grouped conversations, check if message is from this user
-                  const userId = parseInt(conv.id.replace('user_', ''));
-                  isRelevant = message.sender_id === userId;
-                  relevanceReason = `user_grouped: message.sender_id(${message.sender_id}) === userId(${userId})`;
-                } else {
-                  // For regular conversations, check exact conversation ID match
-                  isRelevant = conv.id === message.conversation_id?.toString();
-                  relevanceReason = `regular: conv.id(${conv.id}) === message.conversation_id(${message.conversation_id})`;
-                }
-                
-                console.log(`🔍 Checking conversation ${conv.id}: ${relevanceReason} = ${isRelevant}`);
-                
-                if (isRelevant) {
-                  console.log(`✅ Updating conversation ${conv.id} with new message`);
-                  const currentConv = currentConversationRef.current;
-                  return {
-                    ...conv,
-                    last_message: message,
-                    updated_at: new Date().toISOString(),
-                    unread_count: conv.id === currentConv?.id ? 
-                      conv.unread_count : 
-                      (conv.unread_count + 1)
-                  };
-                }
-                return conv;
-              });
-            });
-
-            // Then update the messages if we're in the relevant conversation
-            setMessages(prevMessages => {
-              const currentConv = currentConversationRef.current;
-              console.log('🔄 Checking if message should be added to current conversation');
-              console.log('📊 Current messages count:', prevMessages.length);
-              console.log('🎯 Current conversation:', {
-                id: currentConv?.id,
-                type: currentConv?.id?.startsWith('instructor_') ? 'instructor_grouped' : 
-                      currentConv?.id?.startsWith('user_') ? 'user_grouped' : 'regular'
-              });
-              
-              // Check if we're in the right conversation
-              let isCurrentConv = false;
-              let currentConvReason = '';
-              
-              if (currentConv?.id?.startsWith('instructor_')) {
-                // For user viewing instructor conversations
-                const instructorId = parseInt(currentConv.id.replace('instructor_', ''));
-                // Check if message is from this instructor (regardless of which specific conversation)
-                isCurrentConv = message.sender_id === instructorId;
-                currentConvReason = `instructor_grouped: message.sender_id(${message.sender_id}) === instructorId(${instructorId})`;
-              } else if (currentConv?.id?.startsWith('user_')) {
-                // For instructor viewing user conversations  
-                const userId = parseInt(currentConv.id.replace('user_', ''));
-                // Check if message is from this user (regardless of which specific conversation)
-                isCurrentConv = message.sender_id === userId;
-                currentConvReason = `user_grouped: message.sender_id(${message.sender_id}) === userId(${userId})`;
-              } else {
-                // For regular conversation, check exact conversation ID match
-                isCurrentConv = currentConv?.id === message.conversation_id?.toString();
-                currentConvReason = `regular: currentConversation.id(${currentConv?.id}) === message.conversation_id(${message.conversation_id})`;
-              }
-              
-              console.log(`🎯 Current conversation check: ${currentConvReason} = ${isCurrentConv}`);
-              
-              // Additional check: if the message is from the current user and we're in a grouped conversation,
-              // we should also show it (for sent messages)
-              if (!isCurrentConv && currentConv?.id?.startsWith('instructor_')) {
-                const instructorId = parseInt(currentConv.id.replace('instructor_', ''));
-                if (message.sender_id === userId) { // userId is the current user
-                  isCurrentConv = true;
-                  currentConvReason = `instructor_grouped_sent: message.sender_id(${message.sender_id}) === currentUserId(${userId})`;
-                  console.log(`🎯 Additional check for sent message: ${currentConvReason} = ${isCurrentConv}`);
-                }
-              } else if (!isCurrentConv && currentConv?.id?.startsWith('user_')) {
-                const userIdFromConv = parseInt(currentConv.id.replace('user_', ''));
-                if (message.sender_id === userId) { // userId is the current user (instructor)
-                  isCurrentConv = true;
-                  currentConvReason = `user_grouped_sent: message.sender_id(${message.sender_id}) === currentUserId(${userId})`;
-                  console.log(`🎯 Additional check for sent message: ${currentConvReason} = ${isCurrentConv}`);
-                }
-              }
-              
-              // Check if message already exists to prevent duplicates
-              const messageExists = prevMessages.some(m => m.id === message.id);
-              console.log(`🔍 Message already exists: ${messageExists} (message.id: ${message.id})`);
-
-              if (isCurrentConv && !messageExists) {
-                console.log('✅ Adding message to current conversation');
-                // Add the new message to the end of the list
-                const updatedMessages = [...prevMessages, message];
-                console.log(`📊 Messages updated: ${prevMessages.length} → ${updatedMessages.length}`);
-                return updatedMessages;
-              } else if (isCurrentConv && messageExists) {
-                console.log('⚠️ Message already exists in current conversation, skipping');
-              } else {
-                console.log('❌ Message not relevant to current conversation');
-              }
-              
-              return prevMessages;
-            });
+            const message = data.data || data;
+            handleWebSocketMessage(message);
           } else if (data.type === 'typing_start' || data.type === 'typing_stop') {
             // Handle typing indicators
             const typingData = data.data || data;
@@ -206,12 +438,15 @@ export const ChatProvider = ({ children, userId }) => {
           console.error('❌ WebSocket message error:', error);
         }
       };
+      
       ws.onerror = (error) => {
         console.error('Chat WebSocket error:', error);
+        setIsConnected(false);
       };
 
       ws.onclose = () => {
         console.log('Chat WebSocket disconnected');
+        setIsConnected(false);
         // Reconnect after 5 seconds
         setTimeout(connectWebSocket, 5000);
       };
@@ -228,172 +463,59 @@ export const ChatProvider = ({ children, userId }) => {
     };
   }, [userId, baseWsUrl]);
 
-  // Load conversations
-  const loadConversations = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await chatAPI.getConversations();
-      setConversations(response.conversations || []);
-    } catch (err) {
-      setError(err.message);
-      console.error('Error loading conversations:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Load messages for a conversation
-  const loadMessages = async (conversationId, page = 1) => {
-    try {
-      console.log('🔄 Loading messages for conversation:', {
-        conversationId,
-        page,
-        type: conversationId?.startsWith('instructor_') ? 'instructor_grouped' : 
-              conversationId?.startsWith('user_') ? 'user_grouped' : 'regular'
-      });
-      
-      setLoading(true);
-      let response;
-      
-      if (conversationId.startsWith('instructor_')) {
-        // For user viewing instructor conversations
-        const instructorId = conversationId.replace('instructor_', '');
-        console.log('👨‍🏫 Loading instructor messages for instructor ID:', instructorId);
-        response = await chatAPI.getInstructorMessages(instructorId, page);
-        
-        // Merge with existing messages to prevent loss
-        setMessages(prevMessages => {
-          const newMessages = response.messages || [];
-          console.log(`📊 Loading instructor messages: existing=${prevMessages.length}, new=${newMessages.length}`);
-          
-          // If this is a fresh load (page 1), replace messages
-          if (page === 1) {
-            console.log('🔄 Fresh load: replacing messages');
-            return newMessages;
-          } else {
-            // If pagination, append new messages
-            console.log('🔄 Pagination: appending messages');
-            const combined = [...prevMessages, ...newMessages];
-            // Remove duplicates based on message ID
-            const uniqueMessages = combined.filter((message, index, self) => 
-              index === self.findIndex(m => m.id === message.id)
-            );
-            console.log(`📊 Combined messages: ${combined.length} → unique: ${uniqueMessages.length}`);
-            return uniqueMessages;
-          }
-        });
-        
-        setCurrentConversation(response.conversation);
-        console.log('✅ Instructor messages loaded:', {
-          messageCount: response.messages?.length || 0,
-          conversation: response.conversation
-        });
-      } else if (conversationId.startsWith('user_')) {
-        // For instructor viewing user conversations
-        const userId = conversationId.replace('user_', '');
-        console.log('👤 Loading user messages for user ID:', userId);
-        response = await chatAPI.getUserMessages(userId, page);
-        
-        // Merge with existing messages to prevent loss
-        setMessages(prevMessages => {
-          const newMessages = response.messages || [];
-          console.log(`📊 Loading user messages: existing=${prevMessages.length}, new=${newMessages.length}`);
-          
-          // If this is a fresh load (page 1), replace messages
-          if (page === 1) {
-            console.log('🔄 Fresh load: replacing messages');
-            return newMessages;
-          } else {
-            // If pagination, append new messages
-            console.log('🔄 Pagination: appending messages');
-            const combined = [...prevMessages, ...newMessages];
-            // Remove duplicates based on message ID
-            const uniqueMessages = combined.filter((message, index, self) => 
-              index === self.findIndex(m => m.id === message.id)
-            );
-            console.log(`📊 Combined messages: ${combined.length} → unique: ${uniqueMessages.length}`);
-            return uniqueMessages;
-          }
-        });
-        
-        setCurrentConversation(response.conversation);
-        console.log('✅ User messages loaded:', {
-          messageCount: response.messages?.length || 0,
-          conversation: response.conversation
-        });
-      } else {
-        // Regular conversation
-        console.log('💬 Loading regular conversation messages for ID:', conversationId);
-        response = await chatAPI.getConversationMessages(conversationId, page);
-        
-        // Merge with existing messages to prevent loss
-        setMessages(prevMessages => {
-          const newMessages = response.messages || [];
-          console.log(`📊 Loading regular messages: existing=${prevMessages.length}, new=${newMessages.length}`);
-          
-          // If this is a fresh load (page 1), replace messages
-          if (page === 1) {
-            console.log('🔄 Fresh load: replacing messages');
-            return newMessages;
-          } else {
-            // If pagination, append new messages
-            console.log('🔄 Pagination: appending messages');
-            const combined = [...prevMessages, ...newMessages];
-            // Remove duplicates based on message ID
-            const uniqueMessages = combined.filter((message, index, self) => 
-              index === self.findIndex(m => m.id === message.id)
-            );
-            console.log(`📊 Combined messages: ${combined.length} → unique: ${uniqueMessages.length}`);
-            return uniqueMessages;
-          }
-        });
-        
-        setCurrentConversation(response.conversation);
-        console.log('✅ Regular conversation messages loaded:', {
-          messageCount: response.messages?.length || 0,
-          conversation: response.conversation
-        });
-      }
-      
-      // Mark messages as read
-      await markMessagesAsRead(conversationId);
-      
-    } catch (error) {
-      console.error('❌ Error loading messages:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Mark messages as read
   const markMessagesAsRead = async (conversationId) => {
     try {
-      console.log('Marking messages as read for conversation:', conversationId);
+      console.log('📖 Marking messages as read for conversation:', conversationId);
+      
+      let result;
       if (conversationId.startsWith('instructor_')) {
         const instructorId = conversationId.replace('instructor_', '');
-        console.log('Calling markInstructorMessagesAsRead with instructorId:', instructorId);
-        const result = await chatAPI.markInstructorMessagesAsRead(instructorId);
-        console.log('Mark instructor messages result:', result);
+        console.log('👨‍🏫 Calling markInstructorMessagesAsRead with instructorId:', instructorId);
+        result = await chatAPI.markInstructorMessagesAsRead(instructorId);
+        console.log('✅ Mark instructor messages result:', result);
       } else if (conversationId.startsWith('user_')) {
         const userId = conversationId.replace('user_', '');
-        console.log('Calling markUserMessagesAsRead with userId:', userId);
-        const result = await chatAPI.markUserMessagesAsRead(userId);
-        console.log('Mark user messages result:', result);
+        console.log('👤 Calling markUserMessagesAsRead with userId:', userId);
+        result = await chatAPI.markUserMessagesAsRead(userId);
+        console.log('✅ Mark user messages result:', result);
       } else {
-        console.log('Calling markMessagesAsRead with conversationId:', conversationId);
-        const result = await chatAPI.markMessagesAsRead(conversationId);
-        console.log('Mark messages result:', result);
+        console.log('💬 Calling markMessagesAsRead with conversationId:', conversationId);
+        result = await chatAPI.markMessagesAsRead(conversationId);
+        console.log('✅ Mark messages result:', result);
       }
-      console.log('Messages marked as read successfully');
       
-      // Refresh conversations to update unread counts
-      await loadConversations();
+      console.log('✅ Messages marked as read successfully');
+      
+      // Update local state immediately instead of reloading all conversations
+      setConversations(prev => {
+        return prev.map(conv => {
+          if (conv.id === conversationId) {
+            console.log('🔄 Updating local conversation unread count to 0:', conv.id);
+            return {
+              ...conv,
+              unread_count: 0
+            };
+          }
+          return conv;
+        });
+      });
+      
+      // Also update current messages to mark them as read
+      setMessages(prev => {
+        return prev.map(msg => ({
+          ...msg,
+          is_read: true
+        }));
+      });
+      
+      console.log('✅ Local state updated - notifications cleared');
+      
     } catch (error) {
-      console.error('Error marking messages as read:', error);
+      console.error('❌ Error marking messages as read:', error);
       console.error('Error details:', error.response?.data);
     }
   };
-        console.log('currentconvo',currentConversation)
 
   // Send a message
   const sendMessage = async (content) => {
@@ -407,7 +529,7 @@ export const ChatProvider = ({ children, userId }) => {
       
       setError(null);
       let newMessage;
-
+      
       if (currentConversation.id.startsWith('instructor_')) {
         // For user sending message to instructor
         const instructorId = currentConversation.id.replace('instructor_', '');
@@ -462,32 +584,73 @@ export const ChatProvider = ({ children, userId }) => {
 
   // Send an image message
   const sendImageMessage = async (file) => {
-    if (!currentConversation) return;
+    if (!currentConversation) {
+      console.log('❌ No current conversation for image upload');
+      return;
+    }
 
     try {
+      console.log('📸 ChatContext: Starting image upload:', {
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        conversationId: currentConversation.id,
+        conversationType: currentConversation.id?.startsWith('instructor_') ? 'instructor_grouped' : 
+                         currentConversation.id?.startsWith('user_') ? 'user_grouped' : 'regular'
+      });
+      
       let newMessage;
       
       // Check if this is a grouped conversation
       if (currentConversation.id.startsWith('instructor_')) {
         // For grouped conversations, send to the most recent conversation
         const instructorId = currentConversation.id.replace('instructor_', '');
+        console.log('👨‍🏫 Sending image to instructor:', instructorId);
         newMessage = await chatAPI.sendImageMessageToInstructor(instructorId, file);
       } else if (currentConversation.id.startsWith('user_')) {
         // For instructor sending image message to user
         const userId = currentConversation.id.replace('user_', '');
+        console.log('👤 Sending image to user:', userId);
         newMessage = await chatAPI.sendImageMessageToUser(userId, file);
       } else {
         // Regular conversation
+        console.log('💬 Sending image to regular conversation:', currentConversation.id);
         newMessage = await chatAPI.sendImageMessage(currentConversation.id, file);
       }
       
+      console.log('✅ ChatContext: Image message created:', newMessage);
+      
+      // Validate the image message format
+      if (!newMessage || !newMessage.id || !newMessage.content) {
+        console.error('❌ Invalid image message format:', newMessage);
+        throw new Error('Invalid image message format received from server');
+      }
+      
+      // Ensure message_type is set to 'image'
+      if (newMessage.message_type !== 'image') {
+        console.warn('⚠️ Image message type not set correctly, fixing...');
+        newMessage.message_type = 'image';
+      }
+      
+      console.log('✅ Image message validated:', {
+        id: newMessage.id,
+        content: newMessage.content,
+        message_type: newMessage.message_type,
+        sender_id: newMessage.sender_id
+      });
+      
       // Add message to local state
-      setMessages(prev => [...prev, newMessage]);
+      setMessages(prev => {
+        console.log('🔄 Adding image message to local state, current count:', prev.length);
+        return [...prev, newMessage];
+      });
       
       // Update conversation list
       setConversations(prev => {
+        console.log('🔄 Updating conversation list with new image message');
         return prev.map(conv => {
           if (conv.id === currentConversation.id) {
+            console.log('✅ Updating conversation in list with image:', conv.id);
             return {
               ...conv,
               last_message: newMessage,
@@ -500,9 +663,37 @@ export const ChatProvider = ({ children, userId }) => {
 
       return newMessage;
     } catch (err) {
-      setError(err.message);
-      console.error('Error sending image message:', err);
-      throw err;
+      console.error('❌ ChatContext: Error sending image message:', err);
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to upload image. ';
+      if (err.response?.status === 413) {
+        errorMessage += 'File is too large. Please select a smaller image.';
+      } else if (err.response?.status === 415) {
+        errorMessage += 'Invalid file type. Please select an image file.';
+      } else if (err.response?.status === 500) {
+        errorMessage += 'Server error. Please try again later.';
+      } else if (err.response?.status === 401) {
+        errorMessage += 'Authentication required. Please log in again.';
+      } else if (err.response?.status === 403) {
+        errorMessage += 'Permission denied. You cannot send messages to this conversation.';
+      } else if (err.response?.status === 404) {
+        errorMessage += 'Conversation not found. Please refresh and try again.';
+      } else if (err.message) {
+        errorMessage += err.message;
+      } else {
+        errorMessage += 'Please try again.';
+      }
+      
+      console.error('❌ Detailed error info:', {
+        status: err.response?.status,
+        statusText: err.response?.statusText,
+        data: err.response?.data,
+        message: err.message
+      });
+      
+      setError(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 
@@ -544,8 +735,8 @@ export const ChatProvider = ({ children, userId }) => {
       // Clear current messages to prevent mixing with old messages
       setMessages([]);
       
-      // Load messages for the conversation
-      await loadMessages(conversationId, 1);
+      // Load ALL messages for the conversation to ensure nothing is missed
+      await loadAllMessages(conversationId);
       
       console.log('✅ Conversation reopened successfully');
     } catch (error) {
@@ -624,8 +815,11 @@ export const ChatProvider = ({ children, userId }) => {
     messages,
     loading,
     error,
+    isConnected,
     loadConversations,
     loadMessages,
+    loadAllMessages, // Added for loading all messages
+    syncWebSocketMessages, // Added for syncing WebSocket messages with database
     sendMessage,
     sendImageMessage,
     getCourseConversation,
@@ -633,21 +827,28 @@ export const ChatProvider = ({ children, userId }) => {
     reopenConversation, // Added for better conversation management
     setCurrentConversation: (conversation) => {
       console.log('🔄 Setting current conversation:', {
-        id: conversation?.id,
-        type: conversation?.id?.startsWith('instructor_') ? 'instructor_grouped' : 
-              conversation?.id?.startsWith('user_') ? 'user_grouped' : 'regular',
-        user_id: conversation?.user_id,
-        instructor_id: conversation?.instructor_id
+        from: currentConversation?.id,
+        to: conversation?.id,
+        isSame: currentConversation?.id === conversation?.id
       });
       
-      // If switching to a different conversation, clear messages first
       if (currentConversation?.id !== conversation?.id) {
-        console.log('🔄 Switching conversations, clearing messages for fresh load');
+        console.log('🔄 Switching to different conversation, clearing messages');
         setMessages([]); // Clear messages when switching conversations
+      }
+      
+      // Mark messages as read when opening a conversation
+      if (conversation?.id) {
+        console.log('📖 Auto-marking messages as read for conversation:', conversation.id);
+        // Use setTimeout to avoid blocking the UI update
+        setTimeout(() => {
+          markMessagesAsRead(conversation.id);
+        }, 100);
       }
       
       setCurrentConversation(conversation);
     },
+    markMessagesAsRead,
     startTyping,
     stopTyping,
     typingUsers,

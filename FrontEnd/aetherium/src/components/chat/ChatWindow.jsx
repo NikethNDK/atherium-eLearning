@@ -7,9 +7,10 @@ import MessageInput from './MessageInput';
 
 const ChatWindow = ({ conversation, onBackToList }) => {
   const { user } = useAuth();
-  const { messages, loading, loadMessages, sendMessage, sendImageMessage, typingUsers } = useChat();
+  const { messages, loading, loadMessages, sendMessage, sendImageMessage, typingUsers, markMessagesAsRead } = useChat();
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
+  const scrollTimeoutRef = useRef(null);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
   useEffect(() => {
@@ -18,37 +19,88 @@ const ChatWindow = ({ conversation, onBackToList }) => {
     }
   }, [conversation?.id]);
 
+  // Improved scroll logic - only scroll when new messages are added
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, typingUsers]);
+    // Only auto-scroll if there are messages and we're not loading
+    if (messages.length > 0 && !loading && !isLoadingMessages) {
+      // Small delay to ensure DOM has updated
+      const scrollTimer = setTimeout(() => {
+        scrollToBottom();
+      }, 200);
+      
+      return () => clearTimeout(scrollTimer);
+    }
+  }, [messages.length, loading, isLoadingMessages]); // Only trigger on message count change, not content
+
+  // Separate effect for typing indicators
+  useEffect(() => {
+    if (typingUsers.size > 0) {
+      scrollToBottom();
+    }
+  }, [typingUsers]);
 
   const scrollToBottom = () => {
-    // Use setTimeout to ensure DOM has updated
-    setTimeout(() => {
+    // Use requestAnimationFrame for smoother scrolling
+    requestAnimationFrame(() => {
       if (messagesEndRef.current) {
         messagesEndRef.current.scrollIntoView({ 
           behavior: 'smooth',
           block: 'end'
         });
       }
-    }, 100);
+    });
   };
 
-  const handleSendMessage = async (content) => {
+  // Manual scroll function for user control
+  const handleManualScroll = () => {
+    scrollToBottom();
+  };
+
+  // Scroll to bottom when new message is sent
+  const handleMessageSent = async (content) => {
     try {
       await sendMessage(content);
+      // Scroll to bottom after message is sent
+      setTimeout(scrollToBottom, 100);
     } catch (error) {
       console.error('Error sending message:', error);
     }
   };
 
-  const handleSendImage = async (file) => {
+  const handleImageSent = async (file) => {
     try {
-      await sendImageMessage(file);
+      const result = await sendImageMessage(file);
+      // Scroll to bottom after image is sent
+      setTimeout(scrollToBottom, 100);
+      return result;
     } catch (error) {
       console.error('Error sending image:', error);
+      throw error;
     }
   };
+
+  // Mark messages as read when user scrolls through conversation
+  const handleScroll = () => {
+    if (conversation?.id && messages.length > 0) {
+      // Mark messages as read when user scrolls (debounced)
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+      
+      scrollTimeoutRef.current = setTimeout(() => {
+        markMessagesAsRead(conversation.id);
+      }, 1000); // Wait 1 second after scrolling stops
+    }
+  };
+
+  // Cleanup scroll timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const getDisplayName = () => {
     if (user?.role?.name === 'instructor') {
@@ -152,7 +204,7 @@ const ChatWindow = ({ conversation, onBackToList }) => {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 relative" onScroll={handleScroll}>
         {loading || isLoadingMessages ? (
           <div className="flex justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
@@ -181,13 +233,24 @@ const ChatWindow = ({ conversation, onBackToList }) => {
         {/* Typing Indicator */}
         {getTypingIndicator()}
         <div ref={messagesEndRef} />
+        
+        {/* Scroll to Bottom Button */}
+        <button
+          onClick={handleManualScroll}
+          className="absolute bottom-4 right-4 bg-blue-500 text-white p-2 rounded-full shadow-lg hover:bg-blue-600 transition-colors z-10"
+          title="Scroll to bottom"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+          </svg>
+        </button>
       </div>
 
       {/* Message Input */}
       <div className="border-t border-gray-200 p-4">
         <MessageInput
-          onSendMessage={handleSendMessage}
-          onSendImage={handleSendImage}
+          onSendMessage={handleMessageSent}
+          onSendImage={handleImageSent}
           disabled={loading}
         />
       </div>
