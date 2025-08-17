@@ -3,7 +3,7 @@ from aetherium.models.user_course import CourseReview, Purchase, PurchaseStatus
 from aetherium.schemas.user_course import CourseReviewCreate
 from fastapi import HTTPException
 from sqlalchemy import func
-
+from aetherium.core.logger import logger
 class ReviewService:
     @staticmethod
     def create_course_review(db: Session, user_id: int, review_data: CourseReviewCreate):
@@ -12,13 +12,15 @@ class ReviewService:
             Purchase.course_id == review_data.course_id,
             Purchase.status == PurchaseStatus.COMPLETED
         ).first()
-        
+        logger.info(f"This is the purchase list: {purchase.__dict__}")
         is_verified = purchase is not None
         
         existing_review = db.query(CourseReview).filter(
             CourseReview.user_id == user_id,
             CourseReview.course_id == review_data.course_id
         ).first()
+
+        logger.info(f"This is the exisiting review list: {existing_review}")
         
         if existing_review:
             raise HTTPException(status_code=400, detail="Review already exists")
@@ -30,7 +32,7 @@ class ReviewService:
             review_text=review_data.review_text,
             is_verified_purchase=is_verified
         )
-        
+        logger.info(f"This is the review that will be saved in the db {review}")
         db.add(review)
         db.commit()
         db.refresh(review)

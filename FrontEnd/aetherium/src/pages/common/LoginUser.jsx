@@ -41,6 +41,7 @@ const LoginUser = () => {
         email: formData.email,
         password: formData.password,
       })
+      console.log("This is the result log", result)
 
       if (result.success) {
         navigate("/user/dashboard")

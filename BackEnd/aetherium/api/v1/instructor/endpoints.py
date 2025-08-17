@@ -656,7 +656,7 @@ async def get_course_analytics(
 @router.get("/courses/{course_id}/purchase-stats", response_model=PurchaseStatsResponse)
 async def get_purchase_stats(
     course_id: int,
-    period: str = "monthly",  # can be 'daily', 'weekly', 'monthly', 'yearly'
+    period: str = "monthly",  
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):

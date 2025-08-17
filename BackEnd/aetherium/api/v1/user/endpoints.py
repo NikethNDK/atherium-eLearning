@@ -26,7 +26,8 @@ from aetherium.services.wallet_service import wallet_service
 from aetherium.utils.jwt_utils import get_current_user
 from sqlalchemy.sql import func
 
-router = APIRouter(prefix="/user", tags=["user"])
+# router = APIRouter(prefix="/user", tags=["user"])
+router=APIRouter()
 
 @router.get("/courses", response_model=PaginatedCoursesResponse)
 async def get_published_courses(
@@ -238,70 +239,7 @@ async def get_order_detail(
     
     return order
 
-
-# @router.post("/payment/create-razorpay-order", response_model=RazorpayOrderResponse)
-# async def create_razorpay_order(
-#     order_data: RazorpayOrderCreate, 
-#     current_user: User = Depends(get_current_user), 
-#     db: Session = Depends(get_db)
-# ):
-#     try:
-#         # Call the service function that handles all the logic
-#         order_response = await PurchaseService.create_course_order(
-#             db=db,
-#             user_id=current_user.id,
-#             course_id=order_data.course_id,
-#             user_email=current_user.email,
-#             user_firstname=current_user.firstname,
-#             user_lastname=current_user.lastname
-#         )
-        
-#         logger.info(f"Order created successfully: {order_response.order_id} for user {current_user.id}")
-#         return order_response
-        
-#     except HTTPException:
-#         raise
-#     except Exception as e:
-#         logger.error(f"Unexpected error in create_razorpay_order: {e}")
-#         raise HTTPException(
-#             status_code=500,
-#             detail="Failed to create order. Please try again."
-#         )
-
-
-# @router.post("/payment/verify-razorpay", response_model=PaymentSuccessResponse)
-# async def verify_razorpay_payment(
-#     payment_data: RazorpayPaymentVerify, 
-#     current_user: User = Depends(get_current_user), 
-#     db: Session = Depends(get_db)
-# ):
-#     try:
-#         # Call the service function that handles all verification logic
-#         result = await PurchaseService.verify_payment_and_complete_purchase(
-#             db=db,
-#             payment_data=payment_data,
-#             user_id=current_user.id
-#         )
-        
-#         return PaymentSuccessResponse(
-#             success=True,
-#             message="Payment successful! Course purchased successfully.",
-#             purchase_id=result["purchase"].id,
-#             course_id=result["course_id"],
-#             transaction_id=result["transaction_id"]
-#         )
-        
-#     except HTTPException:
-#         raise
-#     except Exception as e:
-#         logger.error(f"Unexpected error in verify_razorpay_payment: {e}")
-#         raise HTTPException(
-#             status_code=500,
-#             detail="Payment verification failed. Please try again."
-#         )
-
 # Updated endpoints
-
 @router.post("/payment/create-razorpay-order", response_model=RazorpayOrderResponse)
 async def create_razorpay_order(
     order_data: RazorpayOrderCreate, 

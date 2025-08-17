@@ -34,6 +34,9 @@ class Purchase(Base):
     user = relationship("User", back_populates="purchases")
     course = relationship("Course", back_populates="purchases")
 
+    def __repr__(self):
+        return f"<Purchase id={self.id}, user_id={self.user_id}, course_id={self.course_id}, status={self.status}>"
+
 class Cart(Base):
     __tablename__ = "cart"
     
