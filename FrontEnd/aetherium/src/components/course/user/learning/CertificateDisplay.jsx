@@ -27,7 +27,7 @@
 // }
 
 // export default CertificateDisplay
-"use client"
+
 
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'

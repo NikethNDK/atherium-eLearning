@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react"
-import { useParams, useNavigate,Link } from "react-router-dom"
+import { useParams, useNavigate, Link, useSearchParams } from "react-router-dom"
 import { userAPI} from '../../services/userApi'
 import LoadingSpinner from "../../components/common/LoadingSpinner"
+import CertificateDisplay from "../../components/course/user/learning/CertificateDisplay"
 import { ArrowLeft, CheckCircle, XCircle, User, Clock, BookOpen, Play, ChevronDown, ChevronRight } from "lucide-react"
 import Header from "../../components/common/Header"
 
@@ -9,7 +10,9 @@ import Header from "../../components/common/Header"
 const MyCourseView = () => {
   const { courseId } = useParams()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [course, setCourse] = useState(null)
+  const [courseProgress, setCourseProgress] = useState(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("overview")
 
@@ -20,10 +23,21 @@ const MyCourseView = () => {
     fetchCourse()
   }, [courseId])
 
+  useEffect(() => {
+    const tabParam = searchParams.get('tab')
+    if (tabParam && ['overview', 'curriculum', 'certificate', 'instructor'].includes(tabParam)) {
+      setActiveTab(tabParam)
+    }
+  }, [searchParams])
+
   const fetchCourse = async () => {
     try {
-      const data = await userAPI.getCourseDetails(courseId)
+      const [data, progress] = await Promise.all([
+        userAPI.getCourseDetails(courseId),
+        userAPI.getCourseProgress(courseId).catch(() => null)
+      ])
       setCourse(data)
+      setCourseProgress(progress)
        const expanded = {}
       data.sections?.forEach(section => {
         expanded[section.id] = true
@@ -135,7 +149,7 @@ const MyCourseView = () => {
         <div className="bg-white rounded-lg shadow-sm">
           <div className="border-b border-gray-200">
             <nav className="flex space-x-4 sm:space-x-8 px-4 sm:px-6 overflow-x-auto">
-              {["overview", "curriculum", "instructor"].map((tab) => (
+              {["overview", "curriculum", ...(courseProgress?.is_completed ? ["certificate"] : []), "instructor"].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -288,6 +302,13 @@ const MyCourseView = () => {
                 ) : (
                   <div className="text-center py-8 text-gray-500">No curriculum sections available</div>
                 )}
+              </div>
+            )}
+
+            {activeTab === "certificate" && courseProgress?.is_completed && (
+              <div>
+                <h3 className="text-lg font-semibold mb-6">Course Certificate</h3>
+                <CertificateDisplay course={course} />
               </div>
             )}
 
