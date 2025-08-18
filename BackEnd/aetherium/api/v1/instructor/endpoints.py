@@ -27,6 +27,7 @@ async def create_course_step1(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    """Course Creattion Step 1"""
     if current_user.role.name != "instructor":
         raise HTTPException(status_code=403, detail="Instructor access required")
     
@@ -43,13 +44,10 @@ async def update_course_step1(
     if current_user.role.name != "instructor":
         raise HTTPException(status_code=403, detail="Instructor access required")
     
-    # Get existing course and update it
     course = db.query(Course).filter(Course.id == course_id,Course.instructor_id == current_user.id).first()
     
     if not course:
         raise HTTPException(status_code=404, detail="Course not found or not authorized")
-    
-    # Update course data
     for field, value in course_data.model_dump().items():
         if value is not None:
             setattr(course, field, value)
@@ -70,10 +68,10 @@ async def update_course_step2(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    """Course creation step 2"""
     if current_user.role.name != "instructor":
         raise HTTPException(status_code=403, detail="Instructor access required")
     
-    # Handle file uploads
     cover_image_path = None
     trailer_video_path = None
     
@@ -120,7 +118,7 @@ async def update_course_step2(
 
 @router.put("/courses/{course_id}/step3", response_model=CourseResponse)
 async def update_course_step3(course_id: int,db: Session = Depends(get_db),current_user: User = Depends(get_current_user)):
-    
+    """Course Createiion step 3"""
     course = db.query(Course).filter(Course.id == course_id,Course.instructor_id == current_user.id).first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
@@ -143,6 +141,7 @@ async def update_course_step4(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    """Course Creation final step"""
     if current_user.role.name != "instructor":
         raise HTTPException(status_code=403, detail="Instructor access required")
     
@@ -155,6 +154,7 @@ async def submit_course(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    """Submitting the course for admin review"""
     if current_user.role.name != "instructor":
         raise HTTPException(status_code=403, detail="Instructor access required")
     
@@ -167,6 +167,7 @@ async def get_drafts(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    """Instructor Course Drafts"""
     if current_user.role.name != "instructor":
         raise HTTPException(status_code=403, detail="Instructor access required")
     
@@ -175,6 +176,7 @@ async def get_drafts(
 
 @router.get("/courses/pending-approval", response_model=List[CourseResponse])
 async def get_pending_approval(db: Session = Depends(get_db),current_user: User = Depends(get_current_user)):
+    
     if current_user.role.name != "instructor":
         raise HTTPException(status_code=403, detail="Instructor access required")
     
@@ -198,7 +200,6 @@ async def get_instructor_course(
     current_user: User = Depends(get_current_user)
 ):
     if current_user.role.name != "instructor":
-
         raise HTTPException(status_code=403, detail="Instructor access required")
     
     course = CourseService.get_instructor_course_detail(
@@ -230,6 +231,7 @@ async def delete_course(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    """Delete Instructor's course"""
     if current_user.role.name != "instructor":
         raise HTTPException(status_code=403, detail="Instructor access required")
     
@@ -244,6 +246,7 @@ async def search_instructors(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    """Searcing other instructors for doing collab---not implemented"""
     if current_user.role.name != "instructor":
         raise HTTPException(status_code=403, detail="Instructor access required")
     
@@ -264,7 +267,7 @@ async def get_instructor_dashboard_stats(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-   
+    """Dashboard data including analytics"""
     if current_user.role.name != "instructor":
         raise HTTPException(status_code=403, detail="Instructor access required")
     
@@ -279,10 +282,11 @@ async def get_instructor_dashboard_stats(
 @router.post("/courses/{course_id}/sections", response_model=SectionResponse)
 async def create_section(
     course_id: int,
-    section_data: SectionCreate, # This schema should only contain 'name'
+    section_data: SectionCreate, 
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    """Course Section Creation"""
     if current_user.role.name != "instructor":
         raise HTTPException(status_code=403, detail="Instructor access required")
     
@@ -300,10 +304,11 @@ async def create_section(
 @router.put("/sections/{section_id}", response_model=SectionResponse)
 async def update_section(
     section_id: int,
-    section_data: SectionCreate, # This schema should only contain 'name'
+    section_data: SectionCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    """Updating the Course Section"""
     if current_user.role.name != "instructor":
         raise HTTPException(status_code=403, detail="Instructor access required")
     
@@ -311,7 +316,6 @@ async def update_section(
     if not section:
         raise HTTPException(status_code=404, detail="Section not found")
     
-    # Ensure the instructor owns the course this section belongs to
     course = db.query(Course).filter(Course.id == section.course_id, Course.instructor_id == current_user.id).first()
     if not course:
         raise HTTPException(status_code=403, detail="Not authorized to update this section")
@@ -327,6 +331,7 @@ async def delete_section(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    """Delete Course Section"""
     if current_user.role.name != "instructor":
         raise HTTPException(status_code=403, detail="Instructor access required")
     
@@ -344,10 +349,11 @@ async def delete_section(
     return {"message": "Section deleted successfully"}
 
 
-"""Create a new lesson in a section"""
+
 @router.post("/sections/{section_id}/lessons", response_model=LessonResponse)
 async def create_new_lesson(section_id: int,lesson: LessonCreate,db: Session = Depends(get_db),current_user = Depends(get_current_user)):
     
+    """Create new lesson in a section"""
     service = LessonService(db)
     return await service.create_lesson(section_id, lesson)
 
@@ -390,7 +396,7 @@ async def get_lesson_assessment(
     lesson_id: int,
     db: Session = Depends(get_db)
 ):
-    """Get assessment details for a lesson (returns empty object if no assessment exists)"""
+    """Get assessment details for a lesson"""
     lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
     if not lesson:
         raise HTTPException(status_code=404, detail="Lesson not found")
@@ -623,7 +629,8 @@ async def get_lesson_progress(
 ):
     """Get lesson progress for current user"""
     from aetherium.services.progress_service import ProgressService
-    
+    if current_user.role.name != "instructor":
+        raise HTTPException(status_code=403, detail="Instructor access required")
     service = ProgressService(db)
     progress = service.get_lesson_progress(current_user.id, lesson_id)
     

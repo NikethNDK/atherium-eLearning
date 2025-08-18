@@ -55,7 +55,7 @@ def get_comprehensive_dashboard_data(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Get comprehensive dashboard data including all analytics"""
+    """Dashboard data including analytics"""
     if current_user.role.name != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
     return AdminService.get_comprehensive_dashboard_data(db)
@@ -66,7 +66,7 @@ def get_revenue_analytics(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Get revenue analytics for graphs and charts"""
+    """Revenue analytics charts"""
     if current_user.role.name != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
     return AdminService.get_revenue_analytics(db, days)
@@ -76,7 +76,7 @@ def get_category_analytics(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Get analytics for each category"""
+    """analytics for each category"""
     if current_user.role.name != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
     return AdminService.get_category_analytics(db)
@@ -86,7 +86,7 @@ def get_instructor_analytics(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Get analytics for each instructor"""
+    """analytics for each instructor"""
     if current_user.role.name != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
     return AdminService.get_instructor_analytics(db)
@@ -248,8 +248,11 @@ def download_course_report(
     period: str = Query("all", enum=["all", "day", "month", "year"]),
     start_date: Optional[date] = Query(None),
     end_date: Optional[date] = Query(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user:User=Depends(get_current_user)
 ):
+    if current_user.role.name != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized")
     report = AdminReportService.get_course_report(
         db,
         course_id=course_id,

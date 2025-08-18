@@ -137,6 +137,14 @@ export const userAPI = {
     return response.data
   },
 
+  createCourseReview: async (courseId, reviewData) => {
+    const response = await api.post(`/user/courses/${courseId}/reviews`, {
+      course_id: courseId,
+      ...reviewData
+    })
+    return response.data
+  },
+
   checkCoursePurchase: async (courseId) => {
     const response = await api.get(`/user/courses/${courseId}/purchase-status`)
     return response.data

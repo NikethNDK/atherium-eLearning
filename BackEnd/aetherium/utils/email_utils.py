@@ -29,7 +29,6 @@ def store_otp(email: str, otp: str):
     if redis_client is None:
         raise ConnectionError("Redis is not connected")
     redis_client.setex(f"otp:{email}", 300, json.dumps({"otp": otp})) #Otp stored for 5 min
-
 def verify_otp_code(email: str, otp: str) -> bool:
     stored_data = redis_client.get(f"otp:{email}")
     if stored_data:

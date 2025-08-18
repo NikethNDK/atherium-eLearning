@@ -11,6 +11,7 @@ async def get_redis_client() -> Redis:
         db=settings.REDIS_DB,
         decode_responses=True
     )
+    
 
 def add_session_middleware(app: FastAPI):
     app.add_middleware(

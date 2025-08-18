@@ -5,7 +5,7 @@ from aetherium.database.db import get_db
 from aetherium.models.user import User, Role
 from aetherium.schemas.user import UserCreate, UserResponse, Token, UserUpdate, OTPVerify, OTPSend, PasswordChange,MessageResponse,ForgotPasswordRequest,ResetPasswordRequest
 from aetherium.services.auth_service import create_user, update_user_bio, change_password, upload_profile_picture
-from aetherium.utils.jwt_utils import create_access_token, get_current_user
+from aetherium.utils.jwt_utils import create_access_token, get_current_user,create_refresh_token,blacklist_token,is_token_blacklisted
 from aetherium.utils.password_hash import verify_password,hash_password
 from aetherium.utils.email_utils import generate_otp, store_otp, verify_otp_code, send_otp_email,check_existing_reset_request,generate_reset_token,store_reset_token,delete_reset_token,verify_reset_token,send_password_reset_email
 from authlib.integrations.starlette_client import OAuth,OAuthError
@@ -16,6 +16,7 @@ from aetherium.config import settings
 from fastapi.responses import FileResponse,JSONResponse
 from typing import Optional
 import os
+from jose import JWTError,jwt
 from fastapi.responses import RedirectResponse
 import logging
 import httpx ,json
@@ -79,6 +80,8 @@ async def login(response: Response, form_data: OAuth2PasswordRequestForm = Depen
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Email not verified, OTP sent")
     access_token = create_access_token(data={"sub": user.email, "role": user.role.name})
+    refresh_token = create_refresh_token(data={"sub": user.email, "role": user.role.name})
+
     response.set_cookie(
         key="access_token",
         value=access_token,
@@ -88,6 +91,17 @@ async def login(response: Response, form_data: OAuth2PasswordRequestForm = Depen
         max_age=settings.ACCESS_TOKEN_EXPIRE_MIN * 60,
         path="/"
     )
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=False,
+        samesite="lax",
+        max_age=settings.REFRESH_TOKEN_EXPIRE_MIN * 60,
+        path="/"
+    )
+
+
     logger.debug("Set access_token cookie for login")
     return {"message": "Login successful", "user": {"email": user.email, "firstname": user.firstname}}
 
@@ -273,10 +287,55 @@ async def get_current_user_info(
     return user
 
 @router.post("/logout")
-def logout(response: Response):
+def logout(response: Response,request: Request,current_user: User = Depends(get_current_user)):
+    logger.debug("Deleting cookies")
+    access_token = request.cookies.get("access_token")
+    if access_token:
+        blacklist_token(access_token, current_user.id)
     response.delete_cookie(key="access_token")
+    response.delete_cookie(key="refresh_token")
     return {"message": "Logout successful"}
 
+@router.post("/refresh-token")
+def refresh_token(request: Request,response: Response):
+    logger.debug("Refreshing token")
+    
+    refresh_token = request.cookies.get("refresh_token")
+    if not refresh_token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No refresh token provided")
+    try:
+        payload = jwt.decode(refresh_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        email = payload.get("sub")
+        role = payload.get("role")
+        
+        if not email:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+        
+        # Check if refresh token is blacklisted
+        if is_token_blacklisted(refresh_token):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token is blacklisted")
+        
+        # Create new access token
+        access_token = create_access_token(data={"sub": email, "role": role})
+        
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+            secure=False,
+            samesite="lax",
+            max_age=settings.ACCESS_TOKEN_EXPIRE_MIN * 60,
+            path="/"
+        )
+        
+        return {"message": "Token refreshed successfully"}
+        
+    except JWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+            
+    except Exception as e:
+        logger.error(f"Error refreshing token: {e}")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Error refreshing token")
 @router.post("/send-otp")
 def send_otp(otp_send: OTPSend, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == otp_send.email).first()
@@ -350,7 +409,7 @@ async def reset_password(
     db: Session = Depends(get_db)
 ):
     """Reset user password using reset token"""
-    logger.info(f"{request.confirm_password}{request.token},jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj")
+    logger.info(f"{request.confirm_password}{request.token}")
     # Validate passwords match
     if request.new_password != request.confirm_password:
         raise HTTPException(

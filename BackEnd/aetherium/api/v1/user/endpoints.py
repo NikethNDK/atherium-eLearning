@@ -142,26 +142,26 @@ async def get_course_progress(
     return ProgressService.get_course_progress(db, current_user.id, course_id)
 
 # Review Endpoints
-@router.post("/courses/{course_id}/reviews", response_model=CourseReviewResponse)
-async def create_course_review(
-    course_id: int,
-    review_data: CourseReviewCreate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    if current_user.role.name != "user":
-        raise HTTPException(status_code=403, detail="User access required")
-    review_data.course_id = course_id
-    return ReviewService.create_course_review(db, current_user.id, review_data)
+# @router.post("/courses/{course_id}/reviews", response_model=CourseReviewResponse)
+# async def create_course_review(
+#     course_id: int,
+#     review_data: CourseReviewCreate,
+#     db: Session = Depends(get_db),
+#     current_user: User = Depends(get_current_user)
+# ):
+#     if current_user.role.name != "user":
+#         raise HTTPException(status_code=403, detail="User access required")
+#     review_data.course_id = course_id
+#     return ReviewService.create_course_review(db, current_user.id, review_data)
 
-@router.get("/courses/{course_id}/reviews")
-async def get_course_reviews(
-    course_id: int,
-    page: int = Query(1, ge=1),
-    limit: int = Query(10, ge=1, le=50),
-    db: Session = Depends(get_db)
-):
-    return ReviewService.get_course_reviews(db, course_id, page, limit)
+# @router.get("/courses/{course_id}/reviews")
+# async def get_course_reviews(
+#     course_id: int,
+#     page: int = Query(1, ge=1),
+#     limit: int = Query(10, ge=1, le=50),
+#     db: Session = Depends(get_db)
+# ):
+#     return ReviewService.get_course_reviews(db, course_id, page, limit)
 
 # Wishlist Endpoints
 @router.post("/wishlist/add")

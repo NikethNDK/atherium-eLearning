@@ -23,7 +23,12 @@ class Settings(BaseSettings):
     CLOUDINARY_CLOUD_NAME:str
     CLOUDINARY_API_KEY:str
     CLOUDINARY_API_SECRET:str
+    REFRESH_TOKEN_EXPIRE_MIN:int
+    BLACKLIST_TOKEN_EXPIRE_DAYS:int
 
+    
+    # Google
+    # Stripe
     class Config:
         env_file = os.path.join(os.path.dirname(__file__), ".env")
 

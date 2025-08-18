@@ -30,7 +30,11 @@ after that install the requirement.txt to get the dependencies
 Prepare a .env file with the below details.
 SECRET_KEY
 ALGORITHM
+
 ACCESS_TOKEN_EXPIRE_MIN
+REFRESH_TOKEN_EXPIRE_DAYS
+BLACKLIST_TOKEN_EXPIRE_DAYS
+
 DATABASE_URL
 GOOGLE_CLIENT_ID
 GOOGLE_CLIENT_SECRET

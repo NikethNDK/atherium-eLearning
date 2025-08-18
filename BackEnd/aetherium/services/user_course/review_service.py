@@ -41,6 +41,7 @@ class ReviewService:
     @staticmethod
     def get_course_reviews(db: Session, course_id: int, page: int = 1, limit: int = 10):
         offset = (page - 1) * limit
+        logger.info(f"Getting reviews for course {course_id}, page {page}, limit {limit}")
         
         reviews = db.query(CourseReview).options(
             joinedload(CourseReview.user)
@@ -53,6 +54,8 @@ class ReviewService:
         avg_rating = db.query(func.avg(CourseReview.rating)).filter(
             CourseReview.course_id == course_id
         ).scalar() or 0
+        
+        logger.info(f"Found {len(reviews)} reviews, total: {total_reviews}, avg rating: {avg_rating}")
         
         return {
             "reviews": reviews,

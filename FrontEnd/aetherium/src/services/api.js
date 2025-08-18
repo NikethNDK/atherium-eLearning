@@ -146,6 +146,10 @@ export const authAPI = {
     const response = await api.get(`/auth/verify-reset-token/${token}`)
     return response.data
   },
+  refreshToken: async () => {
+    const response = await api.post("/auth/refresh-token");
+    return response.data;
+  }
 }
 
 // Enhanced Course Related APIs -- Instructor
@@ -461,17 +465,44 @@ export const chatAPI = {
 
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    console.error("API error:", {
-      status: error.response?.status,
-      data: error.response?.data,
-      message: error.message,
-    })
-    // if (error.response?.status === 401 && window.location.pathname !== "/login") {
-    //   window.location.href = "/login"
-    // }
-    return Promise.reject(error)
-  },
-)
+  async (error) => {
+    const originalRequest = error.config;
+    
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      try {
+        // Try to refresh token
+        await api.post("/auth/refresh-token");
+        
+        // Retry original request
+        return api.request(originalRequest);
+      } catch (refreshError) {
+        // Refresh failed, redirect to login
+        console.log("Token refresh failed, redirecting to login");
+        // window.location.href = "/login";
+        return Promise.reject(refreshError);
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+);
+
+
+// api.interceptors.response.use(
+//   (response) => response,
+//   (error) => {
+//     console.error("API error:", {
+//       status: error.response?.status,
+//       data: error.response?.data,
+//       message: error.message,
+//     })
+//     // if (error.response?.status === 401 && window.location.pathname !== "/login") {
+//     //   window.location.href = "/login"
+//     // }
+//     return Promise.reject(error)
+//   },
+// )
 
 export default api
