@@ -39,5 +39,5 @@ class CourseReviewsListResponse(BaseModel):
     reviews: list[CourseReviewWithUserResponse]
     total: int
     average_rating: float
-    page: int
-    limit: int
+    page: Optional[int]=None
+    limit: Optional[int]=None

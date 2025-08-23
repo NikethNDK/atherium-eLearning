@@ -64,3 +64,35 @@ class ReviewService:
             "page": page,
             "limit": limit
         }
+    
+    @staticmethod
+    def update_course_review(db:Session, user_id:int, course_id:int, review_data:CourseReviewCreate):
+        review=db.query(CourseReview).filter(
+            CourseReview.user_id==user_id,
+            CourseReview.course_id==course_id
+        ).first()
+
+        if not review:
+            raise HTTPException(status_code=404, detail="Review not found")
+        
+        review.rating =review_data.rating
+        review.review_text=review_data.review_text
+        reviews = db.query(CourseReview).options(
+            joinedload(CourseReview.user)
+        ).filter(
+            CourseReview.course_id == course_id
+        ).order_by(CourseReview.created_at.desc()).all()
+        
+        total_reviews = db.query(CourseReview).filter(CourseReview.course_id == course_id).count()
+        
+        avg_rating = db.query(func.avg(CourseReview.rating)).filter(
+            CourseReview.course_id == course_id
+        ).scalar() or 0
+
+        db.commit()
+        db.refresh(review)
+        return {
+            "reviews": reviews,
+            "total": total_reviews,
+            "average_rating": round(float(avg_rating), 1)
+        }

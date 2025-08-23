@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Star, Send } from 'lucide-react';
 
-const ReviewForm = ({ courseId, onSubmit, onCancel, existingReview }) => {
+const ReviewForm = ({ courseId, onCreate,onUpdate, onCancel, existingReview }) => {
   const [rating, setRating] = useState(existingReview?.rating || 0);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [reviewText, setReviewText] = useState(existingReview?.review_text || '');
@@ -24,9 +24,12 @@ const ReviewForm = ({ courseId, onSubmit, onCancel, existingReview }) => {
 
     setIsSubmitting(true);
     try {
-      await onSubmit({ rating, review_text: reviewText });
-      if (!existingReview) {
-        // Only reset form if it's a new review
+      if (existingReview) {
+        // Updating
+        await onUpdate({ rating, review_text: reviewText });
+      } else {
+        // Creating
+        await onCreate({ rating, review_text: reviewText });
         setRating(0);
         setReviewText('');
       }

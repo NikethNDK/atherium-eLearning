@@ -98,6 +98,19 @@ const CourseDetailsTab = ({ course, isPurchased, onPurchase }) => {
     }
   };
 
+  const handleReviewUpdate = async (reviewData) => {
+    try {
+      await userAPI.updateCourseReview(course.id, reviewData);
+      setShowReviewForm(false);
+      // Refresh reviews
+      await fetchReviews();
+      console.log('Review submitted successfully');
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      throw error;
+    }
+  };  
+
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
   };
@@ -251,7 +264,8 @@ const CourseDetailsTab = ({ course, isPurchased, onPurchase }) => {
                 {showReviewForm && (
                   <div className="mb-6">
                     <ReviewForm
-                      onSubmit={handleReviewSubmit}
+                      onCreate={handleReviewSubmit}
+                      onUpdate={handleReviewUpdate}
                       onCancel={() => setShowReviewForm(false)}
                       existingReview={userExistingReview}
                     />

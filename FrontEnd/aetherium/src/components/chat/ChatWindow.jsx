@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
+import { getImageUrl } from '../common/ImageURL';
 
 const ChatWindow = ({ conversation, onBackToList }) => {
   const { user } = useAuth();
@@ -112,9 +113,9 @@ const ChatWindow = ({ conversation, onBackToList }) => {
 
   const getDisplayImage = () => {
     if (user?.role?.name === 'instructor') {
-      return conversation.user_profile_picture;
+      return getImageUrl(conversation.user_profile_picture);
     } else {
-      return conversation.instructor_profile_picture;
+      return getImageUrl(conversation.instructor_profile_picture);
     }
   };
 

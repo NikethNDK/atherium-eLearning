@@ -12,6 +12,7 @@ from aetherium.schemas.chat import MessageCreate, ConversationCreate
 from aetherium.services.cloudinary_service import cloudinary_service
 import os
 import uuid
+import io
 
 from datetime import datetime
 from aetherium.core.dependency import get_manager
@@ -633,15 +634,23 @@ class ChatService:
 
         # Upload image to Cloudinary
         try:
-            file_content = file.file.read()
-            file.file.seek(0)
-            upload_result = cloudinary_service.upload_image(file_content, folder="chat_images")
+            # read file content
+            file_content = await file.read()
+
+            # wrap into BytesIO
+            file_stream = io.BytesIO(file_content)
+            file_stream.seek(0)
+
+            # pass file stream to service
+            upload_result = await cloudinary_service.upload_image(file_stream, folder="chat_images")
+
             image_url = upload_result.get("secure_url")
             if not image_url:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Failed to upload image"
                 )
+
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

@@ -49,6 +49,9 @@ class User(Base):
     user_conversations = relationship("Conversation", foreign_keys="[Conversation.user_id]", back_populates="user")
     instructor_conversations = relationship("Conversation", foreign_keys="[Conversation.instructor_id]", back_populates="instructor")
     sent_messages = relationship("Message", back_populates="sender")
+    
+    # Lesson comments
+    lesson_comments = relationship("LessonComment", back_populates="user", cascade="all, delete-orphan")
 
 class Wallet(Base):
     __tablename__ = "wallets"

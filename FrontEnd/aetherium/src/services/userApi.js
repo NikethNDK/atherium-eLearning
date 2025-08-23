@@ -144,6 +144,12 @@ export const userAPI = {
     })
     return response.data
   },
+  updateCourseReview:async(courseId,reviewData)=>{
+    const response = await api.put(`/user/courses/${courseId}/reviews`,{
+      course_id:courseId,
+      ...reviewData
+    })
+  },
 
   checkCoursePurchase: async (courseId) => {
     const response = await api.get(`/user/courses/${courseId}/purchase-status`)
@@ -297,7 +303,34 @@ export const userAPI = {
       console.error("Error verifying certificate:", error)
       throw error
     }
-  }
+  },
 
+  // =================== LESSON COMMENTS APIs ===================
+  
+  getLessonComments: async (lessonId, page = 1, limit = 20) => {
+    const response = await api.get(`/user/lessons/${lessonId}/comments?page=${page}&limit=${limit}`)
+    return response.data
+  },
+
+  createLessonComment: async (lessonId, content, parentCommentId = null) => {
+    const response = await api.post(`/user/lessons/${lessonId}/comments`, {
+      lesson_id: lessonId,
+      content,
+      parent_comment_id: parentCommentId
+    })
+    return response.data
+  },
+
+  updateLessonComment: async (commentId, content) => {
+    const response = await api.put(`/user/comments/${commentId}`, {
+      content
+    })
+    return response.data
+  },
+
+  deleteLessonComment: async (commentId) => {
+    const response = await api.delete(`/user/comments/${commentId}`)
+    return response.data
+  }
 
 }

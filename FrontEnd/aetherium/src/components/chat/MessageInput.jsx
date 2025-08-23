@@ -115,7 +115,7 @@ const MessageInput = ({ onSendMessage, onSendImage, disabled }) => {
   };
 
   const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
+    const file = e.target?.files[0];
     console.log('📸 Image upload started:', {
       fileName: file?.name,
       fileSize: file?.size,

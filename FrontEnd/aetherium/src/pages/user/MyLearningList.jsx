@@ -110,7 +110,7 @@ const MyLearningList = ({ courses, filter, getProgressPercentage }) => {
               <div className="flex items-center mb-2 sm:mb-3 text-xs sm:text-sm text-gray-600">
                 {course.instructor?.profile_picture ? (
                   <img
-                    src={course.instructor.profile_picture}
+                    src={getImageUrl(course.instructor.profile_picture)}
                     alt={course.instructor?.firstname}
                     className="w-4 h-4 sm:w-5 sm:h-5 rounded-full mr-1 sm:mr-2 object-cover"
                   />

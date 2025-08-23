@@ -1,15 +1,20 @@
-import { Star } from 'lucide-react';
-import { getImageUrl } from '../common/ImageURL';
+import { Star } from "lucide-react";
+import { getImageUrl } from "../common/ImageURL";
 
-const ReviewList = ({ reviews, averageRating, totalReviews }) => {
-  console.log('ReviewList rendered with props:', { reviews, averageRating, totalReviews });
-  
+const ReviewList = ({ reviews, stats }) => {
+  const { average_rating, total } = stats;
+  console.log("ReviewList rendered with props:", {
+    reviews,
+    average_rating,
+    total,
+  });
+
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
@@ -18,7 +23,7 @@ const ReviewList = ({ reviews, averageRating, totalReviews }) => {
       <Star
         key={index}
         className={`w-4 h-4 ${
-          index < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
+          index < rating ? "text-yellow-400 fill-current" : "text-gray-300"
         }`}
       />
     ));
@@ -36,40 +41,48 @@ const ReviewList = ({ reviews, averageRating, totalReviews }) => {
     <div>
       {/* Review Summary */}
       <div className="bg-gray-50 rounded-lg p-4 mb-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-gray-900">{averageRating}</div>
-              <div className="flex items-center justify-center mt-1">
-                {renderStars(Math.round(averageRating))}
-              </div>
-              <div className="text-sm text-gray-500 mt-1">
-                {totalReviews} review{totalReviews !== 1 ? 's' : ''}
-              </div>
+        <div className="flex items-start gap-8">
+          {/* Left: Average Rating */}
+          <div className="text-center w-32 flex-shrink-0">
+            <div className="text-3xl font-bold text-gray-900">
+              {average_rating}
+            </div>
+            <div className="flex items-center justify-center mt-1">
+              {renderStars(Math.round(average_rating))}
+            </div>
+            <div className="text-sm text-gray-500 mt-1">
+              {total} review{total !== 1 ? "s" : ""}
             </div>
           </div>
-          <div className="text-right">
-            <div className="text-sm text-gray-600">
-              {totalReviews > 0 && (
-                <>
-                  <div className="mb-2">
-                    <span className="font-medium">5 stars:</span> {Math.round((reviews.filter(r => r.rating === 5).length / totalReviews) * 100)}%
-                  </div>
-                  <div className="mb-2">
-                    <span className="font-medium">4 stars:</span> {Math.round((reviews.filter(r => r.rating === 4).length / totalReviews) * 100)}%
-                  </div>
-                  <div className="mb-2">
-                    <span className="font-medium">3 stars:</span> {Math.round((reviews.filter(r => r.rating === 3).length / totalReviews) * 100)}%
-                  </div>
-                  <div className="mb-2">
-                    <span className="font-medium">2 stars:</span> {Math.round((reviews.filter(r => r.rating === 2).length / totalReviews) * 100)}%
-                  </div>
-                  <div>
-                    <span className="font-medium">1 star:</span> {Math.round((reviews.filter(r => r.rating === 1).length / totalReviews) * 100)}%
-                  </div>
-                </>
-              )}
-            </div>
+
+          {/* Right: Progress Bars */}
+          <div className="flex-1">
+            {total > 0 && (
+              <div className="space-y-2">
+                {[5, 4, 3, 2, 1].map((star) => {
+                  const count = reviews.filter((r) => r.rating === star).length;
+                  const percentage = Math.round((count / total) * 100);
+
+                  return (
+                    <div key={star} className="flex items-center space-x-2">
+                      <span className="w-12 font-medium">{star}★</span>
+                      <div className="flex-1 bg-gray-200 h-4 rounded-lg overflow-hidden">
+                        <div
+                          className="h-4 bg-yellow-500"
+                          style={{
+                            width: `${percentage}%`,
+                            minWidth: percentage > 0 ? "4px" : "0",
+                          }}
+                        ></div>
+                      </div>
+                      <span className="w-12 text-right text-sm">
+                        {percentage}%
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -77,7 +90,10 @@ const ReviewList = ({ reviews, averageRating, totalReviews }) => {
       {/* Individual Reviews */}
       <div className="space-y-4">
         {reviews.map((review) => (
-          <div key={review.id} className="border-b border-gray-200 pb-4 last:border-b-0">
+          <div
+            key={review.id}
+            className="border-b border-gray-200 pb-4 last:border-b-0"
+          >
             <div className="flex items-start space-x-3">
               {/* User Avatar */}
               <div className="flex-shrink-0">
@@ -89,7 +105,7 @@ const ReviewList = ({ reviews, averageRating, totalReviews }) => {
                   />
                 ) : (
                   <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
-                    {review.user?.firstname?.[0] || 'U'}
+                    {review.user?.firstname?.[0] || "U"}
                   </div>
                 )}
               </div>
@@ -106,7 +122,7 @@ const ReviewList = ({ reviews, averageRating, totalReviews }) => {
                     </span>
                   )}
                 </div>
-                
+
                 <div className="flex items-center space-x-1 mb-2">
                   {renderStars(review.rating)}
                   <span className="text-sm text-gray-500 ml-2">

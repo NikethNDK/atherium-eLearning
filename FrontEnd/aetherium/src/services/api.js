@@ -470,17 +470,18 @@ api.interceptors.response.use(
     
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      
       try {
         // Try to refresh token
-        await api.post("/auth/refresh-token");
+        const refreshResponse = await api.post("/auth/refresh-token");
         
-        // Retry original request
-        return api.request(originalRequest);
+        // Only retry if refresh was successful
+        if (refreshResponse.status === 200) {
+          return api.request(originalRequest);
+        }
       } catch (refreshError) {
-        // Refresh failed, redirect to login
+        // Refresh failed, clear tokens and redirect to login
         console.log("Token refresh failed, redirecting to login");
-        // window.location.href = "/login";
+        // Clear cookies or redirect to login
         return Promise.reject(refreshError);
       }
     }
@@ -488,6 +489,24 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+      
+//       try {
+//         // Try to refresh token
+//         await api.post("/auth/refresh-token");
+        
+//         // Retry original request
+//         return api.request(originalRequest);
+//       } catch (refreshError) {
+//         // Refresh failed, redirect to login
+//         console.log("Token refresh failed, redirecting to login");
+//         // window.location.href = "/login";
+//         return Promise.reject(refreshError);
+//       }
+//     }
+    
+//     return Promise.reject(error);
+//   }
+// );
 
 
 // api.interceptors.response.use(

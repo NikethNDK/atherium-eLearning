@@ -36,3 +36,15 @@ async def get_course_reviews(
     """Get course reviews with pagination"""
     logger.info(f"Request received for course {course_id} reviews, page {page}")
     return ReviewService.get_course_reviews(db, course_id, page, limit)
+
+@router.put('/courses/{course_id}/reviews', response_model=CourseReviewsListResponse)
+async def update_review(
+    course_id:int,
+    review_data:CourseReviewCreate,
+    db:Session= Depends(get_db),
+    current_user:User =Depends(get_current_user)
+):
+    if review_data.course_id != course_id:
+        raise HTTPException(status_code=400,detail="Course not found")
+    
+    return ReviewService.update_course_review(db, current_user.id,course_id,review_data)

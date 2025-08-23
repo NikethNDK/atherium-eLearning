@@ -2,6 +2,7 @@ from .user import User,Role
 import aetherium.models.user_course as user_course
 import aetherium.models.courses as courses
 from .chat import Conversation, Message
+# LessonComment models are imported through courses module
 
 from .user_course import *
 from .courses import *

@@ -26,6 +26,15 @@ from aetherium.services.wallet_service import wallet_service
 from aetherium.utils.jwt_utils import get_current_user
 from sqlalchemy.sql import func
 
+# Import lesson comment service and schemas
+# from aetherium.services.lesson_comment_service import LessonCommentService
+# from aetherium.schemas.lesson_comment import (
+#     LessonCommentCreate, 
+#     LessonCommentUpdate, 
+#     LessonCommentResponse, 
+#     LessonCommentListResponse
+# )
+
 # router = APIRouter(prefix="/user", tags=["user"])
 router=APIRouter()
 
@@ -450,4 +459,101 @@ async def update_lesson_time(
     return await service.update_lesson_progress(
         current_user.id, lesson_id, progress_update
     )
+
+# Test endpoint to verify router is working
+@router.get("/test-lesson-comments")
+async def test_lesson_comments():
+    """Test endpoint to verify lesson comment router is working"""
+    return {"message": "Lesson comment router is working!"}
+
+# Lesson Comment Endpoints
+# @router.get("/lessons/{lesson_id}/comments")
+# async def get_lesson_comments(
+#     lesson_id: int,
+#     page: int = Query(1, ge=1),
+#     limit: int = Query(20, ge=1, le=100),
+#     db: Session = Depends(get_db),
+#     current_user: User = Depends(get_current_user)
+# ):
+#     """Get comments for a specific lesson"""
+#     if current_user.role.name != "user":
+#         raise HTTPException(status_code=403, detail="User access required")
+    
+#     # Temporary simple response to test if endpoint is working
+#     return {
+#         "comments": [],
+#         "total_count": 0,
+#         "page": page,
+#         "limit": limit,
+#         "total_pages": 0
+#     }
+
+# @router.post("/lessons/{lesson_id}/comments")
+# async def create_lesson_comment(
+#     lesson_id: int,
+#     comment_data: dict,
+#     db: Session = Depends(get_db),
+#     current_user: User = Depends(get_current_user)
+# ):
+#     """Create a new comment or reply for a lesson"""
+#     if current_user.role.name != "user":
+#         raise HTTPException(status_code=403, detail="User access required")
+    
+#     # Temporary simple response to test if endpoint is working
+#     return {
+#         "id": 1,
+#         "lesson_id": lesson_id,
+#         "user_id": current_user.id,
+#         "content": comment_data.get("content", ""),
+#         "parent_comment_id": comment_data.get("parent_comment_id"),
+#         "is_edited": False,
+#         "is_deleted": False,
+#         "created_at": "2025-01-27T10:00:00Z",
+#         "updated_at": None,
+#         "user_firstname": current_user.firstname,
+#         "user_lastname": current_user.lastname,
+#         "user_profile_picture": current_user.profile_picture,
+#         "replies": []
+#     }
+
+# @router.put("/comments/{comment_id}")
+# async def update_lesson_comment(
+#     comment_id: int,
+#     comment_data: dict,
+#     db: Session = Depends(get_db),
+#     current_user: User = Depends(get_current_user)
+# ):
+#     """Update an existing comment"""
+#     if current_user.role.name != "user":
+#         raise HTTPException(status_code=403, detail="User access required")
+    
+#     # Temporary simple response to test if endpoint is working
+#     return {
+#         "id": comment_id,
+#         "lesson_id": 1,
+#         "user_id": current_user.id,
+#         "content": comment_data.get("content", ""),
+#         "parent_comment_id": None,
+#         "is_edited": True,
+#         "is_deleted": False,
+#         "created_at": "2025-01-27T10:00:00Z",
+#         "updated_at": "2025-01-27T10:00:00Z",
+#         "user_firstname": current_user.firstname,
+#         "user_lastname": current_user.lastname,
+#         "user_profile_picture": current_user.profile_picture,
+#         "replies": []
+#     }
+
+# @router.delete("/comments/{comment_id}")
+# async def delete_lesson_comment(
+#     comment_id: int,
+#     db: Session = Depends(get_db),
+#     current_user: User = Depends(get_current_user)
+# ):
+#     """Delete a comment (soft delete)"""
+#     if current_user.role.name != "user":
+#         raise HTTPException(status_code=403, detail="User access required")
+    
+#     # Temporary simple response to test if endpoint is working
+#     return {"message": "Comment deleted successfully"}
 

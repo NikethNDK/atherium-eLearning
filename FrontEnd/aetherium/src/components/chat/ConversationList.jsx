@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { getImageUrl } from '../common/ImageURL';
 
 const ConversationList = ({ conversations, currentConversation, onSelectConversation, loading }) => {
   const { user } = useAuth();
@@ -29,9 +30,9 @@ const ConversationList = ({ conversations, currentConversation, onSelectConversa
 
   const getDisplayImage = (conversation) => {
     if (user?.role?.name === 'instructor') {
-      return conversation.user_profile_picture;
+      return getImageUrl(conversation.user_profile_picture);
     } else {
-      return conversation.instructor_profile_picture;
+      return getImageUrl(conversation.instructor_profile_picture);
     }
   };
 

@@ -6,6 +6,7 @@ import { userAPI } from "../../services/userApi"
 import { chatAPI } from "../../services/api"
 import LoadingSpinner from "../../components/common/LoadingSpinner"
 import LessonContentDisplay from "../../components/course/user/learning/LessonContentDisplay"
+import LessonComments from "../../components/course/user/learning/LessonComments"
 import { ChevronLeft, ChevronRight, CheckCircle, Lock, ArrowLeft, MessageCircle, Award } from "lucide-react"
 import Header from "../../components/common/Header"
 import Footer from "../../components/common/Footer"
@@ -449,6 +450,15 @@ const CourseCurriculumPage = () => {
               onLessonComplete={handleLessonComplete}
               onQuizComplete={handleQuizComplete}
             />
+            
+            {/* Lesson Comments Section */}
+            <div className="mt-8">
+              <LessonComments 
+                lessonId={activeLesson.id} 
+                lessonName={activeLesson.name} 
+              />
+            </div>
+            
             <div className="mt-8 flex justify-between items-center">
               <button
                 onClick={goToPreviousLesson}

@@ -47,6 +47,7 @@ class Lesson(Base):
     section = relationship("Section", back_populates="lessons")
     lesson_content = relationship("LessonContent", back_populates="lesson", uselist=False, cascade="all, delete-orphan")
     lesson_progress = relationship("LessonProgress", back_populates="lesson", cascade="all, delete-orphan")
+    comments = relationship("LessonComment", back_populates="lesson", cascade="all, delete-orphan")
 
 class LessonContent(Base):
     __tablename__ = "lesson_contents"
