@@ -50,6 +50,7 @@ const MyLearningList = ({ courses, filter, getProgressPercentage }) => {
       {filteredCourses.map((course) => {
         const progress = getProgressPercentage(course);
         const isHovered = hoveredCourse === course.id;
+        console.log(course)
         
         return (
           <div
@@ -153,12 +154,22 @@ const MyLearningList = ({ courses, filter, getProgressPercentage }) => {
               </div>
               
               {/* Action Button */}
-              <Link
-                to={`/my-learning/${course.id}`}
-                className="w-full bg-[#1a1b3a] hover:bg-[#2a2b4a] text-white py-2 px-3 sm:px-4 rounded-lg font-medium transition-colors duration-200 block text-center text-xs sm:text-sm"
-              >
-                {progress === 0 ? "Start Learning" : progress === 100 ? "Review Course" : "Continue Learning"}
-              </Link>
+              {course.verification_status === "PENDING" ? (
+                <div className="w-full bg-gray-400 text-white py-2 px-3 sm:px-4 rounded-lg font-medium block text-center text-xs sm:text-sm cursor-not-allowed">
+                  Course is being updated
+                </div>
+              ) : (
+                <Link
+                  to={`/my-learning/${course.id}`}
+                  className="w-full bg-[#1a1b3a] hover:bg-[#2a2b4a] text-white py-2 px-3 sm:px-4 rounded-lg font-medium transition-colors duration-200 block text-center text-xs sm:text-sm"
+                >
+                  {progress === 0
+                    ? "Start Learning"
+                    : progress === 100
+                    ? "Review Course"
+                    : "Continue Learning"}
+                </Link>
+              )}
             </div>
           </div>
         );

@@ -317,9 +317,9 @@ const InstructorDashboard = () => {
 
   const tabs = [
     { key: "all", label: "All Courses", count: courses.length },
-    { key: "verified", label: "Published", count: courses.filter((c) => c.verification_status === "verified").length },
-    { key: "pending", label: "Pending", count: courses.filter((c) => c.verification_status === "pending").length },
-    { key: "rejected", label: "Rejected", count: courses.filter((c) => c.verification_status === "rejected").length },
+    { key: "VERIFIED", label: "Published", count: courses.filter((c) => c.verification_status === "VERIFIED").length },
+    { key: "PENDING", label: "Pending", count: courses.filter((c) => c.verification_status === "PENDING").length },
+    { key: "REJECTED", label: "Rejected", count: courses.filter((c) => c.verification_status === "REJECTED").length },
   ]
 
   const filteredCourses =

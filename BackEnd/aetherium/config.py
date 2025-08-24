@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     # Google
     # Stripe
     class Config:
-        env_file = os.path.join(os.path.dirname(__file__), ".env")
+        # env_file = os.path.join(os.path.dirname(__file__), ".env")
+        env_file=".env"
 
 settings=Settings()

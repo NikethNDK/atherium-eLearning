@@ -100,7 +100,7 @@ const InstructorCourseCard = ({ course, onEdit, showActions = true }) => {
                 </svg>
                 <span>Preview</span>
               </button>
-              {onEdit && (
+              {/* {onEdit && (
                 <button
                   onClick={() => onEdit(course.id)}
                   className="flex items-center space-x-1 text-gray-600 hover:text-gray-700 text-xs sm:text-sm px-2 py-1 rounded hover:bg-gray-50 transition-colors"
@@ -115,7 +115,7 @@ const InstructorCourseCard = ({ course, onEdit, showActions = true }) => {
                   </svg>
                   <span>Edit</span>
                 </button>
-              )}
+              )} */}
               <Link
                 to={`/instructor/courses/${course.id}/analytics`}
                 className="flex items-center space-x-1 text-purple-600 hover:text-purple-700 text-xs sm:text-sm px-2 py-1 rounded hover:bg-purple-50 transition-colors"

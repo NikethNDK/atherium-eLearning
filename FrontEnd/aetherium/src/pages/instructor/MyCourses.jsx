@@ -85,13 +85,13 @@ const MyCourses = () => {
                 <p className="text-sm text-gray-600 mb-4 line-clamp-2">{course.subtitle}</p>
 
                 <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
-                  <div className="flex items-center space-x-1">
+                  {/* <div className="flex items-center space-x-1">
                     <Users size={14} />
                     <span>0 students</span>
-                  </div>
+                  </div> */}
                   <div className="flex items-center space-x-1">
-                    <DollarSign size={14} />
-                    <span>${course.price}</span>
+                    {/* <DollarSign size={14} /> */}
+                    <span>₹  {course.price}</span>
                   </div>
                 </div>
 
