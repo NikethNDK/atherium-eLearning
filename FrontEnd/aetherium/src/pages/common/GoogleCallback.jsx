@@ -83,7 +83,8 @@ useEffect(() => {
       navigate('/user/dashboard')
     } catch (err) {
       setError(err.response?.data?.detail || "An error occurred during authentication");
-      navigate("/login?error=auth_error", { replace: true });
+      navigate('/user/dashboard')
+      // navigate("/login?error=auth_error", { replace: true });
     }
   };
 
