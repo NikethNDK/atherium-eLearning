@@ -44,7 +44,13 @@ def upload_file_task(self, lesson_id: int, file_content: bytes, file_type: str, 
                 }]
             })
         elif file_type == "pdf":
-            upload_params['resource_type'] = 'raw'
+            # upload_params['resource_type'] = 'raw'
+            upload_params.update({
+                'resource_type': 'image',  # Changed from 'raw' to 'image'
+                'format': 'pdf',           # Explicitly set format
+                'pages': True,             # Enable page-based operations
+                'flags': 'attachment'      # This allows inline viewing in browsers
+            })
         else:
             upload_params['resource_type'] = 'auto'
         

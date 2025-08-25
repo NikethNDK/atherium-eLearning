@@ -7,7 +7,7 @@ from fastapi import HTTPException, UploadFile
 import os,time,io,asyncio
 from pathlib import Path
 from aetherium.config import settings
-
+from aetherium.core.logger import logger
 
 class CloudinaryService:
     def __init__(self):
@@ -74,44 +74,77 @@ class CloudinaryService:
                 detail=f"Failed to upload video: {str(e)}"
             )
 
-
-    async def upload_pdf_from_stream(self, file_stream: io.BytesIO, filename: str, folder: str = "elearning/pdfs") -> Dict[str, Any]:
-        """Upload PDF file from stream with robust handling"""
+    async def upload_pdf_from_stream(self, file_stream: io.BytesIO, filename: str) -> Dict[str, Any]:
+        """Upload PDF with proper configuration for browser viewing"""
         try:
-            # Create a fresh copy of the stream to ensure isolation
             file_stream.seek(0)
-            file_content = file_stream.read()
-            new_stream = io.BytesIO(file_content)
-
-            def _upload():
-                new_stream.seek(0)
-                return cloudinary.uploader.upload(
-                    new_stream,
-                    resource_type="raw",
-                    folder=folder,
-                    filename=filename,
-                    use_filename=True,
-                    unique_filename=True,
-                    timeout=60
-                )
-
-            result = await asyncio.get_event_loop().run_in_executor(None, _upload)
-
-            if not result.get('secure_url'):
-                raise ValueError("Cloudinary upload failed - no URL returned")
-
-            return {
-                "public_id": result["public_id"],
-                "url": result["secure_url"],
-                "file_type": "pdf",
-                "file_size": result.get("bytes", len(file_content)),
-                "format": result.get("format", "pdf")
+            
+            upload_params = {
+                'folder': 'elearning/pdfs',
+                'filename': filename,
+                'use_filename': True,
+                'unique_filename': True,
+                'resource_type': 'image',  # Use 'image' not 'raw' for browser viewing
+                'format': 'pdf',
+                'pages': True,             # Enable page operations
+                'timeout': 300,
+                # Add content disposition for inline viewing
+                'context': {
+                    'caption': filename,
+                    'alt': f"PDF document: {filename}"
+                }
             }
+            
+            result = cloudinary.uploader.upload(file_stream, **upload_params)
+            
+            return {
+                'public_id': result['public_id'],
+                'url': result['secure_url'],
+                'format': result.get('format', 'pdf'),
+                'bytes': result.get('bytes', 0),
+                'pages': result.get('pages', 1)  # Number of pages in PDF
+            }
+            
         except Exception as e:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Failed to upload PDF: {str(e)}"
-            )
+            logger.error(f"PDF upload failed: {str(e)}")
+            raise Exception(f"PDF upload failed: {str(e)}")
+    # async def upload_pdf_from_stream(self, file_stream: io.BytesIO, filename: str, folder: str = "elearning/pdfs") -> Dict[str, Any]:
+    #     """Upload PDF file from stream with robust handling"""
+    #     try:
+    #         # Create a fresh copy of the stream to ensure isolation
+    #         file_stream.seek(0)
+    #         file_content = file_stream.read()
+    #         new_stream = io.BytesIO(file_content)
+
+    #         def _upload():
+    #             new_stream.seek(0)
+    #             return cloudinary.uploader.upload(
+    #                 new_stream,
+    #                 resource_type="raw",
+    #                 folder=folder,
+    #                 filename=filename,
+    #                 use_filename=True,
+    #                 unique_filename=True,
+    #                 timeout=60
+    #             )
+
+    #         result = await asyncio.get_event_loop().run_in_executor(None, _upload)
+
+    #         if not result.get('secure_url'):
+    #             raise ValueError("Cloudinary upload failed - no URL returned")
+
+    #         return {
+    #             "public_id": result["public_id"],
+    #             "url": result["secure_url"],
+    #             "file_type": "pdf",
+    #             "file_size": result.get("bytes", len(file_content)),
+    #             "format": result.get("format", "pdf")
+    #         }
+    #     except Exception as e:
+    #         raise HTTPException(
+    #             status_code=500,
+    #             detail=f"Failed to upload PDF: {str(e)}"
+    #         )
     
     async def upload_file_from_stream(self, file_stream: io.BytesIO, filename: str, folder: str = "elearning/files") -> Dict[str, Any]:
         """Upload general file from stream"""
@@ -119,7 +152,7 @@ class CloudinaryService:
             def _upload():
                 return cloudinary.uploader.upload(
                     file_stream,
-                    resource_type="auto",
+                    resource_type="raw",
                     folder=folder,
                     overwrite=True,
                     invalidate=True,

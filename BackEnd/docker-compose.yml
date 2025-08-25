@@ -11,9 +11,11 @@ services:
       - redis
     volumes:
       - ./uploads:/Backend/uploads
+      - ./aetherium:/Backend/aetherium
     working_dir: /Backend
     restart: unless-stopped
-    
+    command: uvicorn aetherium.main:app --host 0.0.0.0 --port 8000 --reload
+
   nginx:
     image: nginx:alpine
     ports:
@@ -33,6 +35,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       #- ./docker/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro # optional
     restart: unless-stopped
+    
 
   redis:
     image: redis:7-alpine
