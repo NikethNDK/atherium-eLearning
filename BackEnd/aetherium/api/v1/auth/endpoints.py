@@ -211,6 +211,7 @@ async def google_exchange(request: Request, response: Response, db: Session = De
                 logger.debug(f"Created new user: {email}")
 
         access_token = create_access_token(data={"sub": user.email, "role": user.role.name})
+        refresh_token = create_refresh_token(data={"sub": user.email, "role": user.role.name})
         logger.debug(f"Created access_token: {access_token[:30]}...")
 
       
@@ -221,8 +222,19 @@ async def google_exchange(request: Request, response: Response, db: Session = De
             key="access_token",
             value=access_token,
             httponly=True,
-            secure=True, 
-            samesite="Lax"
+            secure=False,
+            samesite="lax",
+            max_age=settings.ACCESS_TOKEN_EXPIRE_MIN * 60,
+            path="/"
+        )
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            httponly=True,
+            secure=False,
+            samesite="lax",
+            max_age=settings.REFRESH_TOKEN_EXPIRE_MIN * 60,
+            path="/"
         )
         return response
        

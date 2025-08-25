@@ -2,7 +2,7 @@ from aetherium.database.db import get_db
 from aetherium.models.notification import Notification
 import json
 from sqlalchemy.orm import Session 
-from aetherium.sockets.websocket import manager  # Import the global manager instance directly
+from aetherium.sockets.websocket import manager  
 from aetherium.core.logger import logger
 
 async def create_notification(db: Session, recipient_id: int, message: str, notification_type: str, related_data: dict = None):
@@ -29,7 +29,7 @@ async def create_notification(db: Session, recipient_id: int, message: str, noti
     }
     
     try:
-        # Use the global manager instance directly
+        # Use the global manager instance that has the active websocket connections
         await manager.send_notification(recipient_id, notification_payload)
     except Exception as e:
         logger.error(f"Failed to send websocket notification to the user {recipient_id}: {e}")

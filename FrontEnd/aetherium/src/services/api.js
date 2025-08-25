@@ -463,32 +463,32 @@ export const chatAPI = {
   }
 };
 
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
+// api.interceptors.response.use(
+//   (response) => response,
+//   async (error) => {
+//     const originalRequest = error.config;
     
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      try {
-        // Try to refresh token
-        const refreshResponse = await api.post("/auth/refresh-token");
+//     if (error.response?.status === 401 && !originalRequest._retry) {
+//       originalRequest._retry = true;
+//       try {
+//         // Try to refresh token
+//         const refreshResponse = await api.post("/auth/refresh-token");
         
-        // Only retry if refresh was successful
-        if (refreshResponse.status === 200) {
-          return api.request(originalRequest);
-        }
-      } catch (refreshError) {
-        // Refresh failed, clear tokens and redirect to login
-        console.log("Token refresh failed, redirecting to login");
-        // Clear cookies or redirect to login
-        return Promise.reject(refreshError);
-      }
-    }
+//         // Only retry if refresh was successful
+//         if (refreshResponse.status === 200) {
+//           return api.request(originalRequest);
+//         }
+//       } catch (refreshError) {
+//         // Refresh failed, clear tokens and redirect to login
+//         console.log("Token refresh failed, redirecting to login");
+//         // Clear cookies or redirect to login
+//         return Promise.reject(refreshError);
+//       }
+//     }
     
-    return Promise.reject(error);
-  }
-);
+//     return Promise.reject(error);
+//   }
+// );
       
 //       try {
 //         // Try to refresh token
