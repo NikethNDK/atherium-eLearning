@@ -78,7 +78,7 @@ async def update_withdrawal_request(
         )
     
     try:
-        withdrawal_request = withdrawal_service.update_withdrawal_request(
+        withdrawal_request = await withdrawal_service.update_withdrawal_request(
             db=db,
             request_id=request_id,
             status=update_data.status,

@@ -95,7 +95,7 @@ class WithdrawalService:
             "limit": limit
         }
     
-    def update_withdrawal_request(self, db: Session, request_id: int, status: WithdrawalStatus, 
+    async def update_withdrawal_request(self, db: Session, request_id: int, status: WithdrawalStatus, 
                                 admin_feedback: Optional[str], admin_id: int) -> WithdrawalRequest:
         """Update withdrawal request status (approve/reject)"""
         request = db.query(WithdrawalRequest).filter(WithdrawalRequest.id == request_id).first()
@@ -117,6 +117,9 @@ class WithdrawalService:
         
         db.commit()
         db.refresh(request)
+        
+        # Send notification to instructor
+        await self._notify_instructor_about_withdrawal_update(db, request)
         
         logger.info(f"Withdrawal request {request_id} updated to {status.value} by admin {admin_id}")
         return request
@@ -234,12 +237,18 @@ class WithdrawalService:
             
             # Get all admin users
             admins = db.query(User).join(User.role).filter(User.role.has(name="admin")).all()
+            logger.info(f"Found {len(admins)} admin users for notification")
+            
+            if not admins:
+                logger.warning("No admin users found in database")
+                return
             
             # Create notification message
             message = f"New withdrawal request from {instructor_name} for ₹{withdrawal_request.amount:.2f}"
             
             # Send notification to each admin
             for admin in admins:
+                logger.info(f"Sending notification to admin {admin.id} ({admin.email})")
                 await create_notification(
                     db=db,
                     recipient_id=admin.id,
@@ -258,6 +267,46 @@ class WithdrawalService:
             
         except Exception as e:
             logger.error(f"Failed to send withdrawal request notifications: {e}")
+    
+    async def _notify_instructor_about_withdrawal_update(self, db: Session, withdrawal_request: WithdrawalRequest):
+        """Send notification to instructor about withdrawal request update"""
+        try:
+            # Get admin details
+            admin = db.query(User).filter(User.id == withdrawal_request.admin_id).first()
+            admin_name = f"{admin.firstname} {admin.lastname}" if admin else "Admin"
+            
+            # Create notification message based on status
+            if withdrawal_request.status == WithdrawalStatus.APPROVED:
+                message = f"Your withdrawal request for ₹{withdrawal_request.amount:.2f} has been approved by {admin_name}"
+            elif withdrawal_request.status == WithdrawalStatus.REJECTED:
+                message = f"Your withdrawal request for ₹{withdrawal_request.amount:.2f} has been rejected by {admin_name}"
+            else:
+                message = f"Your withdrawal request for ₹{withdrawal_request.amount:.2f} status has been updated by {admin_name}"
+            
+            # Add feedback if available
+            if withdrawal_request.admin_feedback:
+                message += f". Feedback: {withdrawal_request.admin_feedback}"
+            
+            # Send notification to instructor
+            await create_notification(
+                db=db,
+                recipient_id=withdrawal_request.instructor_id,
+                message=message,
+                notification_type="withdrawal_update",
+                related_data={
+                    "withdrawal_request_id": withdrawal_request.id,
+                    "status": withdrawal_request.status.value,
+                    "admin_name": admin_name,
+                    "amount": withdrawal_request.amount,
+                    "admin_feedback": withdrawal_request.admin_feedback,
+                    "reviewed_at": withdrawal_request.reviewed_at.isoformat() if withdrawal_request.reviewed_at else None
+                }
+            )
+            
+            logger.info(f"Withdrawal update notification sent to instructor {withdrawal_request.instructor_id}")
+            
+        except Exception as e:
+            logger.error(f"Failed to send withdrawal update notification to instructor: {e}")
 
 # Initialize service
 withdrawal_service = WithdrawalService()

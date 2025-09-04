@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer,String ,DateTime,Boolean
-from datetime import datetime
+from datetime import datetime, timezone
 from aetherium.database.db import Base
 
 
@@ -12,5 +12,5 @@ class Notification(Base):
     message=Column(String)
     type=Column(String)
     is_read=Column(Boolean,default=False)
-    created_at=Column(DateTime, default=lambda: datetime.now().astimezone())
+    created_at=Column(DateTime, default=lambda: datetime.now(timezone.utc))
     related_data=Column(String)

@@ -27,6 +27,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useNotifications } from '../../context/NotificationContext';
+import { formatRelativeTime } from '../../utils/dateUtils';
 
 const NotificationBell = () => {
   const { notifications, setNotifications } = useNotifications();
@@ -63,24 +64,6 @@ const NotificationBell = () => {
     );
   };
 
-  const formatTimeAgo = (dateString) => {
-    const now = new Date();
-    const date = new Date(dateString);
-    const diffInSeconds = Math.floor((now - date) / 1000);
-
-    if (diffInSeconds < 60) {
-      return 'Just now';
-    } else if (diffInSeconds < 3600) {
-      const minutes = Math.floor(diffInSeconds / 60);
-      return `${minutes}m ago`;
-    } else if (diffInSeconds < 86400) {
-      const hours = Math.floor(diffInSeconds / 3600);
-      return `${hours}h ago`;
-    } else {
-      const days = Math.floor(diffInSeconds / 86400);
-      return `${days}d ago`;
-    }
-  };
 
   const clearAllNotifications = () => {
     setNotifications([]);
@@ -190,7 +173,7 @@ const NotificationBell = () => {
                           {notification.message}
                         </p>
                         <p className="mt-1 text-xs text-gray-500">
-                          {formatTimeAgo(notification.created_at)}
+                          {formatRelativeTime(notification.created_at)}
                         </p>
                       </div>
                     </div>

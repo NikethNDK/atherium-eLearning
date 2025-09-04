@@ -72,7 +72,12 @@ export const formatRelativeTime = (dateString) => {
   
   const date = new Date(dateString);
   const now = new Date();
-  const diffInMs = now - date;
+  
+  // Ensure both dates are in the same timezone for accurate comparison
+  const utcDate = new Date(date.getTime() + (date.getTimezoneOffset() * 60000));
+  const utcNow = new Date(now.getTime() + (now.getTimezoneOffset() * 60000));
+  
+  const diffInMs = utcNow - utcDate;
   const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
   const diffInHours = Math.floor(diffInMinutes / 60);
   const diffInDays = Math.floor(diffInHours / 24);
