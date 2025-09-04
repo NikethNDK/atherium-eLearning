@@ -323,6 +323,35 @@ export const adminAPI = {
     const response = await api.get("/admin/instructors");
     return response.data;
   },
+
+  // Withdrawal Management APIs
+  getWithdrawalRequests: async (page = 1, limit = 10, statusFilter = null) => {
+    const params = new URLSearchParams();
+    params.append("page", page.toString());
+    params.append("limit", limit.toString());
+    if (statusFilter) params.append("status_filter", statusFilter);
+    
+    const response = await api.get(`/admin/withdrawal/requests?${params.toString()}`);
+    return response.data;
+  },
+
+  updateWithdrawalRequest: async (requestId, status, adminFeedback = null) => {
+    const response = await api.put(`/admin/withdrawal/requests/${requestId}`, {
+      status,
+      admin_feedback: adminFeedback
+    });
+    return response.data;
+  },
+
+  getWithdrawalRequestDetails: async (requestId) => {
+    const response = await api.get(`/admin/withdrawal/requests/${requestId}`);
+    return response.data;
+  },
+
+  getInstructorWithdrawalRequests: async (instructorId, page = 1, limit = 10) => {
+    const response = await api.get(`/admin/withdrawal/instructor/${instructorId}/requests?page=${page}&limit=${limit}`);
+    return response.data;
+  },
 }
 
 export const chatAPI = {

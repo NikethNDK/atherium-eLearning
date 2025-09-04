@@ -44,6 +44,12 @@ class ContentType(str, enum.Enum):
     PDF = "PDF"
     REFERENCE_LINK = "REFERENCE_LINK"
 
+class WithdrawalStatus(enum.Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    COMPLETED = "completed"
+
 # SQLAlchemy enum types
 purchase_status_enum = ENUM(
     PurchaseStatus,
@@ -81,6 +87,12 @@ content_type_enum = ENUM(
     create_type=False
 )
 
+withdrawal_status_enum = ENUM(
+    WithdrawalStatus,
+    name="withdrawalstatus",
+    create_type=False
+)
+
 
 __all__ = [
     # Python enums
@@ -90,11 +102,13 @@ __all__ = [
     "CourseLevel",
     "DurationUnit",
     "ContentType",
+    "WithdrawalStatus",
     # SQLAlchemy enum types
     "purchase_status_enum",
     "payment_method_enum",
     "verification_status_enum",
     "course_level_enum",
     "duration_unit_enum",
-    "content_type_enum"
+    "content_type_enum",
+    "withdrawal_status_enum"
 ]

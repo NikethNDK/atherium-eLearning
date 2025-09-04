@@ -69,11 +69,25 @@ export const NotificationProvider = ({ children, userId }) => {
 
     ws.onmessage = (event) => {
       try {
-        const notification = JSON.parse(event.data);
-        setNotifications(prev => [notification, ...prev]);
+        const data = JSON.parse(event.data);
+        console.log('Notification received:', data);
         
-        // Show toast notification
-        showToast(notification.message, 'info');
+        // Handle different message types
+        if (data.type === 'notification') {
+          // This is a regular notification
+          setNotifications(prev => [data, ...prev]);
+          showToast(data.message, 'info');
+        } else if (data.type === 'pong') {
+          // Handle pong response
+          console.log('WebSocket pong received');
+        } else if (data.type === 'chat_message' || data.type === 'typing_start' || data.type === 'typing_stop') {
+          // These are handled by ChatContext, ignore here
+          console.log('Chat message received in NotificationContext, ignoring');
+        } else {
+          // Fallback for backward compatibility - treat as notification
+          setNotifications(prev => [data, ...prev]);
+          showToast(data.message, 'info');
+        }
       } catch (error) {
         console.error('Error parsing notification:', error);
       }

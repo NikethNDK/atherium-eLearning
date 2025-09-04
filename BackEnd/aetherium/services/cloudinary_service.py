@@ -84,8 +84,8 @@ class CloudinaryService:
                 'filename': filename,
                 'use_filename': True,
                 'unique_filename': True,
-                'resource_type': 'image',  # Use 'image' not 'raw' for browser viewing
-                'format': 'pdf',
+                'resource_type':"auto",
+                
                 'pages': True,             # Enable page operations
                 'timeout': 300,
                 # Add content disposition for inline viewing

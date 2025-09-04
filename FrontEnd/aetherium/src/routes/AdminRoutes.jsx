@@ -11,6 +11,7 @@ import Categories from "../pages/admin/Categories";
 import Topics from "../pages/admin/Topics"; // or shared path
 import DetailedView from "../pages/admin/DetailedView";
 import AdminReport from "../pages/admin/AdminReport";
+import WithdrawalRequests from "../pages/admin/WithdrawalRequests";
 
 
 export default function AdminRoutes() {
@@ -26,6 +27,7 @@ export default function AdminRoutes() {
       <Route path="courses/:courseId/review/detailed-view" element={<DetailedView />} />
       <Route path="profile" element={<div className="p-8"><h1 className="text-3xl font-bold">Admin Profile</h1></div>} />
       <Route path="sales" element={<div className="p-8"><h1 className="text-3xl font-bold">Sales History</h1></div>} />
+      <Route path="withdrawal-requests" element={<WithdrawalRequests />} />
       <Route path="categories" element={<Categories />} />
       <Route path="topics" element={<Topics />} />
     </Route>

@@ -240,7 +240,37 @@ getLessonAssessment: async (lessonId) => {
     const response = await api.get("/instructor/courses/all/instructors")
     return response.data
   },
-  
+
+  // Withdrawal APIs
+  createWithdrawalRequest: async (amount) => {
+    const response = await api.post("/instructor/withdrawal/request", { amount })
+    return response.data
+  },
+
+  getWithdrawalRequests: async (page = 1, limit = 10) => {
+    const response = await api.get(`/instructor/withdrawal/requests?page=${page}&limit=${limit}`)
+    return response.data
+  },
+
+  getAccountSummary: async () => {
+    const response = await api.get("/instructor/withdrawal/account-summary")
+    return response.data
+  },
+
+  completeWithdrawal: async (requestId) => {
+    const response = await api.post(`/instructor/withdrawal/complete/${requestId}`)
+    return response.data
+  },
+
+  createBankDetails: async (bankData) => {
+    const response = await api.post("/instructor/withdrawal/bank-details", bankData)
+    return response.data
+  },
+
+  getBankDetails: async () => {
+    const response = await api.get("/instructor/withdrawal/bank-details")
+    return response.data
+  }
 
 }
 

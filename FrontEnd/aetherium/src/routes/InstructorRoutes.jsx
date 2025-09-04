@@ -13,6 +13,7 @@ import Topics from "../pages/admin/Topics"; // assumed shared
 import DetailedView from "../pages/admin/DetailedView";
 import InstructorChat from "../pages/instructor/InstructorChat";
 import CourseAnalytics from "../pages/instructor/CourseAnalytics";
+import AccountSummary from "../pages/instructor/AccountSummary";
 
 export default function InstructorRoutes() {
   return (
@@ -30,6 +31,7 @@ export default function InstructorRoutes() {
       <Route path="courses/${courseId}/InstrtructorCourseView" element={<InstrtructorCourseView />} />
       <Route path="courses/${course.id}/preview" element={<DetailedView />}/>
       <Route path="earnings" element={<div className="p-8"><h1 className="text-3xl font-bold">Earnings</h1></div>} />
+      <Route path="account-summary" element={<AccountSummary />} />
       <Route path="messages" element={<InstructorChat />} />
       <Route path="topics" element={<Topics />} />
 
