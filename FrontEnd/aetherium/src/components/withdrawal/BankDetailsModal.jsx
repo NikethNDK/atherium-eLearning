@@ -57,8 +57,14 @@ const BankDetailsModal = ({ isOpen, onClose, onSubmit }) => {
       return;
     }
 
-    if (formData.account_number.length < 9 || formData.account_number.length > 20) {
-      setError('Account number must be between 9 and 20 digits');
+    // Check if account number contains only digits
+    if (!/^[0-9]+$/.test(formData.account_number)) {
+      setError('Account number must contain only numbers');
+      return;
+    }
+
+    if (formData.account_number.length < 6 || formData.account_number.length > 20) {
+      setError('Account number must be between 6 and 20 digits');
       return;
     }
 
@@ -77,6 +83,11 @@ const BankDetailsModal = ({ isOpen, onClose, onSubmit }) => {
       return;
     }
 
+    if (formData.bank_name.trim().length < 3) {
+      setError('Bank name must be at least 3 characters long');
+      return;
+    }
+
     try {
       setLoading(true);
       await onSubmit(formData);
@@ -84,6 +95,21 @@ const BankDetailsModal = ({ isOpen, onClose, onSubmit }) => {
       setError(err.message || 'Failed to save bank details');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteBankDetails = async (bankDetailId) => {
+    if (window.confirm('Are you sure you want to delete this bank detail?')) {
+      try {
+        setLoading(true);
+        await instructorAPI.deleteBankDetails(bankDetailId);
+        await fetchBankDetails(); // Refresh the list
+        setError('');
+      } catch (err) {
+        setError(err.response?.data?.detail || 'Failed to delete bank details');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -125,17 +151,26 @@ const BankDetailsModal = ({ isOpen, onClose, onSubmit }) => {
               {existingBankDetails.map((bank) => (
                 <div key={bank.id} className="p-4 border border-gray-200 rounded-lg">
                   <div className="flex justify-between items-start">
-                    <div>
+                    <div className="flex-1">
                       <p className="font-medium text-gray-900">{bank.account_holder_name}</p>
                       <p className="text-sm text-gray-600">{bank.bank_name} - {bank.branch_name}</p>
                       <p className="text-sm text-gray-600">Account: {bank.account_number}</p>
                       <p className="text-sm text-gray-600">IFSC: {bank.ifsc_code}</p>
                     </div>
-                    {bank.is_primary && (
-                      <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                        Primary
-                      </span>
-                    )}
+                    <div className="flex items-center space-x-2">
+                      {bank.is_primary && (
+                        <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                          Primary
+                        </span>
+                      )}
+                      <button
+                        onClick={() => handleDeleteBankDetails(bank.id)}
+                        disabled={loading}
+                        className="bg-red-100 text-red-600 hover:bg-red-200 px-3 py-1 rounded-md text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {loading ? 'Deleting...' : 'Remove'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}

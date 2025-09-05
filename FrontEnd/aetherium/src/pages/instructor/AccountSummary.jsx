@@ -15,6 +15,17 @@ const AccountSummary = () => {
   const [showBankDetailsModal, setShowBankDetailsModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRequests, setTotalRequests] = useState(0);
+  const [requestsPerPage] = useState(5);
+
+  useEffect(() => {
+    fetchAccountSummary();
+    fetchWithdrawalRequests();
+  }, [currentPage]);
 
   useEffect(() => {
     fetchAccountSummary();
@@ -30,6 +41,20 @@ const AccountSummary = () => {
       setError(err.response?.data?.detail || 'Failed to fetch account summary');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchWithdrawalRequests = async () => {
+    try {
+      const data = await instructorAPI.getWithdrawalRequests(currentPage, requestsPerPage);
+      setAccountSummary(prev => ({
+        ...prev,
+        withdrawal_requests: data.requests
+      }));
+      setTotalPages(Math.ceil(data.total / requestsPerPage));
+      setTotalRequests(data.total);
+    } catch (err) {
+      console.error('Failed to fetch withdrawal requests:', err);
     }
   };
 
@@ -230,6 +255,50 @@ const AccountSummary = () => {
               formatCurrency={formatCurrency}
               getStatusColor={getStatusColor}
             />
+            
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="px-6 py-4 border-t bg-gray-50">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-gray-700">
+                    Showing {((currentPage - 1) * requestsPerPage) + 1} to {Math.min(currentPage * requestsPerPage, totalRequests)} of {totalRequests} results
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+                    
+                    <div className="flex space-x-1">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          className={`px-3 py-2 text-sm font-medium rounded-md ${
+                            currentPage === page
+                              ? 'bg-purple-600 text-white'
+                              : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      ))}
+                    </div>
+                    
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </>
       )}

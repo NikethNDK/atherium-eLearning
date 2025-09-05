@@ -228,6 +228,22 @@ class WithdrawalService:
             BankDetails.instructor_id == instructor_id
         ).order_by(desc(BankDetails.is_primary), desc(BankDetails.created_at)).all()
     
+    def delete_bank_details(self, db: Session, bank_detail_id: int, instructor_id: int) -> bool:
+        """Delete bank details for instructor"""
+        bank_detail = db.query(BankDetails).filter(
+            BankDetails.id == bank_detail_id,
+            BankDetails.instructor_id == instructor_id
+        ).first()
+        
+        if not bank_detail:
+            return False
+        
+        db.delete(bank_detail)
+        db.commit()
+        
+        logger.info(f"Bank details deleted: ID {bank_detail_id} for instructor {instructor_id}")
+        return True
+    
     async def _notify_admins_about_withdrawal_request(self, db: Session, withdrawal_request: WithdrawalRequest):
         """Send notification to all admins about new withdrawal request"""
         try:

@@ -28,10 +28,10 @@ class WithdrawalRequestUpdate(BaseModel):
 
 class BankDetailsCreate(BaseModel):
     account_holder_name: str = Field(..., min_length=2, max_length=255)
-    account_number: str = Field(..., min_length=9, max_length=20)
+    account_number: str = Field(..., min_length=6, max_length=20, pattern=r'^[0-9]+$')
     ifsc_code: str = Field(..., min_length=11, max_length=11, pattern=r'^[A-Z]{4}0[A-Z0-9]{6}$')
     branch_name: str = Field(..., min_length=2, max_length=255)
-    bank_name: str = Field(..., min_length=2, max_length=255)
+    bank_name: str = Field(..., min_length=3, max_length=255)
     is_primary: bool = True
 
 class BankDetailsResponse(BaseModel):

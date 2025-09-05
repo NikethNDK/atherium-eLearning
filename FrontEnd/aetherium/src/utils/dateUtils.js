@@ -70,19 +70,20 @@ export const formatTimeOnly = (dateString) => {
 export const formatRelativeTime = (dateString) => {
   if (!dateString) return '-';
   
-  const date = new Date(dateString);
+  // Convert UTC date to IST by adding 5:30 hours
+  const utcDate = new Date(dateString);
+  const istDate = new Date(utcDate.getTime() + (5.5 * 60 * 60 * 1000));
+  
   const now = new Date();
   
-  // Ensure both dates are in the same timezone for accurate comparison
-  const utcDate = new Date(date.getTime() + (date.getTimezoneOffset() * 60000));
-  const utcNow = new Date(now.getTime() + (now.getTimezoneOffset() * 60000));
-  
-  const diffInMs = utcNow - utcDate;
-  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+  // Calculate difference in milliseconds
+  const diffInMs = now - istDate;
+  const diffInSeconds = Math.floor(diffInMs / 1000);
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
   const diffInHours = Math.floor(diffInMinutes / 60);
   const diffInDays = Math.floor(diffInHours / 24);
   
-  if (diffInMinutes < 1) return 'Just now';
+  if (diffInSeconds < 60) return 'Just now';
   if (diffInMinutes < 60) return `${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''} ago`;
   if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
   if (diffInDays < 7) return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;

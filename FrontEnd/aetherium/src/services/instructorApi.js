@@ -270,6 +270,11 @@ getLessonAssessment: async (lessonId) => {
   getBankDetails: async () => {
     const response = await api.get("/instructor/withdrawal/bank-details")
     return response.data
+  },
+
+  deleteBankDetails: async (bankDetailId) => {
+    const response = await api.delete(`/instructor/withdrawal/bank-details/${bankDetailId}`)
+    return response.data
   }
 
 }

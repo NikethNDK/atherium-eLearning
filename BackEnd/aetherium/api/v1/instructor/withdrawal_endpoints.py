@@ -190,3 +190,38 @@ async def get_bank_details(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch bank details: {str(e)}"
         )
+
+@router.delete("/bank-details/{bank_detail_id}")
+async def delete_bank_details(
+    bank_detail_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Delete bank details for the instructor"""
+    if current_user.role.name != "instructor":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail="Only instructors can delete bank details"
+        )
+    
+    try:
+        result = withdrawal_service.delete_bank_details(
+            db=db,
+            bank_detail_id=bank_detail_id,
+            instructor_id=current_user.id
+        )
+        
+        if not result:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Bank details not found or you don't have permission to delete this"
+            )
+        
+        return {"message": "Bank details deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete bank details: {str(e)}"
+        )
