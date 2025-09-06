@@ -352,6 +352,50 @@ export const adminAPI = {
     const response = await api.get(`/admin/withdrawal/instructor/${instructorId}/requests?page=${page}&limit=${limit}`);
     return response.data;
   },
+
+  // Admin Bank Details
+  createBankDetails: async (bankData) => {
+    const response = await api.post("/admin/bank-details", bankData);
+    return response.data;
+  },
+
+  getBankDetails: async () => {
+    const response = await api.get("/admin/bank-details");
+    return response.data;
+  },
+
+  updateBankDetails: async (bankDetailId, updateData) => {
+    const response = await api.put(`/admin/bank-details/${bankDetailId}`, updateData);
+    return response.data;
+  },
+
+  deleteBankDetails: async (bankDetailId) => {
+    const response = await api.delete(`/admin/bank-details/${bankDetailId}`);
+    return response.data;
+  },
+
+  getPrimaryBankDetails: async () => {
+    const response = await api.get("/admin/bank-details/primary");
+    return response.data;
+  },
+
+  // Admin Withdrawal
+  createWithdrawalRequest: async (amount, bankDetailsId) => {
+    const response = await api.post("/admin/withdrawal/request", { amount }, {
+      params: { bank_details_id: bankDetailsId }
+    });
+    return response.data;
+  },
+
+  getWithdrawalRequests: async (page = 1, limit = 10) => {
+    const response = await api.get(`/admin/withdrawal/requests?page=${page}&limit=${limit}`);
+    return response.data;
+  },
+
+  getWalletBalance: async () => {
+    const response = await api.get("/admin/wallet/balance");
+    return response.data;
+  },
 }
 
 export const chatAPI = {

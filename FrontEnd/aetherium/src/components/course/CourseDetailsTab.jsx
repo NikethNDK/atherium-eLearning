@@ -7,7 +7,7 @@ import ReviewForm from "./ReviewForm";
 import ReviewList from "./ReviewList";
 import { userAPI } from "../../services/userApi";
 import { useAuth } from "../../context/AuthContext";
-
+import { getImageUrl } from "../common/ImageURL";
 const CourseDetailsTab = ({ course, isPurchased, onPurchase }) => {
   const { user } = useAuth();
   console.log('CourseDetailsTab rendered with course:', course);
@@ -209,7 +209,7 @@ const CourseDetailsTab = ({ course, isPurchased, onPurchase }) => {
             <div className="flex items-center mb-3 sm:mb-4">
               {course.instructor?.profile_picture ? (
                 <img
-                  src={course.instructor.profile_picture}
+                  src={getImageUrl(course.instructor.profile_picture)}
                   alt={course.instructor?.firstname}
                   className="w-8 h-8 sm:w-10 sm:h-10 rounded-full mr-2 sm:mr-3"
                 />

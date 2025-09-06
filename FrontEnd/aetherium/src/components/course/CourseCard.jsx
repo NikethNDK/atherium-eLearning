@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom"
+import {getImageUrl} from "../../components/common/ImageURL"
 import { Clock, Star, BookOpen } from "lucide-react"
 
 const CourseCard = ({ course, showAddToCart = true }) => {
@@ -11,14 +12,14 @@ const CourseCard = ({ course, showAddToCart = true }) => {
     return `${duration} ${unit || "hours"}`
   }
 
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return null
-    // If it's already a full URL, return as is
-    if (imagePath.startsWith("http")) return imagePath
-    // Otherwise, construct the URL with your backend base URL
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
-    return `${baseUrl}/${imagePath}`
-  }
+  // const getImageUrl = (imagePath) => {
+  //   if (!imagePath) return null
+  //   // If it's already a full URL, return as is
+  //   if (imagePath.startsWith("http")) return imagePath
+  //   // Otherwise, construct the URL with your backend base URL
+  //   const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
+  //   return `${baseUrl}/${imagePath}`
+  // }
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
       <div className="relative">
@@ -44,7 +45,7 @@ const CourseCard = ({ course, showAddToCart = true }) => {
 
         <div className="flex items-center mb-3">
           <img
-            src={course.instructor?.profile_picture || "/placeholder.svg?height=24&width=24"}
+            src={getImageUrl(course.instructor?.profile_picture) || "/placeholder.svg?height=24&width=24"}
             alt={course.instructor?.firstname}
             className="w-6 h-6 rounded-full mr-2"
           />
