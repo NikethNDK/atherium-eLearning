@@ -121,7 +121,7 @@
 import { useState, useEffect } from "react";
 import Header from "../../components/common/Header";
 import Footer from "../../components/common/Footer";
-import LoadingSpinner from "../../components/common/LoadingSpinner";
+import BookLoader from "../../components/common/BookLoader";
 import MyLearningList from "./MyLearningList"
 import { userAPI } from "../../services/userApi";
 import { useAuth } from "../../context/AuthContext";
@@ -214,7 +214,7 @@ const MyLearning = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <LoadingSpinner />
+        <BookLoader message="Loading your courses..." />
         <Footer />
       </div>
     );

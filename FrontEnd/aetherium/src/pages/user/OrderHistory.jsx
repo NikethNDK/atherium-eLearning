@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { userAPI } from "../../services/userApi"
-import LoadingSpinner from "../../components/common/LoadingSpinner"
+import BookLoader from "../../components/common/BookLoader"
 import Header from '../../components/common/Header'
 const OrderHistory = () => {
   const [orders, setOrders] = useState([])
@@ -62,8 +62,9 @@ const OrderHistory = () => {
 
   if (initialLoad) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <LoadingSpinner size="large" />
+      <div className="min-h-screen bg-white">
+        <Header />
+        <BookLoader size="large" message="Loading your orders..." />
       </div>
     )
   }

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { userAPI } from "../../services/userApi"
 import { chatAPI } from "../../services/api"
-import LoadingSpinner from "../../components/common/LoadingSpinner"
+import BookLoader from "../../components/common/BookLoader"
 import LessonContentDisplay from "../../components/course/user/learning/LessonContentDisplay"
 import LessonComments from "../../components/course/user/learning/LessonComments"
 import { ChevronLeft, ChevronRight, CheckCircle, Lock, ArrowLeft, MessageCircle, Award } from "lucide-react"
@@ -289,7 +289,7 @@ const CourseCurriculumPage = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <LoadingSpinner />
+        <BookLoader message="Loading your course..." />
         <Footer />
       </div>
     )

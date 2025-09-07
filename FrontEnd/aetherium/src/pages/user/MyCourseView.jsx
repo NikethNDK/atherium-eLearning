@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate, Link, useSearchParams } from "react-router-dom"
 import { userAPI} from '../../services/userApi'
-import LoadingSpinner from "../../components/common/LoadingSpinner"
+import BookLoader from "../../components/common/BookLoader"
 import CertificateDisplay from "../../components/course/user/learning/CertificateDisplay"
 import { ArrowLeft, CheckCircle, XCircle, User, Clock, BookOpen, Play, ChevronDown, ChevronRight } from "lucide-react"
 import Header from "../../components/common/Header"
@@ -64,7 +64,7 @@ const MyCourseView = () => {
     return `${baseUrl}/${imagePath}`
   }
 
-  if (loading) return <LoadingSpinner size="large" />
+  if (loading) return <BookLoader size="large" message="Loading course..." />
   if (!course) return <div className="p-8">Course not found</div>
 
   return (

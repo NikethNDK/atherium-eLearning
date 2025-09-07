@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { userAPI } from "../../services/userApi"
-import LoadingSpinner from "../../components/common/LoadingSpinner"
+import BookLoader from "../../components/common/BookLoader"
 
 const Wishlist = () => {
   const [wishlistItems, setWishlistItems] = useState([])
@@ -62,8 +62,8 @@ const Wishlist = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="large" />
+      <div className="min-h-screen bg-gray-50">
+        <BookLoader size="large" message="Loading your wishlist..." />
       </div>
     )
   }

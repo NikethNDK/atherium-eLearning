@@ -138,7 +138,7 @@ import Header from "../../components/common/Header";
 import Footer from "../../components/common/Footer";
 import CourseFilters from "../../components/course/CourseFilters";
 import CourseList from "../../components/course/CourseList";
-import LoadingSpinner from "../../components/common/LoadingSpinner";
+import BookLoader from "../../components/common/BookLoader";
 import { userAPI } from "../../services/userApi";
 
 const Courses = () => {
@@ -199,7 +199,7 @@ const Courses = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <LoadingSpinner />
+        <BookLoader message="Loading courses..." />
         <Footer />
       </div>
     );

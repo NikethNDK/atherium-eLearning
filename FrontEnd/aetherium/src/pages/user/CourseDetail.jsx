@@ -6,7 +6,7 @@ import CourseHero from "./CourseHero";
 import CoursePurchaseCard from "./CoursePurchaseCard";
 import CourseContent from "../../components/course/CourseContent";
 import RelatedCourses from "../../components/course/RelatedCourses";
-import LoadingSpinner from "../../components/common/LoadingSpinner";
+import BookLoader from "../../components/common/BookLoader";
 import { userAPI } from "../../services/userApi";
 import { useAuth } from "../../context/AuthContext";
 
@@ -74,7 +74,7 @@ const CourseDetail = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <LoadingSpinner />
+        <BookLoader message="Loading course information..." />
         <Footer />
       </div>
     );
