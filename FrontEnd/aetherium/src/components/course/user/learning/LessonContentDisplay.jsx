@@ -37,21 +37,29 @@ const LessonContentDisplay = ({ lesson, onLessonComplete, onQuizComplete }) => {
       await userAPI.completeLesson(lesson.id)
       setLessonProgress((prev) => ({ ...prev, is_completed: true, progress_percentage: 100 }))
       onLessonComplete(lesson.id)
-      alert(`Lesson "${lesson.name}" marked as complete!`)
+      // Removed alert message for better UX
     } catch (error) {
       console.error("Error marking lesson complete:", error)
-      alert("Failed to mark lesson complete. Please try again.")
+      // Removed alert message for better UX - error handling is done through notification system
     }
   }
 
   const handleVideoPlay = () => {
     if (videoRef.current && lesson.content_type === "VIDEO") {
+      // Load saved video position from localStorage
+      const savedPosition = localStorage.getItem(`video_position_${lesson.id}`)
+      if (savedPosition && videoRef.current.currentTime === 0) {
+        videoRef.current.currentTime = parseFloat(savedPosition)
+      }
+
       // Start updating time spent every 5 seconds
       intervalRef.current = setInterval(async () => {
         const currentTime = videoRef.current.currentTime
         try {
           // Payload for updateLessonTime: { time_spent: int }
           await userAPI.updateLessonTime(lesson.id, Math.floor(currentTime))
+          // Also save to localStorage for resume functionality
+          localStorage.setItem(`video_position_${lesson.id}`, currentTime.toString())
         } catch (error) {
           console.error("Error updating video time:", error)
         }
@@ -63,6 +71,10 @@ const LessonContentDisplay = ({ lesson, onLessonComplete, onQuizComplete }) => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current)
     }
+    // Save current position when video is paused
+    if (videoRef.current && lesson.content_type === "VIDEO") {
+      localStorage.setItem(`video_position_${lesson.id}`, videoRef.current.currentTime.toString())
+    }
   }
 
   const handleVideoEnded = async () => {
@@ -72,6 +84,8 @@ const LessonContentDisplay = ({ lesson, onLessonComplete, onQuizComplete }) => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current)
     }
+    // Clear saved position when video is completed
+    localStorage.removeItem(`video_position_${lesson.id}`)
   }
 
   const renderContent = () => {

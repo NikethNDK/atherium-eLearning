@@ -47,7 +47,7 @@ const LessonContent = ({ lesson, courseId, onLessonComplete }) => {
       case "TEXT":
         return <TextContent content={lesson.lesson_content} />;
       case "VIDEO":
-        return <VideoContent content={lesson.lesson_content} />;
+        return <VideoContent content={lesson.lesson_content} lessonId={lesson.id} />;
       case "PDF":
         return <PdfContent content={lesson.lesson_content} />;
       case "ASSESSMENT":
