@@ -379,21 +379,32 @@ export const adminAPI = {
     return response.data;
   },
 
-  // Admin Withdrawal
+  // Admin Withdrawal (Admin's own requests)
   createWithdrawalRequest: async (amount, bankDetailsId) => {
-    const response = await api.post("/admin/withdrawal/request", { amount }, {
+    const response = await api.post("/admin/my/withdrawal/request", { amount }, {
       params: { bank_details_id: bankDetailsId }
     });
     return response.data;
   },
 
-  getWithdrawalRequests: async (page = 1, limit = 10) => {
-    const response = await api.get(`/admin/withdrawal/requests?page=${page}&limit=${limit}`);
+  getMyWithdrawalRequests: async (page = 1, limit = 10) => {
+    const response = await api.get(`/admin/my/withdrawal/requests?page=${page}&limit=${limit}`);
     return response.data;
   },
 
   getWalletBalance: async () => {
-    const response = await api.get("/admin/wallet/balance");
+    const response = await api.get("/admin/my/wallet/balance");
+    return response.data;
+  },
+
+  // Admin Withdrawal (For reviewing instructor requests)
+  getWithdrawalRequests: async (page = 1, limit = 10, statusFilter = null) => {
+    const params = new URLSearchParams();
+    params.append("page", page.toString());
+    params.append("limit", limit.toString());
+    if (statusFilter) params.append("status_filter", statusFilter);
+    
+    const response = await api.get(`/admin/withdrawal/requests?${params.toString()}`);
     return response.data;
   },
 }

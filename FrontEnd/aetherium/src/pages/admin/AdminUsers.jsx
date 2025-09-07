@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { authAPI } from "../../services/api"
 import LoadingSpinner from "../../components/common/LoadingSpinner"
+import { formatDateOnly } from "../../utils/dateUtils"
 import { Eye, Edit, Trash2, Shield, ShieldOff } from "lucide-react"
 
 const AdminUsers = () => {
@@ -32,7 +33,7 @@ const AdminUsers = () => {
         status: user.is_active ? "Active" : "Blocked",
         is_active: user.is_active,
         joinedDate: user.created_at
-          ? new Date(user.created_at).toLocaleDateString("en-US", {
+          ? formatDateOnly(user.created_at, {
               day: "numeric",
               month: "short",
               year: "numeric",

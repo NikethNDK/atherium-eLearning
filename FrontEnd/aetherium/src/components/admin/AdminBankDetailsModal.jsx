@@ -12,6 +12,7 @@ const AdminBankDetailsModal = ({ isOpen, onClose, onSubmit }) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [existingBankDetails, setExistingBankDetails] = useState([]);
 
   useEffect(() => {
@@ -90,8 +91,36 @@ const AdminBankDetailsModal = ({ isOpen, onClose, onSubmit }) => {
 
     try {
       setLoading(true);
+      setError('');
+      setSuccessMessage('');
+      console.log('Saving bank details:', formData);
+      // Make the API call to save bank details
+      const result = await adminAPI.createBankDetails(formData);
+      console.log('Bank details saved successfully:', result);
+      
+      // Show success message
+      setSuccessMessage('Bank details saved successfully!');
+      
+      // Clear the form
+      setFormData({
+        account_holder_name: '',
+        account_number: '',
+        ifsc_code: '',
+        branch_name: '',
+        bank_name: '',
+        is_primary: true
+      });
+      
+      // Refresh the existing bank details list
+      await fetchBankDetails();
+      
+      // Call the onSubmit callback to notify parent component
       await onSubmit(formData);
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (err) {
+      console.error('Error saving bank details:', err);
       setError(err.response?.data?.detail || 'Failed to save bank details');
     } finally {
       setLoading(false);
@@ -123,6 +152,7 @@ const AdminBankDetailsModal = ({ isOpen, onClose, onSubmit }) => {
       is_primary: true
     });
     setError('');
+    setSuccessMessage('');
     onClose();
   };
 
@@ -271,6 +301,12 @@ const AdminBankDetailsModal = ({ isOpen, onClose, onSubmit }) => {
           {error && (
             <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md">
               {error}
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="text-green-600 text-sm bg-green-50 p-3 rounded-md">
+              {successMessage}
             </div>
           )}
 

@@ -11,21 +11,21 @@ from typing import List
 router = APIRouter()
 
 @router.post("/withdrawal/request", response_model=AdminWithdrawalResponse)
-async def create_admin_withdrawal_request(
+async def create_admin_withdrawal(
     withdrawal_data: AdminWithdrawalRequest,
     bank_details_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Create withdrawal request for admin"""
+    """Create immediate withdrawal for admin (debit wallet immediately)"""
     if current_user.role.name != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, 
-            detail="Only admins can create withdrawal requests"
+            detail="Only admins can create withdrawals"
         )
     
     try:
-        withdrawal_request = admin_withdrawal_service.create_withdrawal_request(
+        withdrawal_request = admin_withdrawal_service.create_immediate_withdrawal(
             db=db,
             admin_id=current_user.id,
             amount=withdrawal_data.amount,
@@ -37,7 +37,7 @@ async def create_admin_withdrawal_request(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create withdrawal request: {str(e)}"
+            detail=f"Failed to process withdrawal: {str(e)}"
         )
 
 @router.get("/withdrawal/requests", response_model=dict)
@@ -48,6 +48,34 @@ async def get_admin_withdrawal_requests(
     current_user: User = Depends(get_current_user)
 ):
     """Get withdrawal requests for admin"""
+    if current_user.role.name != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail="Only admins can access withdrawal requests"
+        )
+    
+    try:
+        result = admin_withdrawal_service.get_withdrawal_requests(
+            db=db,
+            admin_id=current_user.id,
+            page=page,
+            limit=limit
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch withdrawal requests: {str(e)}"
+        )
+
+@router.get("/withdrawal/my-requests", response_model=dict)
+async def get_my_admin_withdrawal_requests(
+    page: int = 1,
+    limit: int = 10,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get admin's own withdrawal requests"""
     if current_user.role.name != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, 

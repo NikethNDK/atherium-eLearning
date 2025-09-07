@@ -303,6 +303,9 @@ import { useState, useEffect } from "react"
 import { useAuth } from "../../context/AuthContext"
 import { adminAPI } from "../../services/api"
 import LoadingSpinner from "../../components/common/LoadingSpinner"
+import AdminWithdrawalModal from "../../components/admin/AdminWithdrawalModal"
+import AdminWithdrawalHistoryModal from "../../components/admin/AdminWithdrawalHistoryModal"
+import { formatDateOnly } from "../../utils/dateUtils"
 import { Users, BookOpen, DollarSign, Star, ShoppingCart, Award, Filter } from "lucide-react"
 import {
   AreaChart,
@@ -323,9 +326,14 @@ const AdminDashboard = () => {
   const [dashboardData, setDashboardData] = useState({})
   const [revenueFilter, setRevenueFilter] = useState("yearly")
   const [revenueData, setRevenueData] = useState([])
+  const [showWithdrawalModal, setShowWithdrawalModal] = useState(false)
+  const [showWithdrawalHistoryModal, setShowWithdrawalHistoryModal] = useState(false)
+  const [walletBalance, setWalletBalance] = useState(0)
+  const [successMessage, setSuccessMessage] = useState('')
 
   useEffect(() => {
     fetchDashboardData()
+    fetchWalletBalance()
   }, [])
 
   useEffect(() => {
@@ -361,7 +369,7 @@ const AdminDashboard = () => {
           data.monthly_revenue?.map((item) => ({
             ...item,
             revenue: Number.parseFloat(item.revenue),
-            period: new Date(item.month).toLocaleDateString("en-US", {
+            period: formatDateOnly(item.month, {
               month: "short",
               year: revenueFilter === "yearly" ? "numeric" : undefined,
             }),
@@ -372,7 +380,7 @@ const AdminDashboard = () => {
           data.daily_revenue?.map((item) => ({
             ...item,
             revenue: Number.parseFloat(item.revenue),
-            period: new Date(item.date).toLocaleDateString("en-US", {
+            period: formatDateOnly(item.date, {
               month: "short",
               day: "numeric",
             }),
@@ -381,6 +389,32 @@ const AdminDashboard = () => {
       }
     } catch (error) {
       console.error("Error fetching revenue data:", error)
+    }
+  }
+
+  const fetchWalletBalance = async () => {
+    try {
+      const balance = await adminAPI.getWalletBalance()
+      setWalletBalance(balance.balance)
+      console.log("The balance is", balance.balance)
+    } catch (error) {
+      console.error("Error fetching wallet balance:", error)
+    }
+  }
+
+  const handleWithdrawalSubmit = async (amount, bankDetailsId) => {
+    try {
+      await adminAPI.createWithdrawalRequest(amount, bankDetailsId)
+      setShowWithdrawalModal(false)
+      // Refresh wallet balance after successful withdrawal
+      await fetchWalletBalance()
+      // Show success message
+      setSuccessMessage(`Withdrawal of ₹${amount} processed successfully!`)
+      // Clear success message after 5 seconds
+      setTimeout(() => setSuccessMessage(''), 5000)
+    } catch (error) {
+      console.error("Error processing withdrawal:", error)
+      throw error // Re-throw to let the modal handle the error display
     }
   }
 
@@ -430,6 +464,18 @@ const AdminDashboard = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen">
+      {/* Success Message */}
+      {successMessage && (
+        <div className="fixed top-4 right-4 z-50 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg shadow-lg">
+          <div className="flex items-center">
+            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+            {successMessage}
+          </div>
+        </div>
+      )}
+
       {/* Dashboard Title */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
@@ -699,17 +745,44 @@ const AdminDashboard = () => {
               </div>
             </div>
 
-            <div className="pt-4 border-t border-gray-100">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-700">Admin Wallet</span>
-                <span className="text-lg font-bold text-blue-600">
-                  {formatCurrency(stats.admin_wallet_balance || 0)}
-                </span>
+              <div className="pt-4 border-t border-gray-100">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-medium text-gray-700">Admin Wallet</span>
+                  <span className="text-lg font-bold text-blue-600">
+                    {formatCurrency(walletBalance || stats.admin_wallet_balance || 0)}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => setShowWithdrawalModal(true)}
+                    className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
+                  >
+                    Withdraw Funds
+                  </button>
+                  <button
+                    onClick={() => setShowWithdrawalHistoryModal(true)}
+                    className="w-full bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors duration-200 text-sm font-medium"
+                  >
+                    Withdrawal History
+                  </button>
+                </div>
               </div>
-            </div>
           </div>
         </div>
       </div>
+
+      {/* Withdrawal Modal */}
+      <AdminWithdrawalModal
+        isOpen={showWithdrawalModal}
+        onClose={() => setShowWithdrawalModal(false)}
+        onSubmit={handleWithdrawalSubmit}
+        maxAmount={walletBalance || stats.admin_wallet_balance || 0}
+      />
+      
+      <AdminWithdrawalHistoryModal
+        isOpen={showWithdrawalHistoryModal}
+        onClose={() => setShowWithdrawalHistoryModal(false)}
+      />
     </div>
   )
 }

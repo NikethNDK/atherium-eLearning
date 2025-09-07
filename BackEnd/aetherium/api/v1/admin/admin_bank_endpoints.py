@@ -138,3 +138,36 @@ async def delete_admin_bank_details(
             detail=f"Failed to delete bank details: {str(e)}"
         )
 
+@router.get("/bank-details/primary", response_model=AdminBankDetailsResponse)
+async def get_primary_admin_bank_details(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get primary bank details for admin"""
+    if current_user.role.name != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail="Only admins can access bank details"
+        )
+    
+    try:
+        bank_details = admin_bank_service.get_primary_bank_details(
+            db=db,
+            admin_id=current_user.id
+        )
+        
+        if not bank_details:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No primary bank details found"
+            )
+        
+        return bank_details
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch primary bank details: {str(e)}"
+        )
+
