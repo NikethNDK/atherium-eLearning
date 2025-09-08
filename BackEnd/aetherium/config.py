@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     CLOUDINARY_API_SECRET:str
     REFRESH_TOKEN_EXPIRE_MIN:int
     BLACKLIST_TOKEN_EXPIRE_DAYS:int
+    POSTGRES_USER: str
+    POSTGRES_PASSWORD: str
+    POSTGRES_DB: str
 
     
     # Google
