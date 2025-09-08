@@ -5,7 +5,10 @@ class WebSocketService {
     this.typingHandlers = new Map(); // userId -> typing handler function
     this.baseWsUrl = import.meta.env.VITE_WS_URL || "ws://localhost:8000";
     this.reconnectAttempts = new Map(); // userId -> reconnect count
-    this.maxReconnectAttempts = 5;
+    this.maxReconnectAttempts = 10; // Increased for production
+    this.heartbeatInterval = null;
+    this.heartbeatIntervalMs = 30000; // 30 seconds
+    this.connectionTimeout = 10000; // 10 seconds
   }
 
   // Connect to WebSocket for a specific user
@@ -21,14 +24,32 @@ class WebSocketService {
       }
     }
 
-    const wsUrl = `${this.baseWsUrl}/ws/${userId}`;
+    // Determine WebSocket URL based on environment
+    const isProduction = window.location.protocol === 'https:';
+    const wsProtocol = isProduction ? 'wss:' : 'ws:';
+    const wsHost = isProduction ? 'api.aetherium.wiki' : 'localhost:8000';
+    const wsUrl = `${wsProtocol}//${wsHost}/ws/${userId}`;
+    
     console.log(`Connecting to WebSocket: ${wsUrl}`);
     
     const ws = new WebSocket(wsUrl);
     
+    // Set connection timeout
+    const connectionTimeout = setTimeout(() => {
+      if (ws.readyState === WebSocket.CONNECTING) {
+        console.warn(`WebSocket connection timeout for user: ${userId}`);
+        ws.close();
+      }
+    }, this.connectionTimeout);
+    
     ws.onopen = () => {
       console.log(`WebSocket connected for user: ${userId}`);
+      clearTimeout(connectionTimeout);
       this.reconnectAttempts.set(userId, 0); // Reset reconnect attempts
+      
+      // Start heartbeat for this connection
+      this.startHeartbeat(userId);
+      
       // Send ping to verify connection
       ws.send(JSON.stringify({ type: 'ping' }));
     };
@@ -86,6 +107,8 @@ class WebSocketService {
 
     ws.onclose = (event) => {
       console.log(`WebSocket disconnected for user: ${userId}, code: ${event.code}, reason: ${event.reason}`);
+      clearTimeout(connectionTimeout);
+      this.stopHeartbeat(userId);
       this.connections.delete(userId);
       
       // Only reconnect if it wasn't a manual disconnect
@@ -185,6 +208,39 @@ class WebSocketService {
     this.messageHandlers.clear();
     this.typingHandlers.clear();
     this.reconnectAttempts.clear();
+    this.stopAllHeartbeats();
+  }
+
+  // Start heartbeat for a specific user
+  startHeartbeat(userId) {
+    this.stopHeartbeat(userId); // Clear any existing heartbeat
+    
+    this.heartbeatInterval = setInterval(() => {
+      const ws = this.connections.get(userId);
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        console.log(`Sending heartbeat for user: ${userId}`);
+        ws.send(JSON.stringify({ type: 'ping' }));
+      } else {
+        console.warn(`WebSocket not open for user ${userId}, stopping heartbeat`);
+        this.stopHeartbeat(userId);
+      }
+    }, this.heartbeatIntervalMs);
+  }
+
+  // Stop heartbeat for a specific user
+  stopHeartbeat(userId) {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
+  }
+
+  // Stop all heartbeats
+  stopAllHeartbeats() {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
   }
 }
 

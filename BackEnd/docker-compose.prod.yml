@@ -14,7 +14,13 @@ services:
     working_dir: /Backend
     restart: unless-stopped
     command: >
-      gunicorn -w 4 -k uvicorn.workers.UvicornWorker aetherium.main:app --bind 0.0.0.0:8000
+      gunicorn -w 1 -k uvicorn.workers.UvicornWorker aetherium.main:app 
+      --bind 0.0.0.0:8000 
+      --worker-connections 1000 
+      --max-requests 1000 
+      --max-requests-jitter 100 
+      --timeout 300 
+      --keep-alive 2
 
   nginx:
     image: nginx:alpine

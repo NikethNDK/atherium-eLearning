@@ -144,7 +144,7 @@ class PurchaseService:
         subtotal=course.discount_price if course.discount_price else course.price
         if subtotal<=0:
             raise HTTPException (status_code=400, detail="Invalid course price")
-        tax_amount=subtotal*0.18
+        tax_amount=subtotal*0.20
         total_amount=subtotal+tax_amount
 
         receipt = f"single_course_{course.id}_user_{user_id}"
