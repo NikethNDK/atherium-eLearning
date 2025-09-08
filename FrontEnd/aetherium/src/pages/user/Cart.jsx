@@ -326,7 +326,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Trash2, Heart, ShoppingCart } from "lucide-react";
 import Header from "../../components/common/Header";
 import Footer from "../../components/common/Footer";
-import LoadingSpinner from "../../components/common/LoadingSpinner";
+import BookLoader from "../../components/common/BookLoader";
 import CheckoutModal from "./CheckoutModal";
 import { userAPI } from "../../services/userApi";
 import { useAuth } from "../../context/AuthContext";
@@ -477,7 +477,7 @@ const Cart = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <LoadingSpinner />
+        <BookLoader message="Loading your cart..." />
         <Footer />
       </div>
     );

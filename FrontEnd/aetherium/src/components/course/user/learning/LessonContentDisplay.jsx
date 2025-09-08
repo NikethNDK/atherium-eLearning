@@ -179,6 +179,10 @@ const LessonContentDisplay = ({ lesson, onLessonComplete, onQuizComplete }) => {
         case "REFERENCE_LINK":
   const externalUrl = getAbsoluteUrl(lesson.lesson_content?.external_url);
   
+  // Debug logging to help identify the issue
+  console.log('Original external URL:', lesson.lesson_content?.external_url);
+  console.log('Processed external URL:', externalUrl);
+  
   return (
     <div>
       <h3>{lesson.lesson_content?.link_title || lesson.name}</h3>

@@ -13,14 +13,19 @@ export const getAbsoluteUrl = (url) => {
   // Trim whitespace
   url = url.trim();
   
+  console.log('Processing URL:', url);
+  
   // If URL already has protocol, return as is
   if (url.startsWith('http://') || url.startsWith('https://')) {
+    console.log('URL already has protocol:', url);
     return url;
   }
   
   // If URL starts with //, add https: protocol
   if (url.startsWith('//')) {
-    return `https:${url}`;
+    const result = `https:${url}`;
+    console.log('Added https: protocol:', result);
+    return result;
   }
   
   // If URL starts with /, it's a relative path - this shouldn't happen for external URLs
@@ -31,7 +36,9 @@ export const getAbsoluteUrl = (url) => {
   }
   
   // If URL doesn't start with protocol, assume it's a domain and add https://
-  return `https://${url}`;
+  const result = `https://${url}`;
+  console.log('Added https:// protocol:', result);
+  return result;
 };
 
 /**

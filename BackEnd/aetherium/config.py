@@ -35,6 +35,6 @@ class Settings(BaseSettings):
     class Config:
         # env_file = os.path.join(os.path.dirname(__file__), ".env")
         # env_file=".env"
-        env_file = os.getenv("ENV_FILE", ".env")
+        env_file = os.getenv("ENV_FILE", ".env.dev")
 
 settings=Settings()
