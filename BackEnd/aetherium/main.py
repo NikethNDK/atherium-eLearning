@@ -69,5 +69,5 @@ app.include_router(admin_withdrawal_router)
 app.include_router(websocket_router)
 
 # DB & Static Files
-Base.metadata.create_all(bind=engine)
+# Base.metadata.create_all(bind=engine)
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
