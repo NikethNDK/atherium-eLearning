@@ -38,9 +38,11 @@ def verify_otp_code(email: str, otp: str) -> bool:
             return True
     return False
 
-def send_otp_email(email: str, otp: str):
+def send_otp_email(email: str, otp: str, user_name: str = None):
     print(otp)
-    msg = MIMEText(f"Your OTP for email verification is: {otp}\nIt expires in 5 minutes.")
+    # Create personalized greeting if user_name is provided
+    greeting = f"Hello {user_name}," if user_name else "Hello,"
+    msg = MIMEText(f"{greeting}\n\nYour OTP for email verification is: {otp}\nIt expires in 5 minutes.")
     msg['Subject'] = "Aetherium Email Verification OTP"
     msg['From'] = FROM_EMAIL
     msg['To'] = email

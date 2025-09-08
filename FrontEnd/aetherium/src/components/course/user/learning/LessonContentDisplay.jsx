@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { userAPI } from "../../../../services/userApi"
 import QuizComponent from "./QuizComponent"
+import { getAbsoluteUrl } from "../../../../utils/urlUtils"
 
 const LessonContentDisplay = ({ lesson, onLessonComplete, onQuizComplete }) => {
   const [lessonProgress, setLessonProgress] = useState(null)
@@ -176,24 +177,34 @@ const LessonContentDisplay = ({ lesson, onLessonComplete, onQuizComplete }) => {
           />
         )
         case "REFERENCE_LINK":
+  const externalUrl = getAbsoluteUrl(lesson.lesson_content?.external_url);
+  
   return (
     <div>
       <h3>{lesson.lesson_content?.link_title || lesson.name}</h3>
       <p>{lesson.lesson_content?.link_description || lesson.description}</p>
-      {lesson.lesson_content?.external_url && (
-        <a
-          href={lesson.lesson_content.external_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-600 underline"
-        >
-          Open Link
-        </a>
+      {externalUrl && (
+        <div className="mt-4">
+          <a
+            href={externalUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+            Open External Link
+          </a>
+          <p className="text-xs text-gray-500 mt-2 break-all">
+            {externalUrl}
+          </p>
+        </div>
       )}
       {!lessonProgress?.is_completed && (
         <button
           onClick={handleMarkComplete}
-          className="mt-4 ml-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"
+          className="mt-4 ml-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm"
         >
           Mark as Complete
         </button>

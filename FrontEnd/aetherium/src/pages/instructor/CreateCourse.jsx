@@ -802,7 +802,7 @@ const CreateCourse = () => {
               />
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Course Price ($)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Course Price (₹)</label>
                 <input
                   type="number"
                   name="price"

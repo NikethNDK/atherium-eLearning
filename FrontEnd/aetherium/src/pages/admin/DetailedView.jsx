@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom"
 import { adminAPI } from "../../services/api"
 import LoadingSpinner from "../../components/common/LoadingSpinner"
 import { ArrowLeft, Play, FileText, Link as LinkIcon, CheckCircle, BookOpen } from "lucide-react"
+import { getAbsoluteUrl } from "../../utils/urlUtils"
 
 const DetailedView = () => {
   const { courseId } = useParams()
@@ -264,24 +265,30 @@ const DetailedView = () => {
             </div>
             {selectedLesson.lesson_content?.external_url ? (
               <div className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
-                <a
-                  href={selectedLesson.lesson_content.external_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-800"
-                >
-                  <h4 className="font-medium">
-                    {selectedLesson.lesson_content.link_title || selectedLesson.lesson_content.external_url}
-                  </h4>
-                  {selectedLesson.lesson_content.link_description && (
-                    <p className="text-sm text-gray-600 mt-1">
-                      {selectedLesson.lesson_content.link_description}
-                    </p>
-                  )}
-                  <p className="text-xs text-gray-500 mt-2 break-all">
-                    {selectedLesson.lesson_content.external_url}
-                  </p>
-                </a>
+                {(() => {
+                  const externalUrl = getAbsoluteUrl(selectedLesson.lesson_content.external_url);
+                  
+                  return (
+                    <a
+                      href={externalUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      <h4 className="font-medium">
+                        {selectedLesson.lesson_content.link_title || selectedLesson.lesson_content.external_url}
+                      </h4>
+                      {selectedLesson.lesson_content.link_description && (
+                        <p className="text-sm text-gray-600 mt-1">
+                          {selectedLesson.lesson_content.link_description}
+                        </p>
+                      )}
+                      <p className="text-xs text-gray-500 mt-2 break-all">
+                        {externalUrl}
+                      </p>
+                    </a>
+                  );
+                })()}
               </div>
             ) : (
               <p className="text-gray-500">No link available</p>
