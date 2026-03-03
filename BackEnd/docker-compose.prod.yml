@@ -1,6 +1,7 @@
 services:
   backend:
-    build: .
+    image: niketh7/aetherium-backend:latest
+    pull_policy: always
     # Backend should not expose ports directly in production behind NGINX
     # ports:
     #   - "8000:8000"
@@ -50,7 +51,8 @@ services:
     restart: unless-stopped
 
   celery_worker:
-    build: .
+    image: niketh7/aetherium-backend:latest
+    pull_policy: always
     command: >
       celery -A aetherium.utils.celery_worker worker --loglevel=info
       --queues=file_uploads,status_checks,emails,default
